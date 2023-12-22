@@ -1,9 +1,7 @@
-use std::error::Error;
-use std::io;
 use dialoguer::{Confirm, Select};
-use game_lib::cards::model::{Card, EventCard};
+use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::print_to_stderr;
-use crate::cli::prompts::prompt;
+use crate::cli::prompts::{prompt, prompt_allow_empty};
 
 
 fn write_card_to_file(card: &Card) {
@@ -31,7 +29,10 @@ pub fn create() {
 
     let card = match Card::CARD_TYPES[card_type_index] {
         Card::EVENT_CARD => create_event_card(),
-        _ => { todo!("Not yet done") }
+        Card::INCIDENT_CARD => create_incident_card(),
+        Card::LUCKY_CARD => create_lucky_card(),
+        Card::OOPSIE_CARD => create_oopsie_card(),
+        _ => panic!("Unknown card type!")
     };
 
     write_card_to_file(&card);
@@ -53,6 +54,90 @@ fn create_event_card() -> Card {
 
     Card::Event(card)
 }
+
+fn create_incident_card() -> Card {
+    println!("Create a new Incident Card");
+    let title: String = prompt("Card title", None);
+    let description: String = prompt("Card description", None);
+    let action: String = prompt("Card Action", None);
+
+    let targets = ask_for_targets();
+
+    let card = IncidentCard {
+        title,
+        description,
+        action,
+        targets,
+    };
+
+    println!("{}", serde_json::to_string_pretty(&card).unwrap());
+
+    Card::Incident(card)
+}
+
+fn ask_for_targets() -> Vec<String> {
+    println!("Add targets of this card, enter a blank target when finished");
+    let mut targets: Vec<String> = Vec::new();
+
+    loop {
+        let target: String = prompt_allow_empty("Add incident target");
+        if target.is_empty() {
+            break;
+        }
+        targets.push(target);
+    };
+    targets
+}
+
+fn create_lucky_card() -> Card {
+    println!("Create a new Lucky Card");
+    let title: String = prompt("Card title", None);
+    let description: String = prompt("Card description", None);
+    let action: String = prompt("Card Action", None);
+
+    let card = LuckyCard {
+        title,
+        description,
+        action,
+    };
+
+    println!("{}", serde_json::to_string_pretty(&card).unwrap());
+
+    Card::Lucky(card)
+}
+
+fn create_oopsie_card() -> Card {
+    println!("Create a new Oopsie Card");
+    let title: String = prompt("Card title", None);
+    let description: String = prompt("Card description", None);
+    let action: String = prompt("Card Action", None);
+    let targets = ask_for_targets();
+    let mut min_cost: u8;
+    let mut max_cost: u8;
+    loop {
+        min_cost = prompt("Minimal fixing costs", None);
+        max_cost = prompt("Maximal fixing costs", None);
+        if min_cost <= max_cost {
+            break;
+        }
+        println!("Max cost must be greater or equal to min cost.")
+    };
+    let card = OopsieCard {
+        title,
+        description,
+        action,
+        targets,
+        fix_cost: FixCost {
+            min: min_cost,
+            max: max_cost
+        }
+    };
+
+    println!("{}", serde_json::to_string_pretty(&card).unwrap());
+
+    Card::Oopsie(card)
+}
+
 
 #[cfg(test)]
 mod tests {

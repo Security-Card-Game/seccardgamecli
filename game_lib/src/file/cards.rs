@@ -1,5 +1,4 @@
 use std::{fs, io};
-use std::fmt::format;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
