@@ -1,5 +1,8 @@
+use std::error::Error;
+use std::io;
 use dialoguer::{Confirm, Select};
 use game_lib::cards::model::{Card, EventCard};
+use game_lib::print_to_stderr;
 use crate::cli::prompts::prompt;
 
 
@@ -9,7 +12,10 @@ fn write_card_to_file(card: &Card) {
         .interact()
         .unwrap()
     {
-        game_lib::file::cards::write_card_to_file(card)
+        match game_lib::file::cards::write_card_to_file(card) {
+            Ok(_) => (),
+            Err(e) => print_to_stderr(format!("Could not write file\n {}", e.to_string()).as_str())
+        }
     } else {
         println!("Cancelled!");
     }
