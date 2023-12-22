@@ -1,5 +1,5 @@
 [workspace]
 members = [
     "seccardgame",
-    "lib",
+    "game_lib",
 ]

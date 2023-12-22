@@ -1,3 +1,4 @@
+mod cli;
 mod cards;
 
 use std::process::exit;
@@ -27,7 +28,7 @@ fn main() {
         Some(("cards", sub_matches)) => {
             match sub_matches.subcommand() {
                 Some(("create", _)) => {
-                    cards::create()
+                    cards::crud::create()
                 }
                 _ => exit(-1),
             }
