@@ -1,5 +1,5 @@
 use dialoguer::{Confirm, Select};
-use game_lib::cards::model::{Card, CARD_TYPES};
+use game_lib::cards::model::{Card, EventCard};
 use crate::cli::prompts::prompt;
 
 
@@ -18,44 +18,51 @@ fn write_card_to_file(card: &Card) {
 
 pub fn create() {
     let card_type_index = Select::new()
-        .items(CARD_TYPES)
+        .items(&Card::CARD_TYPES)
         .default(0)
         .interact()
         .unwrap();
 
-    let title: String = prompt("Card title", None);
-    let description: String = prompt("Card description", None);
-    let cost: u8 = prompt("Costs (0-20)", Some(Box::new(|input: &u8| -> Result<(), String> {
-        if *input <= 20 { Ok(()) } else { Err(String::from("Costs should be between 0 and 20")) }
-    })));
-
-    let card = Card {
-        card_type: CARD_TYPES[card_type_index].to_string(),
-        title,
-        description,
-        cost,
+    let card = match Card::CARD_TYPES[card_type_index] {
+        Card::EVENT_CARD => create_event_card(),
+        _ => { todo!("Not yet done") }
     };
 
-    println!("{:?}", card);
     write_card_to_file(&card);
+}
+
+fn create_event_card() -> Card {
+    println!("Create a new Event Card");
+    let title: String = prompt("Card title", None);
+    let description: String = prompt("Card description", None);
+    let action: String = prompt("Card Action", None);
+
+    let card = EventCard {
+        title,
+        description,
+        action,
+    };
+
+    println!("{}", serde_json::to_string_pretty(&card).unwrap());
+
+    Card::Event(card)
 }
 
 #[cfg(test)]
 mod tests {
+    use game_lib::cards::model::CardTrait;
     use super::*;
 
     #[test]
     fn test_card_creation() {
-        let card = Card {
-            card_type: "Magic".to_string(),
+        let card = Card::Event(EventCard {
             title: "Magic Card".to_string(),
             description: "This is a magical card.".to_string(),
-            cost: 10,
-        };
+            action: "10".to_string(),
+        });
 
-        assert_eq!(card.card_type, "Magic");
-        assert_eq!(card.title, "Magic Card");
-        assert_eq!(card.description, "This is a magical card.");
-        assert_eq!(card.cost, 10);
+        assert_eq!(card.title(), "Magic Card");
+        assert_eq!(card.description(), "This is a magical card.");
+        assert_eq!(card.action(), 10);
     }
 }

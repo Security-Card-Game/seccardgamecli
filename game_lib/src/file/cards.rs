@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::io::Read;
-use crate::cards::model::Card;
+use crate::cards::model::{Card, EventCard};
 use serde_json;
 
 pub fn write_card_to_file(card: &Card) {
@@ -18,12 +18,11 @@ mod tests {
 
         #[test]
         fn test_write_card_to_file() {
-            let card = Card {
-                    card_type: "type".to_string(),
+            let card = Card::Event(EventCard {
                     title: "title".to_string(),
                     description: "description".to_string(),
-                    cost: 55,
-            };
+                    action: "action".to_string(),
+            });
 
             write_card_to_file(&card);
 
