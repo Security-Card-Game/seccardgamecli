@@ -1,53 +1,91 @@
-on:
-  release:
-    types: [created]
-  push:
+# based on https://github.com/houseabsolute/precious/blob/master/.github/workflows/ci.yml
+name: Release
 
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+..*'
+      
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
 
 jobs:
-  release:
-    name: release ${{ matrix.target }} (with non-required env)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+  test:
+    name: ${{ matrix.platform.os_name }} with rust ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.platform.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: x86_64-pc-windows-gnu
-            archive: zip
-          - target: x86_64-unknown-linux-musl
-            archive: tar.gz
-          - target: x86_64-apple-darwin
-            archive: zip
-          - target: wasm32-wasi
-            archive: zip tar.gz
+        platform:
+          - os_name: Linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bin: seccardgame
+            name: seccardgamecli-Linux-x86_64-gnu.tar.gz
+          - os_name: Windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: seccardgame.exe
+            name: seccardgamecli-Windows-x86_64.zip
+          - os_name: macOS-x86_64
+            os: macOS-latest
+            target: x86_64-apple-darwin
+            bin: seccardgame
+            name: seccardgamecli-MacOs-x86_64.tar.gz
+          #- os_name: macOS-aarch64
+          #  os: macOS-latest
+          #  target: aarch-apple-darwin
+          #  bin: seccardgame
+          #  name: seccardgamecli-MacOs-aarch64.tar.gz
+          #  skip_tests: true
+        toolchain:
+          - stable
+          
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: rust-build/rust-build.action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
         with:
-          RUSTTARGET: ${{ matrix.target }}
-          EXTRA_FILES: "README.md"
-          SRC_DIR: "hello"
-          ARCHIVE_TYPES: ${{ matrix.archive }}
-          PRE_BUILD: "pre_build.sh"
-          POST_BUILD: "test/post_build.sh"
-          MINIFY: "yes"
-  release_without_not_required:
-    name: release ${{ matrix.target }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        target: [x86_64-unknown-linux-musl]
-    steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: rust-build/rust-build.action@master
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args: "--locked --release"
+          strip: true
+      - name: Run tests
+        uses: houseabsolute/actions-rust-cross@v0
         with:
-          RUSTTARGET: ${{ matrix.target }}
-          UPLOAD_MODE: none
-      - name: Checkout output
-        run: ls -laR
+          command: "test"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args: "--locked --release"
+        if: ${{ !matrix.platform.skip_tests }}
+      - name: Package as archive
+        shell: bash
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+            7z a ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          else
+            tar czvf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          fi
+          cd -        
+      - name: Publish release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: seccardgamecli-${{ matrix.platform.os_name }}
+          path: "seccardgamecli-*"        
+      - name: Generate SHA-256
+        run: shasum -a 256 ${{ matrix.platform.name }}        
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: "seccardgamecli-*"
+          body_path: Changes.md
+
