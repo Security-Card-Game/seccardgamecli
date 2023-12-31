@@ -154,6 +154,6 @@ mod tests {
 
         assert_eq!(card.title(), "Magic Card");
         assert_eq!(card.description(), "This is a magical card.");
-        assert_eq!(card.action(), 10);
+        assert_eq!(card.action(), "10");
     }
 }
