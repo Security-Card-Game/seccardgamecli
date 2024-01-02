@@ -1,8 +1,7 @@
+use crate::cli::prompts::{prompt, prompt_allow_empty};
 use dialoguer::{Confirm, Select};
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::print_to_stderr;
-use crate::cli::prompts::{prompt, prompt_allow_empty};
-
 
 fn write_card_to_file(card: &Card) {
     if Confirm::new()
@@ -12,13 +11,12 @@ fn write_card_to_file(card: &Card) {
     {
         match game_lib::file::cards::write_card_to_file(card) {
             Ok(_) => (),
-            Err(e) => print_to_stderr(format!("Could not write file\n {}", e.to_string()).as_str())
+            Err(e) => print_to_stderr(format!("Could not write file\n {}", e.to_string()).as_str()),
         }
     } else {
         println!("Cancelled!");
     }
 }
-
 
 pub fn create() {
     let card_type_index = Select::new()
@@ -32,7 +30,7 @@ pub fn create() {
         Card::INCIDENT_CARD => create_incident_card(),
         Card::LUCKY_CARD => create_lucky_card(),
         Card::OOPSIE_CARD => create_oopsie_card(),
-        _ => panic!("Unknown card type!")
+        _ => panic!("Unknown card type!"),
     };
 
     write_card_to_file(&card);
@@ -85,7 +83,7 @@ fn ask_for_targets() -> Vec<String> {
             break;
         }
         targets.push(target);
-    };
+    }
     targets
 }
 
@@ -121,7 +119,7 @@ fn create_oopsie_card() -> Card {
             break;
         }
         println!("Max cost must be greater or equal to min cost.")
-    };
+    }
     let card = OopsieCard {
         title,
         description,
@@ -129,8 +127,8 @@ fn create_oopsie_card() -> Card {
         targets,
         fix_cost: FixCost {
             min: min_cost,
-            max: max_cost
-        }
+            max: max_cost,
+        },
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -138,11 +136,10 @@ fn create_oopsie_card() -> Card {
     Card::Oopsie(card)
 }
 
-
 #[cfg(test)]
 mod tests {
-    use game_lib::cards::model::CardTrait;
     use super::*;
+    use game_lib::cards::model::CardTrait;
 
     #[test]
     fn test_card_creation() {

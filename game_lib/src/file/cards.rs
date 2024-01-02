@@ -1,19 +1,30 @@
-use std::{fs, io};
+use crate::cards::model::{Card, CardTrait};
+use crate::file::general::{count_files_in_directory, ensure_directory_exists};
+use serde_json;
 use std::fs::File;
+use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use crate::cards::model::{Card, CardTrait};
-use serde_json;
 
 pub fn write_card_to_file(card: &Card) -> std::io::Result<()> {
     let card_directory = get_card_directory(card);
     match ensure_directory_exists(&card_directory) {
         Ok(_) => (),
-        Err(_) => return Err(io::Error::new(io::ErrorKind::NotFound, format!("Could not create directory {}", card_directory))),
+        Err(_) => {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("Could not create directory {}", card_directory),
+            ))
+        }
     }
     let current_cards_count = match count_files_in_directory(&card_directory) {
         Ok(card_number) => card_number,
-        Err(_) => return Err(io::Error::new(io::ErrorKind::NotFound, "Could not count files in directory")),
+        Err(_) => {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Could not count files in directory",
+            ))
+        }
     };
 
     let file_name = generate_filename(card.title(), current_cards_count);
@@ -39,11 +50,13 @@ fn write_data_to_file(card: &Card, path: &Path) -> std::io::Result<()> {
         Ok(serialized_card) => {
             let mut file = File::create(&path)?;
             file.write_all(serialized_card.as_bytes())
-        },
-        Err(_) => Err(io::Error::new(io::ErrorKind::Other, "Unable to serialize data")),
+        }
+        Err(_) => Err(io::Error::new(
+            io::ErrorKind::Other,
+            "Unable to serialize data",
+        )),
     }
 }
-
 
 fn get_card_directory(card: &Card) -> &'static str {
     match card {
@@ -52,27 +65,6 @@ fn get_card_directory(card: &Card) -> &'static str {
         Card::Oopsie(_) => "oppsies",
         Card::Lucky(_) => "lucky",
     }
-}
-
-fn ensure_directory_exists(path: &str) -> std::io::Result<()> {
-    if !Path::new(path).exists() {
-        fs::create_dir_all(path)?; // create_dir_all also creates the parent directories if they don't exist
-    }
-    Ok(())
-}
-
-
-fn count_files_in_directory(dir: &str) -> io::Result<u32> {
-    let mut file_count = 0;
-
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
-        if entry.metadata()?.is_file() {
-            file_count += 1;
-        }
-    }
-
-    Ok(file_count)
 }
 
 fn replace_invalid_character(c: char) -> char {
@@ -85,6 +77,3 @@ fn replace_invalid_character(c: char) -> char {
 fn sanitize_filename(filename: &str) -> String {
     filename.chars().map(replace_invalid_character).collect()
 }
-
-
-

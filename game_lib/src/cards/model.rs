@@ -10,7 +10,6 @@ pub enum Card {
 }
 
 impl Card {
-
     pub const EVENT_CARD: &'static str = "Event";
     pub const INCIDENT_CARD: &'static str = "Incident";
     pub const OOPSIE_CARD: &'static str = "Oopsie";
@@ -23,7 +22,6 @@ impl Card {
         Self::LUCKY_CARD,
     ];
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EventCard {
@@ -53,7 +51,6 @@ pub struct FixCost {
     pub max: u8,
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OopsieCard {
     pub title: String,
@@ -62,7 +59,6 @@ pub struct OopsieCard {
     pub action: String,
     pub fix_cost: FixCost,
 }
-
 
 pub trait CardTrait {
     fn title(&self) -> &String;
