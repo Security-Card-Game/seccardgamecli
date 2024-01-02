@@ -1,7 +1,7 @@
 mod cards;
 mod cli;
 
-use crate::cli::config::{init, CfgInit};
+use crate::cli::config::{init, CfgInit, read_config};
 use clap::{Arg, Command};
 use std::process::exit;
 
@@ -49,7 +49,7 @@ fn main() {
             init(cfg_init)
         }
         Some(("cards", sub_matches)) => match sub_matches.subcommand() {
-            Some(("create", _)) => cards::crud::create(),
+            Some(("create", _)) => cards::crud::create(&read_config(cfg.as_str())),
             _ => exit(-1),
         },
         _ => exit(0),

@@ -3,7 +3,7 @@ use game_lib::print_to_stderr;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::io;
+use std::{fs, io};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -13,7 +13,7 @@ pub struct CfgInit {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Config {
+pub struct Config {
     pub game_path: String,
 }
 
@@ -33,6 +33,13 @@ pub fn init(init: CfgInit) {
     ) {
         Ok(_) => println!("Config file created"),
         Err(e) => print_to_stderr(e.to_string().as_str()),
+    }
+}
+
+pub fn read_config(path_to_config: &str) -> Config {
+    match fs::read_to_string(path_to_config) {
+        Ok(cfg) => serde_json::from_str(cfg.as_str()).expect("Could not parse config file, did you run init?"),
+        Err(e) => panic!("Could not read config file {}", e.to_string())
     }
 }
 

@@ -6,6 +6,7 @@
 * adds init command
   * clones cards repository
   * creates config file
+* respects game path from config file in card creation
 
 ## 0.1.0-alpha
 

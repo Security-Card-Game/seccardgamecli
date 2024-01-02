@@ -6,8 +6,16 @@ use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-pub fn write_card_to_file(card: &Card) -> std::io::Result<()> {
+pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Result<()> {
     let card_directory = get_card_directory(card);
+    let mut path =  if let Some(base) = base_path {
+      PathBuf::from(base)
+    } else {
+        PathBuf::new()
+    };
+
+    path.push(card_directory);
+
     match ensure_directory_exists(&card_directory) {
         Ok(_) => (),
         Err(_) => {
@@ -28,9 +36,8 @@ pub fn write_card_to_file(card: &Card) -> std::io::Result<()> {
     };
 
     let file_name = generate_filename(card.title(), current_cards_count);
-    let mut path = PathBuf::from(card_directory);
-    path.push(file_name);
 
+    path.push(file_name);
     write_data_to_file(card, &path)?;
 
     println!("Wrote to file {}", path.display());

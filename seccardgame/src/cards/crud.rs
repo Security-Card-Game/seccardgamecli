@@ -2,14 +2,15 @@ use crate::cli::prompts::{prompt, prompt_allow_empty};
 use dialoguer::{Confirm, Select};
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::print_to_stderr;
+use crate::cli::config::Config;
 
-fn write_card_to_file(card: &Card) {
+fn write_card_to_file(card: &Card, cfg: &Config) {
     if Confirm::new()
         .with_prompt("Do you confirm these details?")
         .interact()
         .unwrap()
     {
-        match game_lib::file::cards::write_card_to_file(card) {
+        match game_lib::file::cards::write_card_to_file(card, Some(cfg.game_path.as_str())) {
             Ok(_) => (),
             Err(e) => print_to_stderr(format!("Could not write file\n {}", e.to_string()).as_str()),
         }
@@ -18,7 +19,7 @@ fn write_card_to_file(card: &Card) {
     }
 }
 
-pub fn create() {
+pub fn create(cfg: &Config) {
     let card_type_index = Select::new()
         .items(&Card::CARD_TYPES)
         .default(0)
@@ -33,7 +34,7 @@ pub fn create() {
         _ => panic!("Unknown card type!"),
     };
 
-    write_card_to_file(&card);
+    write_card_to_file(&card, cfg);
 }
 
 fn create_event_card() -> Card {
