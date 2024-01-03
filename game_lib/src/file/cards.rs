@@ -16,7 +16,7 @@ pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Resu
 
     path.push(card_directory);
 
-    match ensure_directory_exists(&card_directory) {
+    match ensure_directory_exists(path.to_str().unwrap().trim()) {
         Ok(_) => (),
         Err(_) => {
             return Err(io::Error::new(
@@ -25,7 +25,7 @@ pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Resu
             ))
         }
     }
-    let current_cards_count = match count_files_in_directory(&card_directory) {
+    let current_cards_count = match count_files_in_directory(path.to_str().unwrap().trim()) {
         Ok(card_number) => card_number,
         Err(_) => {
             return Err(io::Error::new(
