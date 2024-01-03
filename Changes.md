@@ -7,6 +7,8 @@
   * clones cards repository
   * creates config file
 * respects game path from config file in card creation
+* adds simple stats to supply card count
+* adds edit card possibility before saving
 
 ## 0.1.0-alpha
 
