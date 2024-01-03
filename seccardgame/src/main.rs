@@ -1,7 +1,7 @@
 mod cards;
 mod cli;
 
-use crate::cli::config::{init, CfgInit, read_config};
+use crate::cli::config::{init, CfgInit, Config};
 use clap::{Arg, Command};
 use std::process::exit;
 use flexi_logger::Logger;
@@ -52,10 +52,17 @@ fn main() {
             };
             init(cfg_init)
         }
-        Some(("cards", sub_matches)) => match sub_matches.subcommand() {
-            Some(("create", _)) => cards::crud::create(&read_config(cfg.as_str())),
-            _ => exit(-1),
+        Some(("cards", sub_matches)) => {
+            let config = load_config(cfg);
+            match sub_matches.subcommand() {
+                Some(("create", _)) => cards::crud::create(&config),
+                _ => exit(-1),
+            }
         },
-        _ => exit(0),
+        _ => exit(-1),
     }
+}
+
+fn load_config(cfg: String) -> Config {
+    cli::config::Config::read_config(cfg.as_str())
 }

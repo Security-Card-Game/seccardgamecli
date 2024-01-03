@@ -44,12 +44,15 @@ where
     }
 }
 
-pub fn read_config(path_to_config: &str) -> Config {
-    match fs::read_to_string(path_to_config) {
-        Ok(cfg) => serde_json::from_str(cfg.as_str())
-            .expect("Could not parse config file, did you run init?"),
-        Err(e) => panic!("Could not read config file {}", e.to_string()),
+impl Config {
+    pub fn read_config(path_to_config: &str) -> Self {
+        match fs::read_to_string(path_to_config) {
+            Ok(cfg) => serde_json::from_str(cfg.as_str())
+                .expect("Could not parse config file, did you run init?"),
+            Err(e) => panic!("Could not read config file {}, did you run init?", e.to_string()),
+        }
     }
+
 }
 
 fn create_config(cfg: Config, path_to_config: &str) -> std::io::Result<()> {
@@ -112,10 +115,8 @@ mod tests {
     use super::*;
     use log::Level;
     use std::io::ErrorKind;
-    use std::sync::{Arc, Mutex, Once};
     use tempfile::tempdir;
 
-    static INIT: Once = Once::new();
     #[test]
     fn test_clone_game_ok() {
         // implements drop and will be cleaned up
