@@ -1,21 +1,54 @@
+use crate::cli::config::Config;
 use crate::cli::prompts::{prompt, prompt_allow_empty};
-use dialoguer::{Confirm, Select};
+use dialoguer::{Confirm, Editor, Select};
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::print_to_stderr;
-use crate::cli::config::Config;
+use log::error;
 
 fn write_card_to_file(card: &Card, cfg: &Config) {
+    let mut card_to_save: Card = card.clone();
+    if Confirm::new()
+        .with_prompt("Do you want to edit this card?")
+        .interact()
+        .unwrap()
+    {
+        card_to_save =
+            match Editor::new().edit(serde_json::to_string_pretty(card).unwrap().as_str()) {
+                Ok(content) => match content {
+                    Some(edited) => deserialize_editor_content(edited, &card).unwrap_or_else(|e| {
+                        error!("Error deserializing into card: {}", e);
+                        card_to_save
+                    }),
+                    None => card_to_save,
+                },
+                Err(e) => panic!("{}", e),
+            };
+        println!(
+            "Card to save is\n{}",
+            serde_json::to_string_pretty(&card_to_save).unwrap()
+        );
+    }
     if Confirm::new()
         .with_prompt("Do you confirm these details?")
         .interact()
         .unwrap()
     {
-        match game_lib::file::cards::write_card_to_file(card, Some(cfg.game_path.as_str())) {
+        match game_lib::file::cards::write_card_to_file(&card_to_save, Some(cfg.game_path.as_str()))
+        {
             Ok(_) => (),
             Err(e) => print_to_stderr(format!("Could not write file\n {}", e.to_string()).as_str()),
         }
     } else {
         println!("Cancelled!");
+    }
+}
+
+fn deserialize_editor_content(content: String, original_card: &Card) -> serde_json::Result<Card> {
+    match original_card {
+        Card::Event(_) => serde_json::from_str(content.as_str()),
+        Card::Incident(_) => serde_json::from_str(content.as_str()),
+        Card::Oopsie(_) => serde_json::from_str(content.as_str()),
+        Card::Lucky(_) => serde_json::from_str(content.as_str()),
     }
 }
 
