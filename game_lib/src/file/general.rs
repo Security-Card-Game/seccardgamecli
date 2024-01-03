@@ -20,3 +20,16 @@ pub fn count_files_in_directory(dir: &str) -> io::Result<u32> {
 
     Ok(file_count)
 }
+
+pub fn count_files_in_directory_with_filter(dir: &str, filter: &str) -> io::Result<u32> {
+    let mut file_count = 0;
+
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        if entry.metadata()?.is_file() && entry.file_name().to_str().unwrap().contains(filter) {
+            file_count += 1;
+        }
+    }
+
+    Ok(file_count)
+}

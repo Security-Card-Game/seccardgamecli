@@ -65,11 +65,11 @@ fn write_data_to_file(card: &Card, path: &Path) -> std::io::Result<()> {
     }
 }
 
-fn get_card_directory(card: &Card) -> &'static str {
+pub fn get_card_directory(card: &Card) -> &'static str {
     match card {
         Card::Event(_) => "events",
         Card::Incident(_) => "incidents",
-        Card::Oopsie(_) => "oppsies",
+        Card::Oopsie(_) => "oopsies",
         Card::Lucky(_) => "lucky",
     }
 }

@@ -29,7 +29,8 @@ fn cli() -> Command {
             Command::new("cards")
                 .about("Operate on cards")
                 .subcommand_required(true)
-                .subcommand(Command::new("create").arg_required_else_help(false)),
+                .subcommand(Command::new("create").about("Create a card").arg_required_else_help(false))
+                .subcommand(Command::new("stats").about("Prints stats")),
         )
 }
 
@@ -56,6 +57,7 @@ fn main() {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
                 Some(("create", _)) => cards::crud::create(&config),
+                Some(("stats", _)) => cards::stats::print_stats(&config),
                 _ => exit(-1),
             }
         },
