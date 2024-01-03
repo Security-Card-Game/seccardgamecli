@@ -45,10 +45,10 @@ fn write_card_to_file(card: &Card, cfg: &Config) {
 
 fn deserialize_editor_content(content: String, original_card: &Card) -> serde_json::Result<Card> {
     match original_card {
-        Card::Event(_) => serde_json::from_str(content.as_str()),
-        Card::Incident(_) => serde_json::from_str(content.as_str()),
-        Card::Oopsie(_) => serde_json::from_str(content.as_str()),
-        Card::Lucky(_) => serde_json::from_str(content.as_str()),
+        Card::Event(_) => serde_json::from_str(content.as_str()).map(|c| Card::Event(c)),
+        Card::Incident(_) => serde_json::from_str(content.as_str()).map(|c| Card::Incident(c)),
+        Card::Oopsie(_) => serde_json::from_str(content.as_str()).map(|c| Card::Oopsie(c)),
+        Card::Lucky(_) => serde_json::from_str(content.as_str()).map(|c| Card::Lucky(c)),
     }
 }
 
