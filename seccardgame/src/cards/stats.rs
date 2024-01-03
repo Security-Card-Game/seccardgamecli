@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
 use log::warn;
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
@@ -27,7 +28,7 @@ impl CardStats {
             oopsie_cards: Self::count_oopsie_cards(cfg),
             lucky_cards: Self::count_lucky_cards(cfg),
             incident_cards: Self::count_incident_cards(cfg),
-            targets: HashMap::new(),
+            targets: Self::read_targets(cfg),
         }
     }
 
@@ -81,6 +82,92 @@ impl CardStats {
             0
         })
     }
+
+    fn read_targets(cfg: &Config) -> HashMap<String, Target> {
+        // only incident and oopsie cards have targets
+        let oopsie_targets = Self::read_oopsie_targets(cfg);
+        let incident_targets = Self::read_incident_targets(cfg);
+        let mut result = HashMap::new();
+        for ot in oopsie_targets {
+            if result.contains_key(&ot) {
+                let old: &Target = result.get(&ot).unwrap();
+                let cnt: u32 = old.oopsie + 1;
+                result.insert(ot, Target {
+                    target: old.target.clone(),
+                    oopsie: cnt,
+                    incident: old.incident
+                });
+            } else {
+                result.insert(ot.clone(), Target {
+                    target: ot.clone(),
+                    oopsie: 1,
+                    incident: 0
+                });
+            }
+        };
+        for it in incident_targets {
+            if result.contains_key(&it) {
+                let old = result.get(&it).unwrap();
+                let cnt = old.incident + 1;
+                result.insert(it, Target {
+                    target: old.target.clone(),
+                    oopsie: cnt,
+                    incident: old.incident
+                });
+            } else {
+                result.insert(it.clone(), Target {
+                    target: it.clone(),
+                    oopsie: 0,
+                    incident: 1
+                });
+            }
+        }
+        result
+    }
+
+    fn read_oopsie_targets(cfg: &Config) -> Vec<String> {
+        let oopsie_card = Card::Oopsie(OopsieCard {
+            title: "".to_string(),
+            description: "".to_string(),
+            targets: vec![],
+            action: "".to_string(),
+            fix_cost: FixCost { min: 0, max: 0 },
+        });
+        let mut path = PathBuf::from(&cfg.game_path.as_str());
+        path.push(get_card_directory(&oopsie_card));
+        let mut oopsie_targets = Vec::new();
+        for entry in fs::read_dir(path).unwrap() {
+            let file = entry.unwrap();
+            if file.metadata().unwrap().is_file() && file.file_name().to_str().unwrap().contains(".json") {
+                let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
+                let card: OopsieCard = serde_json::from_str(content.as_str()).unwrap();
+                oopsie_targets.extend(card.targets);
+            }
+        };
+        oopsie_targets
+    }
+
+    fn read_incident_targets(cfg: &Config) -> Vec<String> {
+        let incident_card = Card::Incident(IncidentCard {
+            title: "".to_string(),
+            description: "".to_string(),
+            targets: vec![],
+            action: "".to_string(),
+        });
+        let mut path = PathBuf::from(&cfg.game_path.as_str());
+        path.push(get_card_directory(&incident_card));
+        let mut incident_targets = Vec::new();
+        for entry in fs::read_dir(path).unwrap() {
+            let file = entry.unwrap();
+            if file.metadata().unwrap().is_file() && file.file_name().to_str().unwrap().contains(".json") {
+                let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
+                let card: IncidentCard = serde_json::from_str(content.as_str()).unwrap();
+                incident_targets.extend(card.targets);
+            }
+        };
+        incident_targets
+    }
+
 }
 
 pub(crate) fn print_stats(cfg: &Config) {
@@ -90,4 +177,14 @@ pub(crate) fn print_stats(cfg: &Config) {
     println!("Lucky:\t\t{}",stats.lucky_cards);
     println!("Oopsie:\t\t{}",stats.oopsie_cards);
     println!("Incident:\t{}",stats.incident_cards);
+    println!("=====Targets=====");
+    if stats.targets.len() > 0 {
+        println!("Name\t\tOopsie\tIncident");
+        for target in stats.targets {
+            let tgt = target.1;
+            println!("{}\t\t{}\t{}", tgt.target, tgt.oopsie, tgt.incident)
+        }
+    } else {
+        println!("No targets")
+    }
 }
