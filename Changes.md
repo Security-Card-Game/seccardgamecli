@@ -1,6 +1,6 @@
 #Changes
 
-## upcoming release
+## 0.1.0-beta
 
 * introduces flag to supply config file
 * adds init command
@@ -9,6 +9,7 @@
 * respects game path from config file in card creation
 * adds simple stats to supply card count
 * adds edit card possibility before saving
+* [BUG] fixes bug in counting cards
 
 ## 0.1.0-alpha
 
