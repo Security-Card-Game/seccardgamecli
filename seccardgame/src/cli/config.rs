@@ -1,11 +1,11 @@
 use game_lib::file::general::ensure_directory_exists;
 use git2::Repository;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Error, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-use log::{error, info};
 
 pub struct CfgInit {
     pub game_path: String,
@@ -40,7 +40,7 @@ where
         init.config_path.as_str(),
     ) {
         Ok(_) => info!("Config file created"),
-        Err(e) => error!("{}", e)
+        Err(e) => error!("{}", e),
     }
 }
 
@@ -110,8 +110,12 @@ fn clone_game(path: &str) -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use log::Level;
+    use std::io::ErrorKind;
+    use std::sync::{Arc, Mutex, Once};
     use tempfile::tempdir;
 
+    static INIT: Once = Once::new();
     #[test]
     fn test_clone_game_ok() {
         // implements drop and will be cleaned up
@@ -151,14 +155,64 @@ mod tests {
 
     #[test]
     fn test_init_impl_ok() {
-        let clone_game = |_: &str| -> Result<(), Error> {
-            Ok(())
+        testing_logger::setup();
+        let clone_game = |_: &str| -> Result<(), Error> { Ok(()) };
+        let create_config = |_: Config, _: &str| -> Result<(), Error> { Ok(()) };
+        let cfg_init = CfgInit {
+            game_path: "".to_string(),
+            config_path: "".to_string(),
         };
-        let create_config = |_: Config, _: &str| -> Result<(), Error> {
-            Ok(())
-        };
-        let cfg_init = CfgInit {game_path: "".to_string(), config_path: "".to_string()};
 
-        init_impl(cfg_init, clone_game, create_config)
+        init_impl(cfg_init, clone_game, create_config);
+
+        validate_error_log_count(0);
+    }
+
+    /// Test for `init_impl` function when `clone_game` returns an error.
+    ///
+    /// This test case verifies that when `clone_game` returns an error, `init_impl` logs an error message.
+    /// It sets up a logger using `Logger::with` and `TestLogWriter`, and then calls `init_impl` with a mock implementation of `clone_game` that always returns
+    #[test]
+    fn test_init_impl_clone_err() {
+        testing_logger::setup();
+        let clone_game =
+            |_: &str| -> Result<(), Error> { Err(Error::new(ErrorKind::Other, "error")) };
+        let create_config = |_: Config, _: &str| -> Result<(), Error> { Ok(()) };
+        let cfg_init = CfgInit {
+            game_path: "".to_string(),
+            config_path: "".to_string(),
+        };
+
+        init_impl(cfg_init, clone_game, create_config);
+
+        validate_error_log_count(1);
+    }
+
+    fn validate_error_log_count(count: usize) {
+        testing_logger::validate(|log| {
+            let error_logs: Vec<_> = log.iter().filter(|&l| l.level == Level::Error).collect();
+            assert_eq!(error_logs.len(), count);
+        });
+    }
+
+    /// Test for `init_impl` function when `create_config` returns an error.
+    ///
+    /// This test case verifies that when `create_config` returns an error, `init_impl` logs an error message.
+    /// It sets up a logger using `Logger::with` and `TestLogWriter`, and then calls `init_impl` with a mock implementation of `clone_game` that always returns
+    #[test]
+    fn test_init_impl_config_err() {
+        testing_logger::setup();
+        let clone_game = |_: &str| -> Result<(), Error> { Ok(()) };
+        let create_config = |_: Config, _: &str| -> Result<(), Error> {
+            Err(Error::new(ErrorKind::Other, "error"))
+        };
+        let cfg_init = CfgInit {
+            game_path: "".to_string(),
+            config_path: "".to_string(),
+        };
+
+        init_impl(cfg_init, clone_game, create_config);
+
+        validate_error_log_count(1);
     }
 }
