@@ -98,3 +98,46 @@ fn clone_game(path: &str) -> std::io::Result<()> {
     println!("Clones game repository into '{}'", path);
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use tempfile::tempdir;
+    use super::*;
+
+    #[test]
+    fn test_clone_game_ok() {
+        // implements drop and will be cleaned up
+        let dir = tempdir().expect("Could not create directory");
+
+        let result = clone_game(dir.path().to_str().expect("Could not extract path"));
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_clone_game_err() {
+        // This directory should not exist
+        let result = clone_game("/invalid/path/");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_create_config_ok() {
+        let dir = tempdir().expect("Could not create directory");
+
+        let cfg = Config {
+            game_path: "test_path".to_string(),
+        };
+        let result = create_config(cfg, dir.path().to_str().expect("Could not get path"));
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_create_config_err() {
+        // This directory should not exist
+        let cfg = Config {
+            game_path: "test_path".to_string(),
+        };
+        let result = create_config(cfg, "/invalid/path/");
+        assert!(result.is_err());
+    }
+}
