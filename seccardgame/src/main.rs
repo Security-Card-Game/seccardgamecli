@@ -4,6 +4,7 @@ mod cli;
 use crate::cli::config::{init, CfgInit, read_config};
 use clap::{Arg, Command};
 use std::process::exit;
+use flexi_logger::Logger;
 
 fn cli() -> Command {
     Command::new("seccardgame")
@@ -33,6 +34,9 @@ fn cli() -> Command {
 }
 
 fn main() {
+    Logger::try_with_env_or_str("info").expect("Logger to be initialized")
+        .start().expect("Logger to be started)");
+
     let matches = cli().get_matches();
     let cfg = matches.get_one::<String>("config").unwrap().clone();
     match matches.subcommand() {

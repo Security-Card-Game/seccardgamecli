@@ -1,11 +1,11 @@
 use game_lib::file::general::ensure_directory_exists;
-use game_lib::print_to_stderr;
 use git2::Repository;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::{fs, io};
-use std::io::Write;
+use std::io::{Error, Write};
 use std::path::{Path, PathBuf};
+use std::{fs, io};
+use log::{error, info};
 
 pub struct CfgInit {
     pub game_path: String,
@@ -21,9 +21,17 @@ const GAME_REPO: &str = "https://github.com/Security-Card-Game/securityDeckGame.
 const DEFAULT_CFG: &str = "seccard_cfg.json";
 
 pub fn init(init: CfgInit) {
+    init_impl(init, clone_game, create_config)
+}
+
+fn init_impl<F, G>(init: CfgInit, clone_game: F, create_config: G)
+where
+    F: Fn(&str) -> Result<(), Error>,
+    G: Fn(Config, &str) -> Result<(), Error>,
+{
     match clone_game(init.game_path.as_str()) {
-        Ok(_) => println!("Downloaded game into {}", init.game_path),
-        Err(e) => print_to_stderr(e.to_string().as_str()),
+        Ok(_) => info!("Downloaded game into {}", init.game_path),
+        Err(e) => error!("{}", e),
     }
     match create_config(
         Config {
@@ -31,15 +39,16 @@ pub fn init(init: CfgInit) {
         },
         init.config_path.as_str(),
     ) {
-        Ok(_) => println!("Config file created"),
-        Err(e) => print_to_stderr(e.to_string().as_str()),
+        Ok(_) => info!("Config file created"),
+        Err(e) => error!("{}", e)
     }
 }
 
 pub fn read_config(path_to_config: &str) -> Config {
     match fs::read_to_string(path_to_config) {
-        Ok(cfg) => serde_json::from_str(cfg.as_str()).expect("Could not parse config file, did you run init?"),
-        Err(e) => panic!("Could not read config file {}", e.to_string())
+        Ok(cfg) => serde_json::from_str(cfg.as_str())
+            .expect("Could not parse config file, did you run init?"),
+        Err(e) => panic!("Could not read config file {}", e.to_string()),
     }
 }
 
@@ -85,24 +94,23 @@ fn clone_game(path: &str) -> std::io::Result<()> {
             ))
         }
     };
-    println!("Cloning game repository...");
+    info!("Cloning game repository...");
     match Repository::clone(GAME_REPO, path) {
         Ok(_) => (),
         Err(e) => {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
-                format!("failed to clone game: {}", e),
+                format!("Failed to clone game: {}", e),
             ))
         }
     };
-    println!("Clones game repository into '{}'", path);
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use tempfile::tempdir;
     use super::*;
+    use tempfile::tempdir;
 
     #[test]
     fn test_clone_game_ok() {
@@ -139,5 +147,18 @@ mod tests {
         };
         let result = create_config(cfg, "/invalid/path/");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_init_impl_ok() {
+        let clone_game = |_: &str| -> Result<(), Error> {
+            Ok(())
+        };
+        let create_config = |_: Config, _: &str| -> Result<(), Error> {
+            Ok(())
+        };
+        let cfg_init = CfgInit {game_path: "".to_string(), config_path: "".to_string()};
+
+        init_impl(cfg_init, clone_game, create_config)
     }
 }
