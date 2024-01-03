@@ -88,13 +88,13 @@ impl CardStats {
         let oopsie_targets = Self::read_oopsie_targets(cfg);
         let incident_targets = Self::read_incident_targets(cfg);
         let mut result = HashMap::new();
+
         for ot in oopsie_targets {
             if result.contains_key(&ot) {
                 let old: &Target = result.get(&ot).unwrap();
-                let cnt: u32 = old.oopsie + 1;
                 result.insert(ot, Target {
                     target: old.target.clone(),
-                    oopsie: cnt,
+                    oopsie: old.oopsie + 1,
                     incident: old.incident
                 });
             } else {
@@ -108,11 +108,10 @@ impl CardStats {
         for it in incident_targets {
             if result.contains_key(&it) {
                 let old = result.get(&it).unwrap();
-                let cnt = old.incident + 1;
                 result.insert(it, Target {
                     target: old.target.clone(),
-                    oopsie: cnt,
-                    incident: old.incident
+                    oopsie: old.oopsie,
+                    incident: old.incident + 1
                 });
             } else {
                 result.insert(it.clone(), Target {
@@ -179,12 +178,26 @@ pub(crate) fn print_stats(cfg: &Config) {
     println!("Incident:\t{}",stats.incident_cards);
     println!("=====Targets=====");
     if stats.targets.len() > 0 {
-        println!("Name\t\tOopsie\tIncident");
+        println!("{:<20}\t\tOopsie\tIncident", "Name");
         for target in stats.targets {
             let tgt = target.1;
-            println!("{}\t\t{}\t{}", tgt.target, tgt.oopsie, tgt.incident)
+            let target_name = truncate_string(tgt.target, 20);
+
+            println!("{:<20}\t\t{}\t{}", target_name, tgt.oopsie, tgt.incident)
         }
     } else {
         println!("No targets")
     }
+
+
 }
+fn truncate_string(s: String, max_len: usize) -> String {
+    if s.len() > max_len {
+        let mut new_s = s;
+        new_s.truncate(max_len - 3);
+        new_s + "..."
+    } else {
+        s
+    }
+}
+

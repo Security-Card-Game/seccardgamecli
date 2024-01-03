@@ -4,6 +4,7 @@ use dialoguer::{Confirm, Editor, Select};
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::print_to_stderr;
 use log::error;
+use crate::cards::stats::print_stats;
 
 fn write_card_to_file(card: &Card, cfg: &Config) {
     let mut card_to_save: Card = card.clone();
@@ -53,7 +54,10 @@ fn deserialize_editor_content(content: String, original_card: &Card) -> serde_js
 }
 
 pub fn create(cfg: &Config) {
+    print_stats(cfg);
+    println!();
     let card_type_index = Select::new()
+        .with_prompt("Select a card type to create")
         .items(&Card::CARD_TYPES)
         .default(0)
         .interact()
