@@ -1,5 +1,5 @@
 use crate::cards::model::{Card, CardTrait};
-use crate::file::general::{count_files_in_directory, ensure_directory_exists};
+use crate::file::general::{count_files_in_directory_with_filter, ensure_directory_exists};
 use serde_json;
 use std::fs::File;
 use std::io;
@@ -25,7 +25,7 @@ pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Resu
             ))
         }
     }
-    let current_cards_count = match count_files_in_directory(path.to_str().unwrap().trim()) {
+    let current_cards_count = match count_files_in_directory_with_filter(path.to_str().unwrap().trim(), ".json") {
         Ok(card_number) => card_number,
         Err(_) => {
             return Err(io::Error::new(
