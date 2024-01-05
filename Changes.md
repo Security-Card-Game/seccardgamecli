@@ -1,4 +1,7 @@
 # Changes
+## 0.1.1-beta
+
+* [BUG] now only counts json files as cards
 
 ## 0.1.0-beta
 
