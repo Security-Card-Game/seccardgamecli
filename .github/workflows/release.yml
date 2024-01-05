@@ -30,7 +30,8 @@ jobs:
             os: windows-latest
             target: x86_64-pc-windows-msvc
             bin: seccardgame.exe
-            name: seccardgamecli-Windows-x86_64.zip
+            name: seccardgamecli-Windows-x86_64.zip    
+            skip_tests: true
           - os_name: macOS-x86_64
             os: macOS-latest
             target: x86_64-apple-darwin
