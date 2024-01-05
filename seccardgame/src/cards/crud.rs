@@ -2,11 +2,12 @@ use crate::cli::config::Config;
 use crate::cli::prompts::{prompt, prompt_allow_empty};
 use dialoguer::{Confirm, Editor, Select};
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
-use game_lib::print_to_stderr;
 use log::error;
 use crate::cards::stats::print_stats;
+use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
+use crate::cli::cli_result::ErrorKind::FileSystemError;
 
-fn write_card_to_file(card: &Card, cfg: &Config) {
+fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
     let mut card_to_save: Card = card.clone();
     if Confirm::new()
         .with_prompt("Do you want to edit this card?")
@@ -22,7 +23,7 @@ fn write_card_to_file(card: &Card, cfg: &Config) {
                     }),
                     None => card_to_save,
                 },
-                Err(e) => panic!("{}", e),
+                Err(e) => return Err(CliError::new(ErrorKind::CardCreationError, "Could not edit card", Some(e.to_string()))),
             };
         println!(
             "Card to save is\n{}",
@@ -34,14 +35,13 @@ fn write_card_to_file(card: &Card, cfg: &Config) {
         .interact()
         .unwrap()
     {
-        match game_lib::file::cards::write_card_to_file(&card_to_save, Some(cfg.game_path.as_str()))
-        {
-            Ok(_) => (),
-            Err(e) => print_to_stderr(format!("Could not write file\n {}", e.to_string()).as_str()),
-        }
+        game_lib::file::cards::write_card_to_file(&card_to_save, Some(cfg.game_path.as_str()))
+            .map_err(|e| CliError::new(FileSystemError
+, "Could not write to file!", Some(e.to_string())))?;
     } else {
         println!("Cancelled!");
     }
+    Ok(())
 }
 
 fn deserialize_editor_content(content: String, original_card: &Card) -> serde_json::Result<Card> {
@@ -53,8 +53,8 @@ fn deserialize_editor_content(content: String, original_card: &Card) -> serde_js
     }
 }
 
-pub fn create(cfg: &Config) {
-    print_stats(cfg);
+pub fn create(cfg: &Config) -> CliResult<()> {
+    print_stats(cfg)?;
     println!();
     let card_type_index = Select::new()
         .with_prompt("Select a card type to create")
@@ -68,10 +68,10 @@ pub fn create(cfg: &Config) {
         Card::INCIDENT_CARD => create_incident_card(),
         Card::LUCKY_CARD => create_lucky_card(),
         Card::OOPSIE_CARD => create_oopsie_card(),
-        _ => panic!("Unknown card type!"),
+        _ => return Err(CliError::new(ErrorKind::CardCreationError, "Unknown card type", None)),
     };
 
-    write_card_to_file(&card, cfg);
+    write_card_to_file(&card, cfg)
 }
 
 fn create_event_card() -> Card {

@@ -68,8 +68,8 @@ fn handle_commands() -> CliResult<()> {
         Some(("cards", sub_matches)) => {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
-                Some(("create", _)) => Ok(cards::crud::create(&config)),
-                Some(("stats", _)) => Ok(cards::stats::print_stats(&config)),
+                Some(("create", _)) => cards::crud::create(&config),
+                Some(("stats", _)) => cards::stats::print_stats(&config),
                 _ => exit(-1),
             }
         },

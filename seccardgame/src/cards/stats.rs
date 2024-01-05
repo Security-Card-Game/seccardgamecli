@@ -5,6 +5,7 @@ use log::warn;
 use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_files_in_directory_with_filter;
+use crate::cli::cli_result::CliResult;
 use crate::cli::config::Config;
 
 pub struct CardStats {
@@ -22,14 +23,14 @@ pub struct Target {
 }
 
 impl CardStats {
-    pub fn create(cfg: &Config) -> Self {
-        CardStats {
+    pub fn create(cfg: &Config) -> CliResult<CardStats> {
+        Ok(CardStats {
             event_cards: Self::count_event_cards(cfg),
             oopsie_cards: Self::count_oopsie_cards(cfg),
             lucky_cards: Self::count_lucky_cards(cfg),
             incident_cards: Self::count_incident_cards(cfg),
             targets: Self::read_targets(cfg),
-        }
+        })
     }
 
     fn count_event_cards(cfg: &Config) -> u32 {
@@ -169,8 +170,8 @@ impl CardStats {
 
 }
 
-pub(crate) fn print_stats(cfg: &Config) {
-    let stats = CardStats::create(cfg);
+pub(crate) fn print_stats(cfg: &Config) -> CliResult<()> {
+    let stats = CardStats::create(cfg)?;
     println!("======Card Stats=====");
     println!("Events:\t\t{}",stats.event_cards);
     println!("Lucky:\t\t{}",stats.lucky_cards);
@@ -186,10 +187,9 @@ pub(crate) fn print_stats(cfg: &Config) {
             println!("{:<20}\t\t{}\t{}", target_name, tgt.oopsie, tgt.incident)
         }
     } else {
-        println!("No targets")
+        println!("No targets");
     }
-
-
+    Ok(())
 }
 fn truncate_string(s: String, max_len: usize) -> String {
     if s.len() > max_len {
