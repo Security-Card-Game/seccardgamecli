@@ -150,7 +150,10 @@ mod tests {
     #[test]
     fn test_clone_game_err() {
         // This directory should not exist
-        let result = clone_game("/invalid/path/");
+        let path = PathBuf::from("invalid").join("path");
+
+        let os_specific_path = path.to_str().unwrap();
+        let result = clone_game(os_specific_path);
         assert!(result.is_err());
     }
 
@@ -171,7 +174,10 @@ mod tests {
         let cfg = Config {
             game_path: "test_path".to_string(),
         };
-        let result = create_config(cfg, "/invalid/path/");
+        let path = PathBuf::from("invalid").join("path");
+        let os_specific_path = path.to_str().unwrap();
+
+        let result = create_config(cfg, os_specific_path);
         assert!(result.is_err());
     }
 

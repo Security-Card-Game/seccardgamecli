@@ -22,6 +22,8 @@ impl Card {
         Self::OOPSIE_CARD,
         Self::LUCKY_CARD,
     ];
+
+
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
