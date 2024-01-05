@@ -5,6 +5,8 @@ use crate::cli::config::{init, CfgInit, Config};
 use clap::{Arg, Command};
 use std::process::exit;
 use flexi_logger::Logger;
+use log::error;
+use crate::cli::cli_result::CliResult;
 
 fn cli() -> Command {
     Command::new("seccardgame")
@@ -37,6 +39,16 @@ fn cli() -> Command {
 fn main() {
     Logger::try_with_env_or_str("info").expect("Logger to be initialized")
         .start().expect("Logger to be started)");
+    match handle_commands() {
+        Ok(_) => exit(0),
+        Err(e) => {
+            error!("{}", e);
+            exit(1)
+        }
+    }
+}
+
+fn handle_commands() -> CliResult<()> {
 
     let matches = cli().get_matches();
     let cfg = matches.get_one::<String>("config").unwrap().clone();
@@ -56,8 +68,8 @@ fn main() {
         Some(("cards", sub_matches)) => {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
-                Some(("create", _)) => cards::crud::create(&config),
-                Some(("stats", _)) => cards::stats::print_stats(&config),
+                Some(("create", _)) => Ok(cards::crud::create(&config)),
+                Some(("stats", _)) => Ok(cards::stats::print_stats(&config)),
                 _ => exit(-1),
             }
         },

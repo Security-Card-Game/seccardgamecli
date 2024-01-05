@@ -1,11 +1,13 @@
 use game_lib::file::general::ensure_directory_exists;
-use git2::Repository;
-use log::{error, info};
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::io::{Error, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::fs;
+use git2::Repository;
+use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
+use crate::cli::cli_result::ErrorKind::{FileSystemError, GameCloneError};
 
 pub struct CfgInit {
     pub game_path: String,
@@ -20,28 +22,22 @@ pub struct Config {
 const GAME_REPO: &str = "https://github.com/Security-Card-Game/securityDeckGame.git";
 const DEFAULT_CFG: &str = "seccard_cfg.json";
 
-pub fn init(init: CfgInit) {
+pub fn init(init: CfgInit) -> CliResult<()> {
     init_impl(init, clone_game, create_config)
 }
 
-fn init_impl<F, G>(init: CfgInit, clone_game: F, create_config: G)
+fn init_impl<F, G>(init: CfgInit, clone_game: F, create_config: G) -> CliResult<()>
 where
-    F: Fn(&str) -> Result<(), Error>,
-    G: Fn(Config, &str) -> Result<(), Error>,
+    F: Fn(&str) -> Result<(), CliError>,
+    G: Fn(Config, &str) -> Result<(), CliError>,
 {
-    match clone_game(init.game_path.as_str()) {
-        Ok(_) => info!("Downloaded game into {}", init.game_path),
-        Err(e) => error!("{}", e),
-    }
-    match create_config(
+    clone_game(init.game_path.as_str())?;
+    create_config(
         Config {
             game_path: init.game_path,
         },
         init.config_path.as_str(),
-    ) {
-        Ok(_) => info!("Config file created"),
-        Err(e) => error!("{}", e),
-    }
+    )
 }
 
 impl Config {
@@ -55,7 +51,7 @@ impl Config {
 
 }
 
-fn create_config(cfg: Config, path_to_config: &str) -> std::io::Result<()> {
+fn create_config(cfg: Config, path_to_config: &str) -> CliResult<()> {
     let path = Path::new(path_to_config);
     let mut path_to_write = path.to_path_buf();
     if path.is_dir() {
@@ -64,58 +60,83 @@ fn create_config(cfg: Config, path_to_config: &str) -> std::io::Result<()> {
         if let Some(dir) = path.parent() {
             match ensure_directory_exists(dir.to_str().unwrap().trim()) {
                 Ok(_) => (),
-                Err(_) => {
-                    return Err(io::Error::new(
-                        io::ErrorKind::NotFound,
-                        format!("Could not create directory {}", path.to_str().unwrap_or("")),
-                    ))
+                Err(e) => {
+                    return Err(CliError{
+                        kind: FileSystemError,
+                        message: format!("Could not create directory {}", path.to_str().unwrap()),
+                        original_message: Some(e.to_string())
+                    })
                 }
             }
         }
     };
     match serde_json::to_string_pretty(&cfg) {
-        Ok(json) => write_config(json, path_to_write),
-        Err(_) => Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Could not serialize config",
-        )),
+        Ok(json) => {
+            match write_config(json, path_to_write) {
+                Ok(()) => {
+                    info!("Config file created");
+                    Ok(())
+                },
+                Err(e) => Err(e)
+            }
+        },
+        Err(_) =>
+            Err(CliError {
+                kind: ErrorKind::ConfigError,
+                message: "Could not serialize config!".to_string(),
+                original_message: None,
+            })
     }
 }
 
-fn write_config(json: String, path: PathBuf) -> std::io::Result<()> {
-    let mut file = File::create(path)?;
-    file.write_all(json.as_bytes())
+fn write_config(json: String, path: PathBuf) -> CliResult<()> {
+    let mut file = File::create(path).map_err(|err|
+    CliError{
+        kind: FileSystemError,
+        message: "Could not crate config file!".to_string(),
+        original_message: Some(err.to_string())
+    })?;
+    match file.write_all(json.as_bytes()) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(CliError {
+           kind: FileSystemError,
+            message: "Could not write config file!".to_string(),
+            original_message: Some(e.to_string()),
+        })
+    }
 }
 
-fn clone_game(path: &str) -> std::io::Result<()> {
+fn clone_game(path: &str) -> CliResult<()> {
     match ensure_directory_exists(path) {
         Ok(_) => (),
-        Err(_) => {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                format!("Could not create directory {}", path),
-            ))
+        Err(e) => {
+            return Err(CliError {
+                kind: FileSystemError,
+                message: format!("Could not create directory {}", path),
+                original_message: Some(e.to_string()),
+            })
         }
     };
     info!("Cloning game repository...");
     match Repository::clone(GAME_REPO, path) {
         Ok(_) => (),
         Err(e) => {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Failed to clone game: {}", e),
-            ))
+            return Err(CliError {
+                kind: GameCloneError,
+                message: "Failed to clone game".to_string(),
+                original_message: Some(e.to_string()),
+            })
         }
     };
+    info!("Downloaded game into {}", path);
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use log::Level;
-    use std::io::ErrorKind;
     use tempfile::tempdir;
+    use crate::cli::cli_result::ErrorKind::ConfigError;
 
     #[test]
     fn test_clone_game_ok() {
@@ -156,64 +177,49 @@ mod tests {
 
     #[test]
     fn test_init_impl_ok() {
-        testing_logger::setup();
-        let clone_game = |_: &str| -> Result<(), Error> { Ok(()) };
-        let create_config = |_: Config, _: &str| -> Result<(), Error> { Ok(()) };
+        let clone_game = |_: &str| -> CliResult<()> { Ok(()) };
+        let create_config = |_: Config, _: &str| -> CliResult<()> { Ok(()) };
         let cfg_init = CfgInit {
             game_path: "".to_string(),
             config_path: "".to_string(),
         };
 
-        init_impl(cfg_init, clone_game, create_config);
-
-        validate_error_log_count(0);
+        let result = init_impl(cfg_init, clone_game, create_config);
+        assert!(result.is_ok());
     }
 
-    /// Test for `init_impl` function when `clone_game` returns an error.
-    ///
-    /// This test case verifies that when `clone_game` returns an error, `init_impl` logs an error message.
-    /// It sets up a logger using `Logger::with` and `TestLogWriter`, and then calls `init_impl` with a mock implementation of `clone_game` that always returns
     #[test]
     fn test_init_impl_clone_err() {
         testing_logger::setup();
+        let error_to_return = CliError::new(GameCloneError, "message", Some("reason".to_string()));
         let clone_game =
-            |_: &str| -> Result<(), Error> { Err(Error::new(ErrorKind::Other, "error")) };
-        let create_config = |_: Config, _: &str| -> Result<(), Error> { Ok(()) };
+            |_: &str| -> CliResult<()> { Err(error_to_return.clone()) };
+        let create_config = |_: Config, _: &str| -> CliResult<()> { Ok(()) };
         let cfg_init = CfgInit {
             game_path: "".to_string(),
             config_path: "".to_string(),
         };
 
-        init_impl(cfg_init, clone_game, create_config);
+        let result = init_impl(cfg_init, clone_game, create_config);
 
-        validate_error_log_count(1);
+        assert_eq!(result.err().expect("Expected error"), error_to_return);
     }
 
-    fn validate_error_log_count(count: usize) {
-        testing_logger::validate(|log| {
-            let error_logs: Vec<_> = log.iter().filter(|&l| l.level == Level::Error).collect();
-            assert_eq!(error_logs.len(), count);
-        });
-    }
-
-    /// Test for `init_impl` function when `create_config` returns an error.
-    ///
-    /// This test case verifies that when `create_config` returns an error, `init_impl` logs an error message.
-    /// It sets up a logger using `Logger::with` and `TestLogWriter`, and then calls `init_impl` with a mock implementation of `clone_game` that always returns
     #[test]
     fn test_init_impl_config_err() {
-        testing_logger::setup();
-        let clone_game = |_: &str| -> Result<(), Error> { Ok(()) };
-        let create_config = |_: Config, _: &str| -> Result<(), Error> {
-            Err(Error::new(ErrorKind::Other, "error"))
+        let error_to_return = CliError::new(ConfigError, "message", Some("reason".to_string()));
+
+        let clone_game = |_: &str| -> CliResult<()> { Ok(()) };
+        let create_config = |_: Config, _: &str| -> CliResult<()> {
+            Err(error_to_return.clone())
         };
         let cfg_init = CfgInit {
             game_path: "".to_string(),
             config_path: "".to_string(),
         };
 
-        init_impl(cfg_init, clone_game, create_config);
+        let result = init_impl(cfg_init, clone_game, create_config);
 
-        validate_error_log_count(1);
+        assert_eq!(result.err().expect("Expected error"), error_to_return);
     }
 }
