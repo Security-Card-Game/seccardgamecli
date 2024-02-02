@@ -54,11 +54,5 @@ where
                 original_message: Some(e.to_string()),
             })
             .unwrap();
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&card_content)
-                .unwrap()
-                .as_str()
-        )
     }
 }

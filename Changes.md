@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.1
+
+* removes card to stdout in migrations
+
 ## 0.2.0
 
 * adds deck creation functionality
