@@ -8,7 +8,8 @@ use std::process::exit;
 use flexi_logger::Logger;
 use log::error;
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::game::create::create_game;
+use crate::game::create::create_deck;
+use crate::game::play::play_deck;
 
 fn cli() -> Command {
     Command::new("seccardgame")
@@ -98,8 +99,15 @@ fn handle_commands() -> CliResult<()> {
                     } else {
                         "deck".to_string()
                     };
-                    create_game(path, &config)                },
-                Some(("play", _)) => Err(CliError { kind: ErrorKind::NotImplemented, message: "not yet done".to_string(), original_message: None }),
+                    create_deck(path, &config)                },
+                Some(("play", sub_matches)) => {
+                    let path = if let Some(deck_path) = sub_matches.get_one::<String>("path") {
+                        deck_path.clone()
+                    } else {
+                        "deck".to_string()
+                    };
+                    play_deck(path)
+                },
                 _ => {
                     println!("Unknown command!");
                     exit(-1)

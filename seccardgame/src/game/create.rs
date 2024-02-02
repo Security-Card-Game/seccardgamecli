@@ -28,7 +28,7 @@ fn get_number_of_cards(prompt: &str) -> u8 {
         .unwrap()
 }
 
-pub fn create_game(deck_path: String, config: &Config) -> CliResult<()> {
+pub fn create_deck(deck_path: String, config: &Config) -> CliResult<()> {
     let event_card_count = get_number_of_cards("Enter number of event cards");
     let incident_card_count = get_number_of_cards("Enter number of incident cards");
     let oopsie_card_count = get_number_of_cards("Enter number of oopsies");
@@ -82,13 +82,13 @@ fn draw_cards(config: &&Config, card_counts: CardCounts) -> Result<Vec<OsString>
     let oopsie_cards = get_cards(OopsieCard::empty(), card_counts.oopsies, &config.game_path)?;
     let lucky_cards = get_cards(LuckyCard::empty(), card_counts.lucky, &config.game_path)?;
 
-    let deck = create_deck(card_counts, event_cards, incident_cards, oopsie_cards, lucky_cards);
+    let deck = prepare_deck(card_counts, event_cards, incident_cards, oopsie_cards, lucky_cards);
 
     log::info!("Cards are drawn and shuffled!");
     Ok(deck)
 }
 
-fn create_deck(card_counts: CardCounts, event_cards: Vec<OsString>, incident_cards: Vec<OsString>, oopsie_cards: Vec<OsString>, lucky_cards: Vec<OsString>) -> Vec<OsString> {
+fn prepare_deck(card_counts: CardCounts, event_cards: Vec<OsString>, incident_cards: Vec<OsString>, oopsie_cards: Vec<OsString>, lucky_cards: Vec<OsString>) -> Vec<OsString> {
     let mut deck = vec![];
 
     deck.extend(event_cards);

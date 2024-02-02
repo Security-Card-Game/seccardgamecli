@@ -6,7 +6,8 @@ pub enum ErrorKind {
     CardCreationError,
     FileSystemError,
     ConfigError,
-    NotImplemented
+    NotImplemented,
+    UserInterfaceError,
 }
 
 impl fmt::Display for ErrorKind {
@@ -16,7 +17,8 @@ impl fmt::Display for ErrorKind {
             ErrorKind::FileSystemError => write!(f, "FileSystemError"),
             ErrorKind::CardCreationError => write!(f, "CardCreationError"),
             ErrorKind::ConfigError => write!(f, "ConfigError"),
-            ErrorKind::NotImplemented => write!(f, "NotImplemented")
+            ErrorKind::NotImplemented => write!(f, "NotImplemented"),
+            ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError")
         }
     }
 }

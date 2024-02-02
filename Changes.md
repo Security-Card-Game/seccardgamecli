@@ -3,6 +3,8 @@
 ## 0.2.0
 
 * adds deck creation functionality
+* adds very simple playing function
+  * iterates through cards and print them to screen
 
 ## 0.1.1-beta
 
