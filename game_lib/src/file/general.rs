@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::{fs, io};
+use std::ffi::{OsStr, OsString};
 
 pub fn ensure_directory_exists(path: &str) -> std::io::Result<()> {
     if !Path::new(path).exists() {
@@ -23,4 +24,16 @@ pub fn count_files_in_directory_with_filter(dir: &str, filter: &str) -> io::Resu
     }
 
     Ok(file_count)
+}
+pub fn get_files_in_directory_with_filter(dir: &str, filter: &str) -> io::Result<Vec<OsString>> {
+    let mut file_names =  vec![];
+
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        if entry.metadata()?.is_file() && entry.file_name().to_str().unwrap().contains(filter) {
+            file_names.push(entry.path().as_os_str().to_owned())
+        }
+    }
+
+    Ok(file_names)
 }

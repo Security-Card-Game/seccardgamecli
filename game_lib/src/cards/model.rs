@@ -110,6 +110,8 @@ pub trait CardTrait {
     fn title(&self) -> &String;
     fn description(&self) -> &String;
     fn action(&self) -> &String;
+
+    fn category(&self) -> &str;
 }
 
 impl CardTrait for Card {
@@ -137,6 +139,15 @@ impl CardTrait for Card {
             Card::Incident(card) => &card.action,
             Card::Oopsie(card) => &card.action,
             Card::Lucky(card) => &card.action,
+        }
+    }
+
+    fn category(&self) -> &str {
+        match self {
+            Card::Event(_) => Card::EVENT_CARD,
+            Card::Incident(_) => Card::INCIDENT_CARD,
+            Card::Oopsie(_) => Card::OOPSIE_CARD,
+            Card::Lucky(_) => Card::LUCKY_CARD,
         }
     }
 }
