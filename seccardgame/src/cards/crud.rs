@@ -1,11 +1,13 @@
+use dialoguer::{Confirm, Editor, Select};
+use log::error;
+
+use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
+
+use crate::cards::stats::print_stats;
+use crate::cli::cli_result::ErrorKind::FileSystemError;
+use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
 use crate::cli::prompts::{prompt, prompt_allow_empty};
-use dialoguer::{Confirm, Editor, Select};
-use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
-use log::error;
-use crate::cards::stats::print_stats;
-use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::cli::cli_result::ErrorKind::FileSystemError;
 
 fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
     let mut card_to_save: Card = card.clone();
@@ -23,7 +25,13 @@ fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
                     }),
                     None => card_to_save,
                 },
-                Err(e) => return Err(CliError::new(ErrorKind::CardCreationError, "Could not edit card", Some(e.to_string()))),
+                Err(e) => {
+                    return Err(CliError::new(
+                        ErrorKind::CardCreationError,
+                        "Could not edit card",
+                        Some(e.to_string()),
+                    ))
+                }
             };
         println!(
             "Card to save is\n{}",
@@ -36,8 +44,13 @@ fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
         .unwrap()
     {
         game_lib::file::cards::write_card_to_file(&card_to_save, Some(cfg.game_path.as_str()))
-            .map_err(|e| CliError::new(FileSystemError
-, "Could not write to file!", Some(e.to_string())))?;
+            .map_err(|e| {
+                CliError::new(
+                    FileSystemError,
+                    "Could not write to file!",
+                    Some(e.to_string()),
+                )
+            })?;
     } else {
         println!("Cancelled!");
     }
@@ -68,7 +81,13 @@ pub fn create(cfg: &Config) -> CliResult<()> {
         Card::INCIDENT_CARD => create_incident_card(),
         Card::LUCKY_CARD => create_lucky_card(),
         Card::OOPSIE_CARD => create_oopsie_card(),
-        _ => return Err(CliError::new(ErrorKind::CardCreationError, "Unknown card type", None)),
+        _ => {
+            return Err(CliError::new(
+                ErrorKind::CardCreationError,
+                "Unknown card type",
+                None,
+            ))
+        }
     };
 
     write_card_to_file(&card, cfg)
@@ -176,8 +195,9 @@ fn create_oopsie_card() -> Card {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use game_lib::cards::model::CardTrait;
+
+    use super::*;
 
     #[test]
     fn test_card_creation() {

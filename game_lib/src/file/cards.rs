@@ -1,15 +1,17 @@
-use crate::cards::model::{Card, CardTrait};
-use crate::file::general::{count_cards_in_directory, ensure_directory_exists};
-use serde_json;
 use std::fs::File;
 use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use serde_json;
+
+use crate::cards::model::{Card, CardTrait};
+use crate::file::general::{count_cards_in_directory, ensure_directory_exists};
+
 pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Result<()> {
     let card_directory = get_card_directory(card);
-    let mut path =  if let Some(base) = base_path {
-      PathBuf::from(base)
+    let mut path = if let Some(base) = base_path {
+        PathBuf::from(base)
     } else {
         PathBuf::new()
     };

@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Formatter;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ErrorKind {
     GameCloneError,
@@ -18,7 +19,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::CardCreationError => write!(f, "CardCreationError"),
             ErrorKind::ConfigError => write!(f, "ConfigError"),
             ErrorKind::NotImplemented => write!(f, "NotImplemented"),
-            ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError")
+            ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError"),
         }
     }
 }
@@ -40,11 +41,11 @@ impl fmt::Display for CliError {
 }
 
 impl CliError {
-    pub fn new(kind: ErrorKind, message: &str, original_message: Option<String>) -> Self  {
+    pub fn new(kind: ErrorKind, message: &str, original_message: Option<String>) -> Self {
         CliError {
             kind,
             message: message.to_string(),
-            original_message
+            original_message,
         }
     }
 }

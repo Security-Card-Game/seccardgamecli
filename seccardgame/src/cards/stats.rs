@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
 use log::warn;
+
 use game_lib::cards::model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_cards_in_directory;
+
 use crate::cli::cli_result::CliResult;
 use crate::cli::config::Config;
 
@@ -73,33 +76,45 @@ impl CardStats {
         for ot in oopsie_targets {
             if result.contains_key(&ot) {
                 let old: &Target = result.get(&ot).unwrap();
-                result.insert(ot, Target {
-                    target: old.target.clone(),
-                    oopsie: old.oopsie + 1,
-                    incident: old.incident
-                });
+                result.insert(
+                    ot,
+                    Target {
+                        target: old.target.clone(),
+                        oopsie: old.oopsie + 1,
+                        incident: old.incident,
+                    },
+                );
             } else {
-                result.insert(ot.clone(), Target {
-                    target: ot.clone(),
-                    oopsie: 1,
-                    incident: 0
-                });
+                result.insert(
+                    ot.clone(),
+                    Target {
+                        target: ot.clone(),
+                        oopsie: 1,
+                        incident: 0,
+                    },
+                );
             }
-        };
+        }
         for it in incident_targets {
             if result.contains_key(&it) {
                 let old = result.get(&it).unwrap();
-                result.insert(it, Target {
-                    target: old.target.clone(),
-                    oopsie: old.oopsie,
-                    incident: old.incident + 1
-                });
+                result.insert(
+                    it,
+                    Target {
+                        target: old.target.clone(),
+                        oopsie: old.oopsie,
+                        incident: old.incident + 1,
+                    },
+                );
             } else {
-                result.insert(it.clone(), Target {
-                    target: it.clone(),
-                    oopsie: 0,
-                    incident: 1
-                });
+                result.insert(
+                    it.clone(),
+                    Target {
+                        target: it.clone(),
+                        oopsie: 0,
+                        incident: 1,
+                    },
+                );
             }
         }
         result
@@ -112,12 +127,14 @@ impl CardStats {
         let mut oopsie_targets = Vec::new();
         for entry in fs::read_dir(path).unwrap() {
             let file = entry.unwrap();
-            if file.metadata().unwrap().is_file() && file.file_name().to_str().unwrap().contains(".json") {
+            if file.metadata().unwrap().is_file()
+                && file.file_name().to_str().unwrap().contains(".json")
+            {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
                 let card: OopsieCard = serde_json::from_str(content.as_str()).unwrap();
                 oopsie_targets.extend(card.targets);
             }
-        };
+        }
         oopsie_targets
     }
 
@@ -133,24 +150,25 @@ impl CardStats {
         let mut incident_targets = Vec::new();
         for entry in fs::read_dir(path).unwrap() {
             let file = entry.unwrap();
-            if file.metadata().unwrap().is_file() && file.file_name().to_str().unwrap().contains(".json") {
+            if file.metadata().unwrap().is_file()
+                && file.file_name().to_str().unwrap().contains(".json")
+            {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
                 let card: IncidentCard = serde_json::from_str(content.as_str()).unwrap();
                 incident_targets.extend(card.targets);
             }
-        };
+        }
         incident_targets
     }
-
 }
 
 pub(crate) fn print_stats(cfg: &Config) -> CliResult<()> {
     let stats = CardStats::create(cfg)?;
     println!("======Card Stats=====");
-    println!("Events:\t\t{}",stats.event_cards);
-    println!("Lucky:\t\t{}",stats.lucky_cards);
-    println!("Oopsie:\t\t{}",stats.oopsie_cards);
-    println!("Incident:\t{}",stats.incident_cards);
+    println!("Events:\t\t{}", stats.event_cards);
+    println!("Lucky:\t\t{}", stats.lucky_cards);
+    println!("Oopsie:\t\t{}", stats.oopsie_cards);
+    println!("Incident:\t{}", stats.incident_cards);
     println!("=====Targets=====");
     if stats.targets.len() > 0 {
         println!("{:<20}\t\tOopsie\tIncident", "Name");
@@ -174,4 +192,3 @@ fn truncate_string(s: String, max_len: usize) -> String {
         s
     }
 }
-

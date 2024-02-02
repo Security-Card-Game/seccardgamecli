@@ -77,7 +77,6 @@ impl LuckyCard {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FixCost {
     pub min: u8,
@@ -104,7 +103,6 @@ impl OopsieCard {
         })
     }
 }
-
 
 pub trait CardTrait {
     fn title(&self) -> &String;
