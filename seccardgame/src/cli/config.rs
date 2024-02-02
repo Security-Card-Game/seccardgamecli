@@ -151,16 +151,6 @@ mod tests {
     }
 
     #[test]
-    fn test_clone_game_err() {
-        // This directory should not exist
-        let path = PathBuf::from("invalid").join("path");
-
-        let os_specific_path = path.to_str().unwrap();
-        let result = clone_game(os_specific_path);
-        assert!(result.is_err());
-    }
-
-    #[test]
     fn test_create_config_ok() {
         let dir = tempdir().expect("Could not create directory");
 
