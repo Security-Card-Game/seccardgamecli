@@ -12,6 +12,12 @@ The plan is to allow for:
 * create a deck while specifying how many cards to use in total and how many cards from which type
 * maybe even create a simple GUI to show the drawn cards - you will still need a dice and keep track of resources ;)
 
+## Known issues
+
+### Windows
+
+* editing of a card opens the editor but changes are not propagated - so editing is broken
+
 ## Why in rust?
 
 Because I want to learn it ;)
