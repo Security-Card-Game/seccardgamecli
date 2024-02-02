@@ -1,12 +1,14 @@
 mod cards;
 mod cli;
+mod game;
 
 use crate::cli::config::{init, CfgInit, Config};
 use clap::{Arg, Command};
 use std::process::exit;
 use flexi_logger::Logger;
 use log::error;
-use crate::cli::cli_result::CliResult;
+use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
+use crate::game::create::create_game;
 
 fn cli() -> Command {
     Command::new("seccardgame")
@@ -34,6 +36,20 @@ fn cli() -> Command {
                 .subcommand(Command::new("create").about("Create a card").arg_required_else_help(false))
                 .subcommand(Command::new("stats").about("Prints stats")),
         )
+        .subcommand(
+            Command::new("game")
+                .about("Operate on games")
+                .subcommand_required(true)
+                .subcommand(
+                    Command::new("create")
+                        .about("Creates a deck to play a game")
+                        .arg_required_else_help(false)
+                        .arg(Arg::new("path").default_missing_value("deck")))
+                .subcommand(Command::new("play")
+                    .about("Plays a game with a deck")
+                    .arg_required_else_help(false)
+                    .arg(Arg::new("path").default_missing_value("deck")))
+                )
 }
 
 fn main() {
@@ -70,6 +86,20 @@ fn handle_commands() -> CliResult<()> {
             match sub_matches.subcommand() {
                 Some(("create", _)) => cards::crud::create(&config),
                 Some(("stats", _)) => cards::stats::print_stats(&config),
+                _ => exit(-1),
+            }
+        },
+        Some(("game", sub_matches)) => {
+            let config = load_config(cfg);
+            match sub_matches.subcommand() {
+                Some(("create", sub_matches)) => {
+                    let path = if let Some(deck_path) = sub_matches.get_one::<String>("path") {
+                        deck_path.clone()
+                    } else {
+                        "deck".to_string()
+                    };
+                    create_game(path, &config)                },
+                Some(("play", _)) => Err(CliError { kind: ErrorKind::NotImplemented, message: "not yet done".to_string(), original_message: None }),
                 _ => exit(-1),
             }
         },
