@@ -54,7 +54,7 @@ fn generate_filename(title: &str, current_cards_count: u32) -> String {
     format!("{}-{}.json", padded_prefix, shortened_title)
 }
 
-fn write_data_to_file(card: &Card, path: &Path) -> std::io::Result<()> {
+pub fn write_data_to_file(card: &Card, path: &Path) -> std::io::Result<()> {
     match serde_json::to_string_pretty(&card) {
         Ok(serialized_card) => {
             let mut file = File::create(&path)?;

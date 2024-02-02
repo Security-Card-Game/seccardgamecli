@@ -4,7 +4,7 @@ use std::fmt::Formatter;
 #[derive(Clone, Debug, PartialEq)]
 pub enum ErrorKind {
     GameCloneError,
-    CardCreationError,
+    CardError,
     FileSystemError,
     ConfigError,
     NotImplemented,
@@ -16,7 +16,7 @@ impl fmt::Display for ErrorKind {
         match self {
             ErrorKind::GameCloneError => write!(f, "GameCloneError"),
             ErrorKind::FileSystemError => write!(f, "FileSystemError"),
-            ErrorKind::CardCreationError => write!(f, "CardCreationError"),
+            ErrorKind::CardError => write!(f, "CardCreationError"),
             ErrorKind::ConfigError => write!(f, "ConfigError"),
             ErrorKind::NotImplemented => write!(f, "NotImplemented"),
             ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError"),

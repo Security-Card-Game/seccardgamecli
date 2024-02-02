@@ -27,7 +27,7 @@ fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
                 },
                 Err(e) => {
                     return Err(CliError::new(
-                        ErrorKind::CardCreationError,
+                        ErrorKind::CardError,
                         "Could not edit card",
                         Some(e.to_string()),
                     ))
@@ -83,7 +83,7 @@ pub fn create(cfg: &Config) -> CliResult<()> {
         Card::OOPSIE_CARD => create_oopsie_card(),
         _ => {
             return Err(CliError::new(
-                ErrorKind::CardCreationError,
+                ErrorKind::CardError,
                 "Unknown card type",
                 None,
             ))

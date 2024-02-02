@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
-#[serde(untagged)]
+#[serde(tag = "type")]
 pub enum Card {
     Event(EventCard),
     Incident(IncidentCard),
@@ -108,8 +108,9 @@ pub trait CardTrait {
     fn title(&self) -> &String;
     fn description(&self) -> &String;
     fn action(&self) -> &String;
-
     fn category(&self) -> &str;
+
+    fn as_enum(&self) -> Card;
 }
 
 impl CardTrait for Card {
@@ -146,6 +147,15 @@ impl CardTrait for Card {
             Card::Incident(_) => Card::INCIDENT_CARD,
             Card::Oopsie(_) => Card::OOPSIE_CARD,
             Card::Lucky(_) => Card::LUCKY_CARD,
+        }
+    }
+
+    fn as_enum(&self) -> Card {
+        match self {
+            Card::Event(_) => EventCard::empty(),
+            Card::Incident(_) => IncidentCard::empty(),
+            Card::Oopsie(_) => OopsieCard::empty(),
+            Card::Lucky(_) => LuckyCard::empty(),
         }
     }
 }

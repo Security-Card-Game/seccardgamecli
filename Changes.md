@@ -5,6 +5,8 @@
 * adds deck creation functionality
 * adds very simple playing function
   * iterates through cards and print them to screen
+* [MIGRATION] Migrates card to v1, with the card type tagged
+  * use the `migration version1` to migrate the game directory
 
 ## 0.1.1-beta
 
