@@ -100,7 +100,10 @@ fn handle_commands() -> CliResult<()> {
                     };
                     create_game(path, &config)                },
                 Some(("play", _)) => Err(CliError { kind: ErrorKind::NotImplemented, message: "not yet done".to_string(), original_message: None }),
-                _ => exit(-1),
+                _ => {
+                    println!("Unknown command!");
+                    exit(-1)
+                },
             }
         },
         _ => exit(-1),
