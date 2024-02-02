@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use log::warn;
-use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_cards_in_directory;
 use crate::cli::cli_result::CliResult;
@@ -34,41 +34,22 @@ impl CardStats {
     }
 
     fn count_event_cards(cfg: &Config) -> u32 {
-        let card = Card::Event(EventCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            action: "".to_string(),
-        });
+        let card = EventCard::empty();
         Self::count_files(&cfg, &card)
     }
 
     fn count_oopsie_cards(cfg: &Config) -> u32 {
-        let card = Card::Oopsie(OopsieCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            targets: vec![],
-            action: "".to_string(),
-            fix_cost: FixCost { min: 0, max: 0 },
-        });
+        let card = OopsieCard::empty();
         Self::count_files(&cfg, &card)
     }
 
     fn count_incident_cards(cfg: &Config) -> u32 {
-        let card = Card::Incident(IncidentCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            targets: vec![],
-            action: "".to_string(),
-        });
+        let card = IncidentCard::empty();
         Self::count_files(&cfg, &card)
     }
 
     fn count_lucky_cards(cfg: &Config) -> u32 {
-        let card = Card::Lucky(LuckyCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            action: "".to_string(),
-        });
+        let card = LuckyCard::empty();
         Self::count_files(&cfg, &card)
     }
 
@@ -125,13 +106,7 @@ impl CardStats {
     }
 
     fn read_oopsie_targets(cfg: &Config) -> Vec<String> {
-        let oopsie_card = Card::Oopsie(OopsieCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            targets: vec![],
-            action: "".to_string(),
-            fix_cost: FixCost { min: 0, max: 0 },
-        });
+        let oopsie_card = OopsieCard::empty();
         let mut path = PathBuf::from(&cfg.game_path.as_str());
         path.push(get_card_directory(&oopsie_card));
         let mut oopsie_targets = Vec::new();

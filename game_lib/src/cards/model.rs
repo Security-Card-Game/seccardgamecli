@@ -22,8 +22,6 @@ impl Card {
         Self::OOPSIE_CARD,
         Self::LUCKY_CARD,
     ];
-
-
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -31,6 +29,16 @@ pub struct EventCard {
     pub title: String,
     pub description: String,
     pub action: String,
+}
+
+impl EventCard {
+    pub fn empty() -> Card {
+        Card::Event(EventCard {
+            title: "".to_string(),
+            description: "".to_string(),
+            action: "".to_string(),
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -41,12 +49,34 @@ pub struct IncidentCard {
     pub action: String,
 }
 
+impl IncidentCard {
+    pub fn empty() -> Card {
+        Card::Incident(IncidentCard {
+            title: "".to_string(),
+            description: "".to_string(),
+            targets: vec![],
+            action: "".to_string(),
+        })
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LuckyCard {
     pub title: String,
     pub description: String,
     pub action: String,
 }
+
+impl LuckyCard {
+    pub fn empty() -> Card {
+        Card::Lucky(LuckyCard {
+            title: "".to_string(),
+            description: "".to_string(),
+            action: "".to_string(),
+        })
+    }
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FixCost {
@@ -62,6 +92,19 @@ pub struct OopsieCard {
     pub action: String,
     pub fix_cost: FixCost,
 }
+
+impl OopsieCard {
+    pub fn empty() -> Card {
+        Card::Oopsie(OopsieCard {
+            title: "".to_string(),
+            description: "".to_string(),
+            targets: vec![],
+            action: "".to_string(),
+            fix_cost: FixCost { min: 0, max: 0 },
+        })
+    }
+}
+
 
 pub trait CardTrait {
     fn title(&self) -> &String;
