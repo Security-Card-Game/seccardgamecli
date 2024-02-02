@@ -1,5 +1,9 @@
 # Changes
 
+## next release
+
+* displays help if subcommands are needed
+
 ## 0.2.1
 
 * removes card to stdout in migrations

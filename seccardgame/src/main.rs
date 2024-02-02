@@ -38,6 +38,7 @@ fn cli() -> Command {
             Command::new("cards")
                 .about("Operate on cards")
                 .subcommand_required(true)
+                .arg_required_else_help(true)
                 .subcommand(
                     Command::new("create")
                         .about("Create a card")
@@ -49,6 +50,7 @@ fn cli() -> Command {
             Command::new("game")
                 .about("Operate on games")
                 .subcommand_required(true)
+                .arg_required_else_help(true)
                 .subcommand(
                     Command::new("create")
                         .about("Creates a deck to play a game")
@@ -66,6 +68,7 @@ fn cli() -> Command {
             Command::new("migration")
                 .about("Migrates card versions")
                 .subcommand_required(true)
+                .arg_required_else_help(true)
                 .subcommand(Command::new("version1").about("Migrates to version 1")),
         )
 }
