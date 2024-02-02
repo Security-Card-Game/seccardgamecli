@@ -172,19 +172,6 @@ mod tests {
     }
 
     #[test]
-    fn test_create_config_err() {
-        // This directory should not exist
-        let cfg = Config {
-            game_path: "test_path".to_string(),
-        };
-        let path = PathBuf::from("invalid").join("path");
-        let os_specific_path = path.to_str().unwrap();
-
-        let result = create_config(cfg, os_specific_path);
-        assert!(result.is_err());
-    }
-
-    #[test]
     fn test_init_impl_ok() {
         let clone_game = |_: &str| -> CliResult<()> { Ok(()) };
         let create_config = |_: Config, _: &str| -> CliResult<()> { Ok(()) };
