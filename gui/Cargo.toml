@@ -18,9 +18,10 @@ eframe = { version = "0.26.2", default-features = false, features = [
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 ] }
 log = "0.4.20"
+getrandom = { version = "0.2", features = ["js"] }
 
 # You only need serde if you want app persistence:
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1.0.197", features = ["derive"] }
 wasm-bindgen-futures = "0.4.41"
 
 # native:
