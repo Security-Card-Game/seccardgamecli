@@ -2,6 +2,9 @@
 
 ## next release
 
+## 0.3.0
+
+* adds UI to show drawn cards
 * displays help if subcommands are needed
 
 ## 0.2.1
