@@ -12,6 +12,12 @@ This CLI supports:
 * create a deck while specifying how many cards to use in total and how many cards from which type
 * a simple GUI to show the drawn cards - you will still need a dice and keep track of resources ;)
 
+# How to play
+
+Run `seccardgame` with the `init` command. Then run it `game crate` to create a deck. After the
+deck is created, run it with `game play` top start the UI. Start drawing cards by
+pressing the button in the lower left corner.
+
 ## Known issues
 
 ### Windows
