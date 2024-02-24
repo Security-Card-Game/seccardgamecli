@@ -1,7 +1,7 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use crate::app::SeccardGameApp;
+use crate::app::SecCardGameApp;
 
 mod app;
 
@@ -20,7 +20,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "seccard game",
         native_options,
-        Box::new(|cc| Box::new(SeccardGameApp::new(cc))),
+        Box::new(|cc| Box::new(SecCardGameApp::new(cc))),
     )
 }
 
@@ -37,7 +37,7 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(SeccardGameApp::new(cc))),
+                Box::new(|cc| Box::new(SecCardGameApp::new(cc))),
             )
             .await
             .expect("failed to start eframe");

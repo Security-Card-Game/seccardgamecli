@@ -1,16 +1,14 @@
 use std::collections::HashMap;
-use std::ffi::OsString;
 use std::fs;
 
-use egui::{Align, FontId, Layout, Pos2, Ui, Visuals, Window};
-use uuid::Uuid;
-use game_lib::cards::model::{Card, CardTrait, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
+use egui::{Align, Color32, Layout, RichText, Ui, Window};
+use game_lib::cards::model::{
+    Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard,
+};
 use game_lib::file::general::get_files_in_directory_with_filter;
+use uuid::Uuid;
 
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-pub struct SeccardGameApp {
-    // Example stuff:
-    label: String,
+pub struct SecCardGameApp {
     current_card: usize,
     total_cards: usize,
     cards: Vec<Card>,
@@ -19,6 +17,8 @@ pub struct SeccardGameApp {
 
 struct CardContent {
     id: Uuid,
+    dark_color: Color32,
+    light_color: Color32,
     label: String,
     description: String,
     action: String,
@@ -26,11 +26,9 @@ struct CardContent {
     costs: Option<FixCost>,
 }
 
-impl SeccardGameApp {
+impl SecCardGameApp {
     fn init(cards: Vec<Card>) -> Self {
         Self {
-            // Example stuff:
-            label: "Hello World!".to_owned(),
             current_card: 0,
             total_cards: cards.len(),
             cards,
@@ -42,58 +40,72 @@ impl SeccardGameApp {
         match self.cards.pop() {
             None => (),
             Some(new_card) => {
-                let id = Uuid::new_v4();
                 let card = match new_card {
                     Card::Event(c) => event_card_content(c),
                     Card::Incident(c) => incident_card_content(c),
                     Card::Oopsie(c) => oopsie_card_content(c),
-                    Card::Lucky(c) => lucky_card_content(c)
+                    Card::Lucky(c) => lucky_card_content(c),
                 };
-                self.cards_to_display.insert(id, card);
+                self.cards_to_display.insert(card.id, card);
                 self.current_card += 1;
             }
         }
     }
 
-    fn create_card_window(mut ids_to_remove: &mut Vec<Uuid>, card: &&CardContent, ui: &mut Ui) {
-        if ui.button("Close").clicked() {
-            ids_to_remove.push(card.id)
-        }
+    fn create_card_window(ids_to_remove: &mut Vec<Uuid>, card: &&CardContent, ui: &mut Ui) {
         ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                let header_color = if ui.visuals().dark_mode {
+                    card.dark_color
+                } else  {
+                    card.light_color
+                };
+                let header = RichText::new(&card.label)
+                    .color(header_color)
+                    .heading();
+                ui.label(header);
+                if ui.button("X").clicked() {
+                    ids_to_remove.push(card.id)
+                }
+            });
+            ui.add_space(5.0);
             ui.label(&card.description);
-            ui.label("Action:");
-            ui.label(&card.action);
+            ui.add_space(2.0);
+                let name = RichText::new("Action: ").strong();
+                ui.label(name);
+                ui.label(&card.action);
             match &card.targets {
                 None => {}
                 Some(targets) => {
-                    ui.label("Targets:");
-                    let list = targets.join(", ");
-                    ui.label(list);
+                        let name = RichText::new("Targets: ").strong();
+                        ui.label(name);
+                        let list = targets.join(", ");
+                        ui.label(list);
                 }
             }
+            ui.add_space(2.0);
             match &card.costs {
                 None => {}
                 Some(cost) => {
-                    ui.label("Costs to fix:");
-                    ui.label(format!("min: {}, max: {}", cost.min, cost.max));
+                        let name = RichText::new("Cost to fix: ").strong();
+                        ui.label(name);
+                        ui.label(format!("{} to {}", cost.min, cost.max));
                 }
             };
         });
     }
 }
 
-impl SeccardGameApp {
+impl SecCardGameApp {
     /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
-        SeccardGameApp::init(Self::load_cards())
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+        SecCardGameApp::init(Self::load_cards())
     }
 
     fn load_cards() -> Vec<Card> {
-        let files = get_files_in_directory_with_filter("deck", ".json").expect("Deck");
+        let files =
+            get_files_in_directory_with_filter("deck", ".json")
+                .expect("Deck");
         let mut cards = vec![];
         for file in files {
             let content = fs::read_to_string(file).expect("file content");
@@ -103,9 +115,9 @@ impl SeccardGameApp {
         cards.reverse();
         cards
     }
-    }
+}
 
-impl eframe::App for SeccardGameApp {
+impl eframe::App for SecCardGameApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
@@ -145,11 +157,14 @@ impl eframe::App for SeccardGameApp {
 
             let mut ids_to_remove = vec![];
             for card in self.cards_to_display.values() {
-                Window::new(&card.label)
+                Window::new(card.id.to_string())
+                    .title_bar(false)
                     .resizable(false)
+                    .collapsible(false)
+                    .default_width(200.0)
                     .show(ctx, |ui| {
-                        Self::create_card_window(&mut ids_to_remove, &card, ui);
-                });
+                        Self::create_card_window(&mut ids_to_remove, &card, ui)
+                    });
             }
 
             for id in &ids_to_remove {
@@ -163,6 +178,8 @@ fn event_card_content(card: EventCard) -> CardContent {
     let id = Uuid::new_v4();
     CardContent {
         id,
+        dark_color: Color32::LIGHT_BLUE,
+        light_color: Color32::DARK_BLUE,
         label: card.title,
         description: card.description,
         action: card.action,
@@ -175,6 +192,8 @@ fn incident_card_content(card: IncidentCard) -> CardContent {
     let id = Uuid::new_v4();
     CardContent {
         id,
+        dark_color: Color32::LIGHT_RED,
+        light_color: Color32::DARK_RED,
         label: card.title,
         description: card.description,
         action: card.action,
@@ -187,6 +206,8 @@ fn oopsie_card_content(card: OopsieCard) -> CardContent {
     let id = Uuid::new_v4();
     CardContent {
         id,
+        dark_color: Color32::YELLOW,
+        light_color: Color32::DARK_GRAY,
         label: card.title,
         description: card.description,
         action: card.action,
@@ -199,28 +220,12 @@ fn lucky_card_content(card: LuckyCard) -> CardContent {
     let id = Uuid::new_v4();
     CardContent {
         id,
+        dark_color: Color32::GREEN,
+        light_color: Color32::DARK_GREEN,
         label: card.title,
         description: card.description,
         action: card.action,
         targets: None,
         costs: None,
     }
-}
-
-
-
-fn configure_text_styles(ctx: &egui::Context) {
-    use egui::FontFamily::Proportional;
-    use egui::TextStyle::*;
-
-    let mut style = (*ctx.style()).clone();
-    style.text_styles = [
-        (Heading, FontId::new(12.0, Proportional)),
-        (Body, FontId::new(10.0, Proportional)),
-        (Monospace, FontId::new(9.0, Proportional)),
-        (Button, FontId::new(10.5, Proportional)),
-        (Small, FontId::new(8.0, Proportional)),
-    ]
-        .into();
-    ctx.set_style(style);
 }
