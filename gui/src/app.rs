@@ -98,13 +98,13 @@ impl SecCardGameApp {
 
 impl SecCardGameApp {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        SecCardGameApp::init(Self::load_cards())
+    pub fn new(_cc: &eframe::CreationContext<'_>, deck_path: String) -> Self {
+        SecCardGameApp::init(Self::load_cards(deck_path))
     }
 
-    fn load_cards() -> Vec<Card> {
+    fn load_cards(deck_path: String) -> Vec<Card> {
         let files =
-            get_files_in_directory_with_filter("deck", ".json")
+            get_files_in_directory_with_filter(&deck_path, ".json")
                 .expect("Deck");
         let mut cards = vec![];
         for file in files {

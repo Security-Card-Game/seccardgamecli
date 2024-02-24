@@ -1,5 +1,5 @@
 [package]
-name = "gui"
+name = "game_ui"
 version = "0.1.0"
 edition = "2021"
 
@@ -20,20 +20,11 @@ eframe = { version = "0.26.2", default-features = false, features = [
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 ] }
 log = "0.4.20"
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.2"}
 
 # You only need serde if you want app persistence:
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.108"
 
-wasm-bindgen-futures = "0.4.41"
-
-# native:
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-env_logger = "0.11.2"
-
-# web:
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4"
 
 
