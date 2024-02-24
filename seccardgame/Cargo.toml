@@ -1,6 +1,6 @@
 [package]
 name = "seccardgame"
-version = "0.1.1"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,6 +11,7 @@ dialoguer = "0.11.0"
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
 game_lib = { path = "../game_lib" }
+game_ui = { path = "../gui" }
 log = "0.4.20"
 flexi_logger = "0.27.3"
 git2 = "0.18.1"

@@ -3,4 +3,12 @@ resolver="2"
 members = [
     "seccardgame",
     "game_lib",
+    "gui",
 ]
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+opt-level = 2

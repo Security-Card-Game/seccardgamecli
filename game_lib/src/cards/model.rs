@@ -158,4 +158,5 @@ impl CardTrait for Card {
             Card::Lucky(_) => LuckyCard::empty(),
         }
     }
+
 }
