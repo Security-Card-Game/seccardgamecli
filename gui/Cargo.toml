@@ -12,6 +12,8 @@ uuid = { version = "1.7.0" , features = [
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
+
+
 egui = "0.26.2"
 eframe = { version = "0.26.2", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
@@ -22,6 +24,8 @@ getrandom = { version = "0.2", features = ["js"] }
 
 # You only need serde if you want app persistence:
 serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.108"
+
 wasm-bindgen-futures = "0.4.41"
 
 # native:
