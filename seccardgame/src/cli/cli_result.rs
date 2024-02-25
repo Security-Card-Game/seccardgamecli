@@ -2,6 +2,7 @@ use std::fmt;
 use std::fmt::Formatter;
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
 pub enum ErrorKind {
     GameCloneError,
     CardError,
@@ -9,6 +10,7 @@ pub enum ErrorKind {
     ConfigError,
     NotImplemented,
     UserInterfaceError,
+    GUI,
 }
 
 impl fmt::Display for ErrorKind {
@@ -20,6 +22,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::ConfigError => write!(f, "ConfigError"),
             ErrorKind::NotImplemented => write!(f, "NotImplemented"),
             ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError"),
+            ErrorKind::GUI => write!(f, "GUIError"),
         }
     }
 }

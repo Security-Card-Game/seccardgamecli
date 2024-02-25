@@ -1,130 +1,69 @@
 use std::collections::HashMap;
-use std::fs;
 
-use egui::{Align, Color32, Layout, RichText, Ui, Window};
-use game_lib::cards::model::{
-    Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard,
-};
-use game_lib::file::general::get_files_in_directory_with_filter;
+use crate::card::{to_ui_deck, CardContent};
+use crate::card_window::display_card;
+use egui::{Color32, Context, RichText, Ui};
+use rand::Rng;
+use game_lib::cards::model::Card;
 use uuid::Uuid;
 
 pub struct SecCardGameApp {
+    resources: usize,
     current_card: usize,
     total_cards: usize,
-    cards: Vec<Card>,
+    cards: Vec<CardContent>,
     cards_to_display: HashMap<Uuid, CardContent>,
+    resources_per_round: usize,
+    input: Input
 }
 
-struct CardContent {
-    id: Uuid,
-    dark_color: Color32,
-    light_color: Color32,
-    label: String,
-    description: String,
-    action: String,
-    targets: Option<Vec<String>>,
-    costs: Option<FixCost>,
+struct Input {
+    next_res: String,
+    pay_res: String,
+    dice: DiceRange,
+    error: Option<String>,
+    dice_result: Option<usize>
 }
 
+struct DiceRange {
+    min: String,
+    max: String,
+}
 impl SecCardGameApp {
-    fn init(cards: Vec<Card>) -> Self {
+    fn init(deck: Vec<CardContent>) -> Self {
         Self {
+            resources: 0,
+            resources_per_round: 5,
             current_card: 0,
-            total_cards: cards.len(),
-            cards,
+            total_cards: deck.len(),
+            cards: deck,
             cards_to_display: HashMap::new(),
-        }
-    }
-
-    fn add_card_to_display(&mut self) {
-        match self.cards.pop() {
-            None => (),
-            Some(new_card) => {
-                let card = match new_card {
-                    Card::Event(c) => event_card_content(c),
-                    Card::Incident(c) => incident_card_content(c),
-                    Card::Oopsie(c) => oopsie_card_content(c),
-                    Card::Lucky(c) => lucky_card_content(c),
-                };
-                self.cards_to_display.insert(card.id, card);
-                self.current_card += 1;
+            input: Input {
+                next_res: "5".to_owned(),
+                pay_res: "0".to_owned(),
+                dice: DiceRange {
+                    min: "0".to_string(),
+                    max: "0".to_string(),
+                },
+                dice_result: None,
+                error: None,
             }
         }
     }
 
-    fn create_card_window(ids_to_remove: &mut Vec<Uuid>, card: &&CardContent, ui: &mut Ui) {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                let header_color = if ui.visuals().dark_mode {
-                    card.dark_color
-                } else  {
-                    card.light_color
-                };
-                let header = RichText::new(&card.label)
-                    .color(header_color)
-                    .heading();
-                ui.label(header);
-                if ui.button("X").clicked() {
-                    ids_to_remove.push(card.id)
-                }
-            });
-            ui.add_space(5.0);
-            ui.label(&card.description);
-            ui.add_space(2.0);
-                let name = RichText::new("Action: ").strong();
-                ui.label(name);
-                ui.label(&card.action);
-            match &card.targets {
-                None => {}
-                Some(targets) => {
-                        let name = RichText::new("Targets: ").strong();
-                        ui.label(name);
-                        let list = targets.join(", ");
-                        ui.label(list);
-                }
-            }
-            ui.add_space(2.0);
-            match &card.costs {
-                None => {}
-                Some(cost) => {
-                        let name = RichText::new("Cost to fix: ").strong();
-                        ui.label(name);
-                        ui.label(format!("{} to {}", cost.min, cost.max));
-                }
-            };
-        });
-    }
-}
-
-impl SecCardGameApp {
-    /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, deck_path: String) -> Self {
-        SecCardGameApp::init(Self::load_cards(deck_path))
-    }
-
-    fn load_cards(deck_path: String) -> Vec<Card> {
-        let files =
-            get_files_in_directory_with_filter(&deck_path, ".json")
-                .expect("Deck");
-        let mut cards = vec![];
-        for file in files {
-            let content = fs::read_to_string(file).expect("file content");
-            let card = serde_json::from_str::<Card>(content.as_str()).unwrap();
-            cards.push(card)
+    fn refresh_cards(&mut self, ctx: &Context, ui: &mut Ui) {
+        let mut ids_to_remove = vec![];
+        for card in self.cards_to_display.values() {
+            display_card(card, |id| ids_to_remove.push(id), ctx, ui);
         }
-        cards.reverse();
-        cards
-    }
-}
 
-impl eframe::App for SecCardGameApp {
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        for id in &ids_to_remove {
+            self.cards_to_display.remove(id);
+        }
+    }
+
+    fn create_menu_bar(ctx: &Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-
             egui::menu::bar(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
@@ -138,94 +77,145 @@ impl eframe::App for SecCardGameApp {
                 }
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
+                ui.add_space(16.0);
+                egui::gui_zoom::zoom_menu_buttons(ui);
             });
         });
+    }
+
+    fn create_control_panel(&mut self, ctx: &Context) {
+        egui::SidePanel::left("control_panel")
+            .resizable(false)
+            .max_width(100.0)
+            .show(ctx, |ui| {
+                self.next_round_controls(ui);
+
+                ui.add_space(15.0);
+
+                self.resource_control(ui);
+
+                ui.add_space(15.0);
+
+                self.dice_control(ui);
+
+                ui.add_space(10.0);
+                ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
+
+                ui.add_space(20.0);
+                match &self.input.error {
+                    None => {}
+                    Some(e) => { ui.label(RichText::new(e).color(Color32::RED)); }
+                }
+            });
+    }
+
+    fn dice_control(&mut self, ui: &mut Ui) {
+        ui.label("Dice");
+        ui.add_space(5.0);
+        ui.horizontal(|ui| {
+            ui.label("Min:\t");
+            ui.text_edit_singleline(&mut self.input.dice.min)
+        });
+        ui.horizontal(|ui| {
+            ui.label("Max:\t");
+            ui.text_edit_singleline(&mut self.input.dice.max)
+        });
+        if ui.button("Roll").clicked() {
+            let min: usize  = self.input.dice.min.parse().unwrap_or_else(|_| 0);
+            let max: usize = self.input.dice.max.parse().unwrap_or_else(|_| 0);
+            let mut rng = rand::thread_rng();
+            let value = if min > max {
+                rng.gen_range(max .. min)
+            } else if min == max {
+                min
+            } else {
+                rng.gen_range(min .. max)
+            };
+            self.input.dice_result = Some(value);
+        }
+        ui.add_space(5.0);
+        match self.input.dice_result {
+            None => ui.label(""),
+            Some(value) => ui.label(format!("You rolled {}", value))
+        };
+    }
+
+    fn resource_control(&mut self, ui: &mut Ui) {
+        ui.label("Resources");
+        ui.add_space(5.0);
+        let available = RichText::new(format!("{} available", self.resources)).strong();
+        ui.label(available);
+
+        ui.horizontal(|ui| {
+            ui.text_edit_singleline(&mut self.input.pay_res);
+            ui.add_space(5.0);
+
+            if ui.button("Pay").clicked() {
+                let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
+                if to_pay > self.resources {
+                    self.input.error = Some("No money!".to_string())
+                } else {
+                    self.resources -= to_pay;
+                    self.input.pay_res = "0".to_string();
+                    self.input.error = None;
+                }
+            };
+
+        });
+    }
+
+    fn next_round_controls(&mut self, ui: &mut Ui) {
+        ui.add_space(5.0);
+        ui.label("Next round");
+        ui.add_space(5.0);
+        ui.label("Gain resources ");
+        let res = ui.add(egui::TextEdit::singleline(&mut self.input.next_res).interactive(true));
+        if res.lost_focus() {
+            self.resources_per_round = self.input.next_res.parse().unwrap_or_else(|_| self.resources_per_round);
+        }
+
+        ui.add_space(5.0);
+        if self.current_card < self.total_cards && ui.button("Draw card").clicked() {
+            self.add_card_to_display();
+            self.resources += self.resources_per_round;
+            self.current_card += 1;
+            self.input.dice_result = None;
+            self.input.error = None;
+        }
+        if self.current_card == self.total_cards {
+            ui.label("Game ended");
+        }
+    }
+}
+
+impl SecCardGameApp {
+    /// Called once before the first frame.
+    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Vec<Card>) -> Self {
+        let ui_deck = to_ui_deck(deck);
+        SecCardGameApp::init(ui_deck)
+    }
+
+    fn add_card_to_display(&mut self) {
+        let card = self.cards.pop();
+        match card {
+            None => log::error!("Could not draw card!"),
+            Some(c) => {
+                self.cards_to_display.insert(c.id, c);
+            }
+        }
+    }
+}
+
+impl eframe::App for SecCardGameApp {
+    /// Called each time the UI needs repainting, which may be many times per second.
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        Self::create_menu_bar(ctx);
+
+        self.create_control_panel(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.with_layout(Layout::left_to_right(Align::BOTTOM), |ui| {
-                ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
-                if self.current_card < self.total_cards && ui.button("Draw card").clicked() {
-                    self.add_card_to_display();
-                }
-                if self.current_card == self.total_cards {
-                    ui.label("Game ended");
-                }
-                ui.add_space(20.0);
-                egui::gui_zoom::zoom_menu_buttons(ui);
-            });
-
-            let mut ids_to_remove = vec![];
-            for card in self.cards_to_display.values() {
-                Window::new(card.id.to_string())
-                    .title_bar(false)
-                    .resizable(false)
-                    .collapsible(false)
-                    .default_width(200.0)
-                    .show(ctx, |ui| {
-                        Self::create_card_window(&mut ids_to_remove, &card, ui)
-                    });
-            }
-
-            for id in &ids_to_remove {
-                self.cards_to_display.remove(id);
-            }
+            self.refresh_cards(ctx, ui);
         });
-    }
-}
-
-fn event_card_content(card: EventCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::LIGHT_BLUE,
-        light_color: Color32::DARK_BLUE,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: None,
-        costs: None,
-    }
-}
-
-fn incident_card_content(card: IncidentCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::LIGHT_RED,
-        light_color: Color32::DARK_RED,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: Some(card.targets),
-        costs: None,
-    }
-}
-
-fn oopsie_card_content(card: OopsieCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::YELLOW,
-        light_color: Color32::DARK_GRAY,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: Some(card.targets),
-        costs: Some(card.fix_cost),
-    }
-}
-
-fn lucky_card_content(card: LuckyCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::GREEN,
-        light_color: Color32::DARK_GREEN,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: None,
-        costs: None,
     }
 }
