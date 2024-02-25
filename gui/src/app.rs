@@ -1,27 +1,17 @@
 use std::collections::HashMap;
 
-use egui::{Align, Color32, Layout, RichText, Ui, Window};
-use game_lib::cards::model::{
-    Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard,
+use crate::card::{
+    event_card_content, incident_card_content, lucky_card_content, oopsie_card_content, CardContent,
 };
+use egui::{Align, Layout, RichText, Ui, Window};
 use uuid::Uuid;
+use game_lib::cards::model::Card;
 
 pub struct SecCardGameApp {
     current_card: usize,
     total_cards: usize,
     cards: Vec<Card>,
     cards_to_display: HashMap<Uuid, CardContent>,
-}
-
-struct CardContent {
-    id: Uuid,
-    dark_color: Color32,
-    light_color: Color32,
-    label: String,
-    description: String,
-    action: String,
-    targets: Option<Vec<String>>,
-    costs: Option<FixCost>,
 }
 
 impl SecCardGameApp {
@@ -55,12 +45,10 @@ impl SecCardGameApp {
             ui.horizontal(|ui| {
                 let header_color = if ui.visuals().dark_mode {
                     card.dark_color
-                } else  {
+                } else {
                     card.light_color
                 };
-                let header = RichText::new(&card.label)
-                    .color(header_color)
-                    .heading();
+                let header = RichText::new(&card.label).color(header_color).heading();
                 ui.label(header);
                 if ui.button("X").clicked() {
                     ids_to_remove.push(card.id)
@@ -69,25 +57,25 @@ impl SecCardGameApp {
             ui.add_space(5.0);
             ui.label(&card.description);
             ui.add_space(2.0);
-                let name = RichText::new("Action: ").strong();
-                ui.label(name);
-                ui.label(&card.action);
+            let name = RichText::new("Action: ").strong();
+            ui.label(name);
+            ui.label(&card.action);
             match &card.targets {
                 None => {}
                 Some(targets) => {
-                        let name = RichText::new("Targets: ").strong();
-                        ui.label(name);
-                        let list = targets.join(", ");
-                        ui.label(list);
+                    let name = RichText::new("Targets: ").strong();
+                    ui.label(name);
+                    let list = targets.join(", ");
+                    ui.label(list);
                 }
             }
             ui.add_space(2.0);
             match &card.costs {
                 None => {}
                 Some(cost) => {
-                        let name = RichText::new("Cost to fix: ").strong();
-                        ui.label(name);
-                        ui.label(format!("{} to {}", cost.min, cost.max));
+                    let name = RichText::new("Cost to fix: ").strong();
+                    ui.label(name);
+                    ui.label(format!("{} to {}", cost.min, cost.max));
                 }
             };
         });
@@ -101,7 +89,6 @@ impl SecCardGameApp {
         deck_copy.reverse();
         SecCardGameApp::init(deck_copy)
     }
-
 }
 
 impl eframe::App for SecCardGameApp {
@@ -158,61 +145,5 @@ impl eframe::App for SecCardGameApp {
                 self.cards_to_display.remove(id);
             }
         });
-    }
-}
-
-fn event_card_content(card: EventCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::LIGHT_BLUE,
-        light_color: Color32::DARK_BLUE,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: None,
-        costs: None,
-    }
-}
-
-fn incident_card_content(card: IncidentCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::LIGHT_RED,
-        light_color: Color32::DARK_RED,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: Some(card.targets),
-        costs: None,
-    }
-}
-
-fn oopsie_card_content(card: OopsieCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::YELLOW,
-        light_color: Color32::DARK_GRAY,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: Some(card.targets),
-        costs: Some(card.fix_cost),
-    }
-}
-
-fn lucky_card_content(card: LuckyCard) -> CardContent {
-    let id = Uuid::new_v4();
-    CardContent {
-        id,
-        dark_color: Color32::GREEN,
-        light_color: Color32::DARK_GREEN,
-        label: card.title,
-        description: card.description,
-        action: card.action,
-        targets: None,
-        costs: None,
     }
 }
