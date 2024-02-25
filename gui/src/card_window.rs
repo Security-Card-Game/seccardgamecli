@@ -1,4 +1,5 @@
-use egui::{Context, RichText, Ui, Vec2, Window};
+use egui::{Context, Pos2, RichText, Ui, Vec2, Window};
+use rand::Rng;
 use uuid::Uuid;
 use crate::card::CardContent;
 
@@ -22,11 +23,18 @@ pub fn display_card<F>(card: &CardContent, close_callback: F, ctx: &Context, ui:
 fn create_window<F>(data: CardWindow, close_callback: F, ctx: &Context, ui: &mut Ui)
     where F: FnMut(Uuid) -> () {
     let card = data.content;
+    let area= ui.available_size();
+    let mut rng = rand::thread_rng();
+    let offset_x = rng.gen_range(-20.0..20.0);
+    let offset_y = rng.gen_range(-20.0..20.0);
+    let new_pos = Pos2::new(area.x/3.0 + offset_x, area.y/3.0 + offset_y);
     Window::new(card.id.to_string())
         .title_bar(false)
         .resizable(false)
         .collapsible(false)
-        .default_width(200.0)
+        .default_pos(new_pos)
+        .max_size(data.max_size)
+        .min_size(data.min_size)
         .show(ctx, |ui| {
             create_card_window(close_callback, card, ui)
         });

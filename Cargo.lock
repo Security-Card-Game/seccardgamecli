@@ -792,6 +792,7 @@ dependencies = [
  "game_lib",
  "getrandom",
  "log",
+ "rand",
  "uuid",
 ]
 

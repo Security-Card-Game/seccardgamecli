@@ -23,3 +23,4 @@ eframe = { version = "0.26.2", default-features = false, features = [
 ] }
 
 log = "0.4.20"
+rand = "0.8.5"
