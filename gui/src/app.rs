@@ -79,7 +79,8 @@ impl eframe::App for SecCardGameApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         Self::create_menu_bar(ctx);
 
-        egui::SidePanel::left("contol_panel")
+        egui::SidePanel::left("control_panel")
+            .resizable(false)
             .show(ctx, |ui| {
                 ui.add_space(5.0);
                 if self.current_card < self.total_cards && ui.button("Draw card").clicked() {
