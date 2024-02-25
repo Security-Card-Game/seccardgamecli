@@ -1,3 +1,5 @@
+use std::fmt::format;
+use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
 use uuid::Uuid;
@@ -45,27 +47,23 @@ fn create_card_window<F>(mut close_callback: F, card: &CardContent, ui: &mut Ui)
     ui.vertical(|ui| {
         add_header(close_callback, &card, ui);
         ui.add_space(5.0);
-        ui.label(&card.description);
-        ui.add_space(2.0);
-        let name = RichText::new("Action: ").strong();
-        ui.label(name);
-        ui.label(&card.action);
+        card_label(&card.description, ui);
+        ui.add_space(5.0);
+        add_explanation("Action:  ", &card.action.as_str(), ui);
         match &card.targets {
             None => {}
+
             Some(targets) => {
-                let name = RichText::new("Targets: ").strong();
-                ui.label(name);
-                let list = targets.join(", ");
-                ui.label(list);
+                let content = targets.join(", ");
+                add_explanation("Targets: ", content.as_str(), ui);
             }
         }
         ui.add_space(2.0);
         match &card.costs {
             None => {}
             Some(cost) => {
-                let name = RichText::new("Cost to fix: ").strong();
-                ui.label(name);
-                ui.label(format!("{} to {}", cost.min, cost.max));
+                let content = format!("{} to {} resources", cost.min, cost.max);
+                add_explanation("Fix:     ", content.as_str(), ui);
             }
         };
     });
@@ -92,4 +90,12 @@ fn add_header<F>(mut close_callback: F, card: &&CardContent, ui: &mut Ui) where 
 
 fn card_label(text: impl Into<WidgetText>, ui: &mut Ui) {
     ui.add(Label::new(text).wrap(true).selectable(false));
+}
+
+fn add_explanation(topic: &str, content: &str, ui: &mut Ui) {
+    ui.horizontal(|ui| {
+        let topic_text = RichText::new(topic).strong().family(FontFamily::Monospace);
+        card_label(topic_text, ui);
+        card_label(content, ui);
+    });
 }
