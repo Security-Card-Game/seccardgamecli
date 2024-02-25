@@ -49,6 +49,8 @@ impl SecCardGameApp {
                 }
 
                 egui::widgets::global_dark_light_mode_buttons(ui);
+                ui.add_space(16.0);
+                egui::gui_zoom::zoom_menu_buttons(ui);
             });
         });
     }
@@ -77,10 +79,9 @@ impl eframe::App for SecCardGameApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         Self::create_menu_bar(ctx);
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.with_layout(Layout::left_to_right(Align::BOTTOM), |ui| {
-                ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
+        egui::SidePanel::left("contol_panel")
+            .show(ctx, |ui| {
+                ui.add_space(5.0);
                 if self.current_card < self.total_cards && ui.button("Draw card").clicked() {
                     self.add_card_to_display();
                     self.current_card += 1;
@@ -88,10 +89,12 @@ impl eframe::App for SecCardGameApp {
                 if self.current_card == self.total_cards {
                     ui.label("Game ended");
                 }
-                ui.add_space(20.0);
-                egui::gui_zoom::zoom_menu_buttons(ui);
-            });
+                ui.add_space(5.0);
+                ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
+        });
 
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // The central panel the region left after adding TopPanel's and SidePanel's
             self.refresh_cards(ctx, ui);
         });
     }
