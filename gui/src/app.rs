@@ -1,42 +1,24 @@
 use std::collections::HashMap;
 
-use crate::card::{
-    event_card_content, incident_card_content, lucky_card_content, oopsie_card_content, CardContent,
-};
+use crate::card::{CardContent, to_ui_deck};
 use egui::{Align, Layout, RichText, Ui, Window};
-use uuid::Uuid;
 use game_lib::cards::model::Card;
+use uuid::Uuid;
 
 pub struct SecCardGameApp {
     current_card: usize,
     total_cards: usize,
-    cards: Vec<Card>,
+    cards: Vec<CardContent>,
     cards_to_display: HashMap<Uuid, CardContent>,
 }
 
 impl SecCardGameApp {
-    fn init(cards: Vec<Card>) -> Self {
+    fn init(deck: Vec<CardContent>) -> Self {
         Self {
             current_card: 0,
-            total_cards: cards.len(),
-            cards,
+            total_cards: deck.len(),
+            cards: deck,
             cards_to_display: HashMap::new(),
-        }
-    }
-
-    fn add_card_to_display(&mut self) {
-        match self.cards.pop() {
-            None => (),
-            Some(new_card) => {
-                let card = match new_card {
-                    Card::Event(c) => event_card_content(c),
-                    Card::Incident(c) => incident_card_content(c),
-                    Card::Oopsie(c) => oopsie_card_content(c),
-                    Card::Lucky(c) => lucky_card_content(c),
-                };
-                self.cards_to_display.insert(card.id, card);
-                self.current_card += 1;
-            }
         }
     }
 
@@ -85,9 +67,16 @@ impl SecCardGameApp {
 impl SecCardGameApp {
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>, deck: Vec<Card>) -> Self {
-        let mut deck_copy = deck.clone();
-        deck_copy.reverse();
-        SecCardGameApp::init(deck_copy)
+        let ui_deck = to_ui_deck(deck);
+        SecCardGameApp::init(ui_deck)
+    }
+
+    fn add_card_to_display(&mut self) {
+        let card = self.cards.pop();
+        match card {
+            None => log::error!("Could not draw card!"),
+            Some(c) =>  { self.cards_to_display.insert(c.id, c); }
+        }
     }
 }
 
