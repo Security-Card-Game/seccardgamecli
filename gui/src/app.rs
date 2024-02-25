@@ -86,6 +86,7 @@ impl SecCardGameApp {
     fn create_control_panel(&mut self, ctx: &Context) {
         egui::SidePanel::left("control_panel")
             .resizable(false)
+            .max_width(100.0)
             .show(ctx, |ui| {
                 self.next_round_controls(ui);
 
@@ -142,21 +143,25 @@ impl SecCardGameApp {
     fn resource_control(&mut self, ui: &mut Ui) {
         ui.label("Resources");
         ui.add_space(5.0);
-        let available = RichText::new(format!("{} resources available", self.resources)).strong();
+        let available = RichText::new(format!("{} available", self.resources)).strong();
         ui.label(available);
-        ui.text_edit_singleline(&mut self.input.pay_res);
-        ui.add_space(5.0);
 
-        if ui.button("Pay").clicked() {
-            let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-            if to_pay > self.resources {
-                self.input.error = Some("No money!".to_string())
-            } else {
-                self.resources -= to_pay;
-                self.input.pay_res = "0".to_string();
-                self.input.error = None;
-            }
-        };
+        ui.horizontal(|ui| {
+            ui.text_edit_singleline(&mut self.input.pay_res);
+            ui.add_space(5.0);
+
+            if ui.button("Pay").clicked() {
+                let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
+                if to_pay > self.resources {
+                    self.input.error = Some("No money!".to_string())
+                } else {
+                    self.resources -= to_pay;
+                    self.input.pay_res = "0".to_string();
+                    self.input.error = None;
+                }
+            };
+
+        });
     }
 
     fn next_round_controls(&mut self, ui: &mut Ui) {
