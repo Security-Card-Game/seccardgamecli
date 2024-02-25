@@ -9,6 +9,7 @@ pub enum ErrorKind {
     ConfigError,
     NotImplemented,
     UserInterfaceError,
+    GUI,
 }
 
 impl fmt::Display for ErrorKind {
@@ -20,6 +21,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::ConfigError => write!(f, "ConfigError"),
             ErrorKind::NotImplemented => write!(f, "NotImplemented"),
             ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError"),
+            ErrorKind::GUI => write!(f, "GUIError"),
         }
     }
 }

@@ -1,11 +1,9 @@
 use std::collections::HashMap;
-use std::fs;
 
 use egui::{Align, Color32, Layout, RichText, Ui, Window};
 use game_lib::cards::model::{
     Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard,
 };
-use game_lib::file::general::get_files_in_directory_with_filter;
 use uuid::Uuid;
 
 pub struct SecCardGameApp {
@@ -98,23 +96,12 @@ impl SecCardGameApp {
 
 impl SecCardGameApp {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, deck_path: String) -> Self {
-        SecCardGameApp::init(Self::load_cards(deck_path))
+    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Vec<Card>) -> Self {
+        let mut deck_copy = deck.clone();
+        deck_copy.reverse();
+        SecCardGameApp::init(deck_copy)
     }
 
-    fn load_cards(deck_path: String) -> Vec<Card> {
-        let files =
-            get_files_in_directory_with_filter(&deck_path, ".json")
-                .expect("Deck");
-        let mut cards = vec![];
-        for file in files {
-            let content = fs::read_to_string(file).expect("file content");
-            let card = serde_json::from_str::<Card>(content.as_str()).unwrap();
-            cards.push(card)
-        }
-        cards.reverse();
-        cards
-    }
 }
 
 impl eframe::App for SecCardGameApp {

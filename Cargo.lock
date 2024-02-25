@@ -792,8 +792,6 @@ dependencies = [
  "game_lib",
  "getrandom",
  "log",
- "serde",
- "serde_json",
  "uuid",
 ]
 
