@@ -4,6 +4,7 @@ use crate::card::{to_ui_deck, CardContent};
 use crate::card_window::display_card;
 use egui::{Align, Color32, Context, Layout, RichText, Ui, Window};
 use egui::WidgetType::TextEdit;
+use rand::Rng;
 use game_lib::cards::model::Card;
 use uuid::Uuid;
 
@@ -20,9 +21,15 @@ pub struct SecCardGameApp {
 struct Input {
     next_res: String,
     pay_res: String,
+    dice: DiceRange,
     error: Option<String>,
+    dice_result: Option<usize>
 }
 
+struct DiceRange {
+    min: String,
+    max: String,
+}
 impl SecCardGameApp {
     fn init(deck: Vec<CardContent>) -> Self {
         Self {
@@ -35,6 +42,11 @@ impl SecCardGameApp {
             input: Input {
                 next_res: "5".to_owned(),
                 pay_res: "0".to_owned(),
+                dice: DiceRange {
+                    min: "0".to_string(),
+                    max: "0".to_string(),
+                },
+                dice_result: None,
                 error: None,
             }
         }
@@ -72,7 +84,7 @@ impl SecCardGameApp {
         });
     }
 
-    fn crete_control_panel(&mut self, ctx: &Context) {
+    fn create_control_panel(&mut self, ctx: &Context) {
         egui::SidePanel::left("control_panel")
             .resizable(false)
             .show(ctx, |ui| {
@@ -81,6 +93,10 @@ impl SecCardGameApp {
                 ui.add_space(15.0);
 
                 self.resource_control(ui);
+
+                ui.add_space(15.0);
+
+                self.dice_control(ui);
 
                 ui.add_space(5.0);
                 ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
@@ -91,6 +107,37 @@ impl SecCardGameApp {
                     Some(e) => { ui.label(RichText::new(e).color(Color32::RED)); }
                 }
             });
+    }
+
+    fn dice_control(&mut self, ui: &mut Ui) {
+        ui.label("Dice");
+        ui.add_space(5.0);
+        ui.horizontal(|ui| {
+            ui.label("Min:\t");
+            ui.text_edit_singleline(&mut self.input.dice.min)
+        });
+        ui.horizontal(|ui| {
+            ui.label("Max:\t");
+            ui.text_edit_singleline(&mut self.input.dice.max)
+        });
+        if (ui.button("Roll").clicked()) {
+            let min: usize  = self.input.dice.min.parse().unwrap_or_else(|_| 0);
+            let max: usize = self.input.dice.max.parse().unwrap_or_else(|_| 0);
+            let mut rng = rand::thread_rng();
+            let value = if (min > max) {
+                rng.gen_range(max .. min)
+            } else if (min == max) {
+                min
+            } else {
+                rng.gen_range(min .. max)
+            };
+            self.input.dice_result = Some(value);
+        }
+        ui.add_space(5.0);
+        match self.input.dice_result {
+            None => ui.label(""),
+            Some(value) => ui.label(format!("You rolled {}", value))
+        };
     }
 
     fn resource_control(&mut self, ui: &mut Ui) {
@@ -127,6 +174,7 @@ impl SecCardGameApp {
             self.add_card_to_display();
             self.resources += self.resources_per_round;
             self.current_card += 1;
+            self.input.dice_result = None;
             self.input.error = None;
         }
         if self.current_card == self.total_cards {
@@ -158,7 +206,7 @@ impl eframe::App for SecCardGameApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         Self::create_menu_bar(ctx);
 
-        self.crete_control_panel(ctx);
+        self.create_control_panel(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
