@@ -1,4 +1,4 @@
-use egui::{Context, Pos2, RichText, Ui, Vec2, Window};
+use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
 use uuid::Uuid;
 use crate::card::CardContent;
@@ -43,18 +43,7 @@ fn create_window<F>(data: CardWindow, close_callback: F, ctx: &Context, ui: &mut
 fn create_card_window<F>(mut close_callback: F, card: &CardContent, ui: &mut Ui)
     where F: FnMut(Uuid) -> () {
     ui.vertical(|ui| {
-        ui.horizontal(|ui| {
-            let header_color = if ui.visuals().dark_mode {
-                card.dark_color
-            } else {
-                card.light_color
-            };
-            let header = RichText::new(&card.label).color(header_color).heading();
-            ui.label(header);
-            if ui.button("X").clicked() {
-                close_callback(card.id);
-            }
-        });
+        add_header(close_callback, &card, ui);
         ui.add_space(5.0);
         ui.label(&card.description);
         ui.add_space(2.0);
@@ -82,3 +71,25 @@ fn create_card_window<F>(mut close_callback: F, card: &CardContent, ui: &mut Ui)
     });
 }
 
+fn add_header<F>(mut close_callback: F, card: &&CardContent, ui: &mut Ui) where F: FnMut(Uuid) -> () {
+    ui.horizontal(|ui| {
+        let header_color = if ui.visuals().dark_mode {
+            card.dark_color
+        } else {
+            card.light_color
+        };
+
+        let header = RichText::new(&card.label).color(header_color).heading();
+        card_label(header, ui);
+        let available = ui.available_rect_before_wrap().width();
+        ui.add_space(available + 20.0);
+        if ui.button("X").clicked() {
+            close_callback(card.id);
+        }
+    });
+}
+
+
+fn card_label(text: impl Into<WidgetText>, ui: &mut Ui) {
+    ui.add(Label::new(text).wrap(true).selectable(false));
+}
