@@ -2,6 +2,7 @@ use std::fmt;
 use std::fmt::Formatter;
 
 #[derive(Clone, Debug, PartialEq)]
+#[allow(dead_code)]
 pub enum ErrorKind {
     GameCloneError,
     CardError,

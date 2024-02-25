@@ -1,4 +1,3 @@
-use std::fmt::format;
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
@@ -42,7 +41,7 @@ fn create_window<F>(data: CardWindow, close_callback: F, ctx: &Context, ui: &mut
         });
 }
 
-fn create_card_window<F>(mut close_callback: F, card: &CardContent, ui: &mut Ui)
+fn create_card_window<F>(close_callback: F, card: &CardContent, ui: &mut Ui)
     where F: FnMut(Uuid) -> () {
     ui.vertical(|ui| {
         add_header(close_callback, &card, ui);

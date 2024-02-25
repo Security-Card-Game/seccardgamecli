@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use crate::card::{to_ui_deck, CardContent};
 use crate::card_window::display_card;
-use egui::{Align, Color32, Context, Layout, RichText, Ui, Window};
-use egui::WidgetType::TextEdit;
+use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use game_lib::cards::model::Card;
 use uuid::Uuid;
@@ -120,13 +119,13 @@ impl SecCardGameApp {
             ui.label("Max:\t");
             ui.text_edit_singleline(&mut self.input.dice.max)
         });
-        if (ui.button("Roll").clicked()) {
+        if ui.button("Roll").clicked() {
             let min: usize  = self.input.dice.min.parse().unwrap_or_else(|_| 0);
             let max: usize = self.input.dice.max.parse().unwrap_or_else(|_| 0);
             let mut rng = rand::thread_rng();
-            let value = if (min > max) {
+            let value = if min > max {
                 rng.gen_range(max .. min)
-            } else if (min == max) {
+            } else if min == max {
                 min
             } else {
                 rng.gen_range(min .. max)
@@ -147,9 +146,9 @@ impl SecCardGameApp {
         ui.text_edit_singleline(&mut self.input.pay_res);
         ui.add_space(5.0);
 
-        if (ui.button("Pay").clicked()) {
+        if ui.button("Pay").clicked() {
             let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-            if (to_pay > self.resources) {
+            if to_pay > self.resources {
                 self.input.error = Some("No money!".to_string())
             } else {
                 self.resources -= to_pay;
@@ -203,7 +202,7 @@ impl SecCardGameApp {
 
 impl eframe::App for SecCardGameApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         Self::create_menu_bar(ctx);
 
         self.create_control_panel(ctx);
