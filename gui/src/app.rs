@@ -97,7 +97,7 @@ impl SecCardGameApp {
 
                 self.dice_control(ui);
 
-                ui.add_space(5.0);
+                ui.add_space(10.0);
                 ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
 
                 ui.add_space(20.0);
@@ -142,7 +142,8 @@ impl SecCardGameApp {
     fn resource_control(&mut self, ui: &mut Ui) {
         ui.label("Resources");
         ui.add_space(5.0);
-        ui.label(format!("{} resources available", self.resources));
+        let available = RichText::new(format!("{} resources available", self.resources)).strong();
+        ui.label(available);
         ui.text_edit_singleline(&mut self.input.pay_res);
         ui.add_space(5.0);
 
