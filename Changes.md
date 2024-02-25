@@ -2,6 +2,13 @@
 
 ## next release
 
+## 0.4.0
+
+* major UI overhaul
+  * adds side panel for controls
+  * adds resource management
+  * adds dice
+
 ## 0.3.0
 
 * adds UI to show drawn cards

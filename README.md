@@ -14,9 +14,15 @@ This CLI supports:
 
 # How to play
 
-Run `seccardgame` with the `init` command. Then run it `game crate` to create a deck. After the
-deck is created, run it with `game play` top start the UI. Start drawing cards by
-pressing the button in the lower left corner.
+Run `seccardgame` with the `init` command. Then run it `game create` to create a deck. After the
+deck is created, run it with `game play` top start the UI. 
+
+On the left side panel you can enter the resources you will gain every turn and also start a
+new turn with the `Draw card` button. Also, your available resources are displayed there. To pay
+costs for fixing enter the amount in the entry field and hit `Pay`. If you need to roll a dice
+to get fixing costs, enter min and max and press `Roll`.
+
+There is little validation, be gentle.
 
 ## Known issues
 
