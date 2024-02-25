@@ -2,4 +2,5 @@ mod app;
 pub use app::SecCardGameApp;
 
 pub mod start;
-pub(crate) mod card;
+mod card;
+mod card_window;

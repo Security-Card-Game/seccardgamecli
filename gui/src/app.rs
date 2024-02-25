@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use crate::card::{CardContent, to_ui_deck};
-use egui::{Align, Layout, RichText, Ui, Window};
+use crate::card::{to_ui_deck, CardContent};
+use crate::card_window::display_card;
+use egui::{Align, Context, Layout, RichText, Ui, Window};
 use game_lib::cards::model::Card;
 use uuid::Uuid;
 
@@ -22,72 +23,19 @@ impl SecCardGameApp {
         }
     }
 
-    fn create_card_window(ids_to_remove: &mut Vec<Uuid>, card: &&CardContent, ui: &mut Ui) {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                let header_color = if ui.visuals().dark_mode {
-                    card.dark_color
-                } else {
-                    card.light_color
-                };
-                let header = RichText::new(&card.label).color(header_color).heading();
-                ui.label(header);
-                if ui.button("X").clicked() {
-                    ids_to_remove.push(card.id)
-                }
-            });
-            ui.add_space(5.0);
-            ui.label(&card.description);
-            ui.add_space(2.0);
-            let name = RichText::new("Action: ").strong();
-            ui.label(name);
-            ui.label(&card.action);
-            match &card.targets {
-                None => {}
-                Some(targets) => {
-                    let name = RichText::new("Targets: ").strong();
-                    ui.label(name);
-                    let list = targets.join(", ");
-                    ui.label(list);
-                }
-            }
-            ui.add_space(2.0);
-            match &card.costs {
-                None => {}
-                Some(cost) => {
-                    let name = RichText::new("Cost to fix: ").strong();
-                    ui.label(name);
-                    ui.label(format!("{} to {}", cost.min, cost.max));
-                }
-            };
-        });
-    }
-}
+    fn refresh_cards(&mut self, ctx: &Context, ui: &mut Ui) {
+        let mut ids_to_remove = vec![];
+        for card in self.cards_to_display.values() {
+            display_card(card, |id| ids_to_remove.push(id), ctx, ui);
+        }
 
-impl SecCardGameApp {
-    /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Vec<Card>) -> Self {
-        let ui_deck = to_ui_deck(deck);
-        SecCardGameApp::init(ui_deck)
-    }
-
-    fn add_card_to_display(&mut self) {
-        let card = self.cards.pop();
-        match card {
-            None => log::error!("Could not draw card!"),
-            Some(c) =>  { self.cards_to_display.insert(c.id, c); }
+        for id in &ids_to_remove {
+            self.cards_to_display.remove(id);
         }
     }
-}
 
-impl eframe::App for SecCardGameApp {
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+    fn create_menu_bar(ctx: &Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-
             egui::menu::bar(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
@@ -103,6 +51,31 @@ impl eframe::App for SecCardGameApp {
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
         });
+    }
+}
+
+impl SecCardGameApp {
+    /// Called once before the first frame.
+    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Vec<Card>) -> Self {
+        let ui_deck = to_ui_deck(deck);
+        SecCardGameApp::init(ui_deck)
+    }
+
+    fn add_card_to_display(&mut self) {
+        let card = self.cards.pop();
+        match card {
+            None => log::error!("Could not draw card!"),
+            Some(c) => {
+                self.cards_to_display.insert(c.id, c);
+            }
+        }
+    }
+}
+
+impl eframe::App for SecCardGameApp {
+    /// Called each time the UI needs repainting, which may be many times per second.
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        Self::create_menu_bar(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
@@ -110,6 +83,7 @@ impl eframe::App for SecCardGameApp {
                 ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
                 if self.current_card < self.total_cards && ui.button("Draw card").clicked() {
                     self.add_card_to_display();
+                    self.current_card += 1;
                 }
                 if self.current_card == self.total_cards {
                     ui.label("Game ended");
@@ -118,21 +92,7 @@ impl eframe::App for SecCardGameApp {
                 egui::gui_zoom::zoom_menu_buttons(ui);
             });
 
-            let mut ids_to_remove = vec![];
-            for card in self.cards_to_display.values() {
-                Window::new(card.id.to_string())
-                    .title_bar(false)
-                    .resizable(false)
-                    .collapsible(false)
-                    .default_width(200.0)
-                    .show(ctx, |ui| {
-                        Self::create_card_window(&mut ids_to_remove, &card, ui)
-                    });
-            }
-
-            for id in &ids_to_remove {
-                self.cards_to_display.remove(id);
-            }
+            self.refresh_cards(ctx, ui);
         });
     }
 }
