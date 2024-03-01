@@ -1,6 +1,7 @@
 use eframe::epaint::Color32;
-use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 use uuid::Uuid;
+
+use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
 
 pub struct CardContent {
     pub id: Uuid,
@@ -11,13 +12,11 @@ pub struct CardContent {
     pub action: String,
     pub targets: Option<Vec<String>>,
     pub costs: Option<FixCost>,
+    pub duration: Option<usize>,
 }
 
 pub fn to_ui_deck(deck: Vec<Card>) -> Vec<CardContent> {
-    let mut ui_deck: Vec<_> = deck
-        .iter()
-        .map(|c| CardContent::from_card(c))
-        .collect();
+    let mut ui_deck: Vec<_> = deck.iter().map(|c| CardContent::from_card(c)).collect();
     ui_deck.reverse();
     ui_deck
 }
@@ -43,6 +42,7 @@ impl CardContent {
             action: card.action,
             targets: None,
             costs: None,
+            duration: None,
         }
     }
 
@@ -57,6 +57,7 @@ impl CardContent {
             action: card.action,
             targets: Some(card.targets),
             costs: None,
+            duration: Some(card.duration),
         }
     }
 
@@ -71,6 +72,7 @@ impl CardContent {
             action: card.action,
             targets: Some(card.targets),
             costs: Some(card.fix_cost),
+            duration: None,
         }
     }
 
@@ -85,6 +87,7 @@ impl CardContent {
             action: card.action,
             targets: None,
             costs: None,
+            duration: None,
         }
     }
 }

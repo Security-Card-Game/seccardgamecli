@@ -115,6 +115,7 @@ fn create_incident_card() -> Card {
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
     let action: String = prompt("Card Action", None);
+    let duration: usize = prompt("Duration (rounds)", None);
 
     let targets = ask_for_targets();
 
@@ -123,6 +124,7 @@ fn create_incident_card() -> Card {
         description,
         action,
         targets,
+        duration,
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());

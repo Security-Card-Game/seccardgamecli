@@ -8,7 +8,7 @@ use crate::cli::cli_result::CliResult;
 use crate::cli::config::{init, CfgInit, Config};
 use crate::game::create::create_deck;
 use crate::game::play::play_deck;
-use crate::migrations::version_one::convert;
+use crate::migrations::*;
 
 mod cards;
 mod cli;
@@ -69,7 +69,8 @@ fn cli() -> Command {
                 .about("Migrates card versions")
                 .subcommand_required(true)
                 .arg_required_else_help(true)
-                .subcommand(Command::new("version1").about("Migrates to version 1")),
+                .subcommand(Command::new("version1").about("Migrates to version 1"))
+                .subcommand(Command::new("version2").about("Migrates from v1 to v2")),
         )
 }
 
@@ -139,7 +140,8 @@ fn handle_commands() -> CliResult<()> {
         Some(("migration", sub_matches)) => {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
-                Some(("version1", _)) => convert(&config),
+                Some(("version1", _)) => version_one::convert(&config),
+                Some(("version2", _)) => version_two::convert(&config),
                 _ => {
                     println!("Unknown command!");
                     exit(-1)

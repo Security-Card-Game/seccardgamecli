@@ -47,6 +47,8 @@ pub struct IncidentCard {
     pub description: String,
     pub targets: Vec<String>,
     pub action: String,
+    #[serde(default)]
+    pub duration: usize,
 }
 
 impl IncidentCard {
@@ -56,6 +58,7 @@ impl IncidentCard {
             description: "".to_string(),
             targets: vec![],
             action: "".to_string(),
+            duration: 0,
         })
     }
 }
@@ -158,5 +161,4 @@ impl CardTrait for Card {
             Card::Lucky(_) => LuckyCard::empty(),
         }
     }
-
 }

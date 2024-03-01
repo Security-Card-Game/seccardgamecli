@@ -139,12 +139,7 @@ impl CardStats {
     }
 
     fn read_incident_targets(cfg: &Config) -> Vec<String> {
-        let incident_card = Card::Incident(IncidentCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            targets: vec![],
-            action: "".to_string(),
-        });
+        let incident_card = IncidentCard::empty();
         let mut path = PathBuf::from(&cfg.game_path.as_str());
         path.push(get_card_directory(&incident_card));
         let mut incident_targets = Vec::new();

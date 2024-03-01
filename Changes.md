@@ -2,6 +2,14 @@
 
 ## next release
 
+## 0.4.1
+
+* [GUI] adds duration to incidents/attacks
+* [CLI] adds duration to incidents/attacks
+* [MIGRATION] Migrates card to v2, where incidents have a duration (and are basically attacks)
+    * use the `migration version2` to migrate the game directory
+    * make sure your cards are version1
+
 ## 0.4.0
 
 * major UI overhaul
