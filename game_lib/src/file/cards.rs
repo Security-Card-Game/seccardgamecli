@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json;
 
-use crate::cards::model::{Card, CardTrait};
+use crate::cards::card_model::{Card, CardTrait};
 use crate::file::general::{count_cards_in_directory, ensure_directory_exists};
 
 pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Result<()> {
@@ -37,7 +37,7 @@ pub fn write_card_to_file(card: &Card, base_path: Option<&str>) -> std::io::Resu
         }
     };
 
-    let file_name = generate_filename(card.title(), current_cards_count);
+    let file_name = generate_filename(card.title().value(), current_cards_count);
 
     path.push(file_name);
     write_data_to_file(card, &path)?;

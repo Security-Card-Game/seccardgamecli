@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use crate::card::{to_ui_deck, CardContent};
-use crate::card_window::display_card;
 use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
-use game_lib::cards::model::Card;
 use uuid::Uuid;
+
+use game_lib::cards::card_model::Card;
+
+use crate::card::{to_ui_deck, CardContent};
+use crate::card_window::display_card;
 
 pub struct SecCardGameApp {
     resources: usize,
@@ -14,7 +16,7 @@ pub struct SecCardGameApp {
     cards: Vec<CardContent>,
     cards_to_display: HashMap<Uuid, CardContent>,
     resources_per_round: usize,
-    input: Input
+    input: Input,
 }
 
 struct Input {
@@ -22,7 +24,7 @@ struct Input {
     pay_res: String,
     dice: DiceRange,
     error: Option<String>,
-    dice_result: Option<usize>
+    dice_result: Option<usize>,
 }
 
 struct DiceRange {
@@ -47,7 +49,7 @@ impl SecCardGameApp {
                 },
                 dice_result: None,
                 error: None,
-            }
+            },
         }
     }
 
@@ -104,7 +106,9 @@ impl SecCardGameApp {
                 ui.add_space(20.0);
                 match &self.input.error {
                     None => {}
-                    Some(e) => { ui.label(RichText::new(e).color(Color32::RED)); }
+                    Some(e) => {
+                        ui.label(RichText::new(e).color(Color32::RED));
+                    }
                 }
             });
     }
@@ -121,22 +125,22 @@ impl SecCardGameApp {
             ui.text_edit_singleline(&mut self.input.dice.max)
         });
         if ui.button("Roll").clicked() {
-            let min: usize  = self.input.dice.min.parse().unwrap_or_else(|_| 0);
+            let min: usize = self.input.dice.min.parse().unwrap_or_else(|_| 0);
             let max: usize = self.input.dice.max.parse().unwrap_or_else(|_| 0);
             let mut rng = rand::thread_rng();
             let value = if min > max {
-                rng.gen_range(max .. min)
+                rng.gen_range(max..min)
             } else if min == max {
                 min
             } else {
-                rng.gen_range(min .. max)
+                rng.gen_range(min..max)
             };
             self.input.dice_result = Some(value);
         }
         ui.add_space(5.0);
         match self.input.dice_result {
             None => ui.label(""),
-            Some(value) => ui.label(format!("You rolled {}", value))
+            Some(value) => ui.label(format!("You rolled {}", value)),
         };
     }
 
@@ -160,7 +164,6 @@ impl SecCardGameApp {
                     self.input.error = None;
                 }
             };
-
         });
     }
 
@@ -171,7 +174,11 @@ impl SecCardGameApp {
         ui.label("Gain resources ");
         let res = ui.add(egui::TextEdit::singleline(&mut self.input.next_res).interactive(true));
         if res.lost_focus() {
-            self.resources_per_round = self.input.next_res.parse().unwrap_or_else(|_| self.resources_per_round);
+            self.resources_per_round = self
+                .input
+                .next_res
+                .parse()
+                .unwrap_or_else(|_| self.resources_per_round);
         }
 
         ui.add_space(5.0);

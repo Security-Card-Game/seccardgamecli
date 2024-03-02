@@ -4,7 +4,8 @@ use std::path::PathBuf;
 
 use log::warn;
 
-use game_lib::cards::model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::card_content::Target;
+use game_lib::cards::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_cards_in_directory;
 
@@ -16,10 +17,10 @@ pub struct CardStats {
     pub incident_cards: u32,
     pub oopsie_cards: u32,
     pub lucky_cards: u32,
-    pub targets: HashMap<String, Target>,
+    pub targets: HashMap<String, TargetCounter>,
 }
 
-pub struct Target {
+pub struct TargetCounter {
     pub target: String,
     pub incident: u32,
     pub oopsie: u32,
@@ -67,18 +68,19 @@ impl CardStats {
         })
     }
 
-    fn read_targets(cfg: &Config) -> HashMap<String, Target> {
+    fn read_targets(cfg: &Config) -> HashMap<String, TargetCounter> {
         // only incident and oopsie cards have targets
         let oopsie_targets = Self::read_oopsie_targets(cfg);
         let incident_targets = Self::read_incident_targets(cfg);
         let mut result = HashMap::new();
 
         for ot in oopsie_targets {
-            if result.contains_key(&ot) {
-                let old: &Target = result.get(&ot).unwrap();
+            let key = ot.value().to_string();
+            if result.contains_key(&key) {
+                let old: &TargetCounter = result.get(&key).unwrap();
                 result.insert(
-                    ot,
-                    Target {
+                    key.clone(),
+                    TargetCounter {
                         target: old.target.clone(),
                         oopsie: old.oopsie + 1,
                         incident: old.incident,
@@ -86,9 +88,9 @@ impl CardStats {
                 );
             } else {
                 result.insert(
-                    ot.clone(),
-                    Target {
-                        target: ot.clone(),
+                    key.clone(),
+                    TargetCounter {
+                        target: key.clone(),
                         oopsie: 1,
                         incident: 0,
                     },
@@ -96,11 +98,12 @@ impl CardStats {
             }
         }
         for it in incident_targets {
-            if result.contains_key(&it) {
-                let old = result.get(&it).unwrap();
+            let key = it.value().to_string();
+            if result.contains_key(&key) {
+                let old = result.get(&key).unwrap();
                 result.insert(
-                    it,
-                    Target {
+                    key.clone(),
+                    TargetCounter {
                         target: old.target.clone(),
                         oopsie: old.oopsie,
                         incident: old.incident + 1,
@@ -108,9 +111,9 @@ impl CardStats {
                 );
             } else {
                 result.insert(
-                    it.clone(),
-                    Target {
-                        target: it.clone(),
+                    key.clone(),
+                    TargetCounter {
+                        target: key.clone(),
                         oopsie: 0,
                         incident: 1,
                     },
@@ -120,7 +123,7 @@ impl CardStats {
         result
     }
 
-    fn read_oopsie_targets(cfg: &Config) -> Vec<String> {
+    fn read_oopsie_targets(cfg: &Config) -> Vec<Target> {
         let oopsie_card = OopsieCard::empty();
         let mut path = PathBuf::from(&cfg.game_path.as_str());
         path.push(get_card_directory(&oopsie_card));
@@ -138,7 +141,7 @@ impl CardStats {
         oopsie_targets
     }
 
-    fn read_incident_targets(cfg: &Config) -> Vec<String> {
+    fn read_incident_targets(cfg: &Config) -> Vec<Target> {
         let incident_card = IncidentCard::empty();
         let mut path = PathBuf::from(&cfg.game_path.as_str());
         path.push(get_card_directory(&incident_card));

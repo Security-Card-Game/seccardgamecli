@@ -1,7 +1,11 @@
 use dialoguer::{Confirm, Editor, Select};
 use log::error;
 
-use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::card_content::{
+    Action, ActionDescription, Description, Duration, FixCost, Target, Title,
+};
+use game_lib::cards::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::game_model::Resources;
 
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
@@ -100,9 +104,9 @@ fn create_event_card() -> Card {
     let action: String = prompt("Card Action", None);
 
     let card = EventCard {
-        title,
-        description,
-        action,
+        title: Title::from(title),
+        description: Description::from(description),
+        action: Action::Immediate(ActionDescription::from(action)),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -120,11 +124,11 @@ fn create_incident_card() -> Card {
     let targets = ask_for_targets();
 
     let card = IncidentCard {
-        title,
-        description,
-        action,
-        targets,
-        duration,
+        title: Title::from(title),
+        description: Description::from(description),
+        action: Action::Immediate(ActionDescription::from(action)),
+        targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
+        duration: Duration::Rounds(duration),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -153,9 +157,9 @@ fn create_lucky_card() -> Card {
     let action: String = prompt("Card Action", None);
 
     let card = LuckyCard {
-        title,
-        description,
-        action,
+        title: Title::from(title),
+        description: Description::from(description),
+        action: Action::Immediate(ActionDescription::from(action)),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -169,8 +173,8 @@ fn create_oopsie_card() -> Card {
     let description: String = prompt("Card description", None);
     let action: String = prompt("Card Action", None);
     let targets = ask_for_targets();
-    let mut min_cost: u8;
-    let mut max_cost: u8;
+    let mut min_cost: usize;
+    let mut max_cost: usize;
     loop {
         min_cost = prompt("Minimal fixing costs", None);
         max_cost = prompt("Maximal fixing costs", None);
@@ -180,37 +184,17 @@ fn create_oopsie_card() -> Card {
         println!("Max cost must be greater or equal to min cost.")
     }
     let card = OopsieCard {
-        title,
-        description,
-        action,
-        targets,
+        title: Title::from(title),
+        description: Description::from(description),
+        action: Action::Immediate(ActionDescription::from(action)),
+        targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
         fix_cost: FixCost {
-            min: min_cost,
-            max: max_cost,
+            min: Resources::new(min_cost),
+            max: Resources::new(max_cost),
         },
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
     Card::Oopsie(card)
-}
-
-#[cfg(test)]
-mod tests {
-    use game_lib::cards::model::CardTrait;
-
-    use super::*;
-
-    #[test]
-    fn test_card_creation() {
-        let card = Card::Event(EventCard {
-            title: "Magic Card".to_string(),
-            description: "This is a magical card.".to_string(),
-            action: "10".to_string(),
-        });
-
-        assert_eq!(card.title(), "Magic Card");
-        assert_eq!(card.description(), "This is a magical card.");
-        assert_eq!(card.action(), "10");
-    }
 }

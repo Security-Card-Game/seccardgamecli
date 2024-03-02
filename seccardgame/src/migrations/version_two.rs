@@ -1,7 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
 
-use game_lib::cards::model::{Card, CardTrait, IncidentCard};
+use game_lib::cards::card_content::Duration;
+use game_lib::cards::card_model::{Card, CardTrait, IncidentCard};
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
 use game_lib::file::general::get_files_in_directory_with_filter;
 
@@ -36,7 +37,7 @@ where
             description: old_card.description,
             targets: old_card.targets,
             action: old_card.action,
-            duration: 3,
+            duration: Duration::Rounds(3),
         });
         fs::remove_file(card).unwrap();
         write_data_to_file(&new_card, PathBuf::from(card).as_path())

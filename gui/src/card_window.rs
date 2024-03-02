@@ -73,7 +73,7 @@ where
         match &card.costs {
             None => {}
             Some(cost) => {
-                let content = format!("{} to {} resources", cost.min, cost.max);
+                let content = format!("{} to {} resources", cost.min.value(), cost.max.value());
                 add_explanation("Fix:      ", content.as_str(), ui);
             }
         };

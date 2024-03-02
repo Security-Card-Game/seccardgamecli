@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::cards::card_content::{Action, Description, Duration, FixCost, Target, Title};
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type")]
@@ -26,98 +28,92 @@ impl Card {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EventCard {
-    pub title: String,
-    pub description: String,
-    pub action: String,
+    pub title: Title,
+    pub description: Description,
+    pub action: Action,
 }
 
 impl EventCard {
     pub fn empty() -> Card {
         Card::Event(EventCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            action: "".to_string(),
+            title: Title::empty(),
+            description: Description::empty(),
+            action: Action::NOP,
         })
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct IncidentCard {
-    pub title: String,
-    pub description: String,
-    pub targets: Vec<String>,
-    pub action: String,
+    pub title: Title,
+    pub description: Description,
+    pub targets: Vec<Target>,
+    pub action: Action,
     #[serde(default)]
-    pub duration: usize,
+    pub duration: Duration,
 }
 
 impl IncidentCard {
     pub fn empty() -> Card {
         Card::Incident(IncidentCard {
-            title: "".to_string(),
-            description: "".to_string(),
+            title: Title::empty(),
+            description: Description::empty(),
             targets: vec![],
-            action: "".to_string(),
-            duration: 0,
+            action: Action::default(),
+            duration: Duration::default(),
         })
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LuckyCard {
-    pub title: String,
-    pub description: String,
-    pub action: String,
+    pub title: Title,
+    pub description: Description,
+    pub action: Action,
 }
 
 impl LuckyCard {
     pub fn empty() -> Card {
         Card::Lucky(LuckyCard {
-            title: "".to_string(),
-            description: "".to_string(),
-            action: "".to_string(),
+            title: Title::empty(),
+            description: Description::empty(),
+            action: Action::default(),
         })
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct FixCost {
-    pub min: u8,
-    pub max: u8,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OopsieCard {
-    pub title: String,
-    pub description: String,
-    pub targets: Vec<String>,
-    pub action: String,
+    pub title: Title,
+    pub description: Description,
+    pub targets: Vec<Target>,
+    pub action: Action,
     pub fix_cost: FixCost,
 }
 
 impl OopsieCard {
     pub fn empty() -> Card {
         Card::Oopsie(OopsieCard {
-            title: "".to_string(),
-            description: "".to_string(),
+            title: Title::empty(),
+            description: Description::empty(),
             targets: vec![],
-            action: "".to_string(),
-            fix_cost: FixCost { min: 0, max: 0 },
+            action: Action::default(),
+            fix_cost: FixCost::default(),
         })
     }
 }
 
 pub trait CardTrait {
-    fn title(&self) -> &String;
-    fn description(&self) -> &String;
-    fn action(&self) -> &String;
+    fn title(&self) -> &Title;
+    fn description(&self) -> &Description;
+    fn action(&self) -> &Action;
     fn category(&self) -> &str;
 
     fn as_enum(&self) -> Card;
 }
 
 impl CardTrait for Card {
-    fn title(&self) -> &String {
+    fn title(&self) -> &Title {
         match self {
             Card::Event(card) => &card.title,
             Card::Incident(card) => &card.title,
@@ -126,7 +122,7 @@ impl CardTrait for Card {
         }
     }
 
-    fn description(&self) -> &String {
+    fn description(&self) -> &Description {
         match self {
             Card::Event(card) => &card.description,
             Card::Incident(card) => &card.description,
@@ -135,7 +131,7 @@ impl CardTrait for Card {
         }
     }
 
-    fn action(&self) -> &String {
+    fn action(&self) -> &Action {
         match self {
             Card::Event(card) => &card.action,
             Card::Incident(card) => &card.action,

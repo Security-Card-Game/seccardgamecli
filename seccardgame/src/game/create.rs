@@ -6,7 +6,9 @@ use dialoguer::Input;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
-use game_lib::cards::model::{Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::card_model::{
+    Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard,
+};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::get_files_in_directory_with_filter;
 

@@ -1,7 +1,8 @@
 use eframe::epaint::Color32;
 use uuid::Uuid;
 
-use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::card_content::{Action, FixCost, Target};
+use game_lib::cards::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 
 pub struct CardContent {
     pub id: Uuid,
@@ -37,13 +38,28 @@ impl CardContent {
             id,
             dark_color: Color32::LIGHT_BLUE,
             light_color: Color32::DARK_BLUE,
-            label: card.title,
-            description: card.description,
-            action: card.action,
+            label: card.title.value().to_string(),
+            description: card.description.value().to_string(),
+            action: Self::action_to_text(card.action),
             targets: None,
             costs: None,
             duration: None,
         }
+    }
+
+    fn action_to_text(action: Action) -> String {
+        match action {
+            Action::Immediate(d) => d.value().to_string(),
+            Action::OnTargetAvailable(d) => d.value().to_string(),
+            Action::OnNextFix(d, m) => format!("{} {}", d.value(), m.value()),
+            Action::OnUsingForFix(d, m) => format!("{} {}", d.value(), m.value()),
+            Action::Other(d) => d.value().to_string(),
+            Action::NOP => "".to_string(),
+        }
+    }
+
+    fn targets_to_strings(targets: Vec<Target>) -> Vec<String> {
+        targets.iter().map(|i| i.value().to_string()).collect()
     }
 
     fn incident_card_content(card: IncidentCard) -> CardContent {
@@ -52,12 +68,12 @@ impl CardContent {
             id,
             dark_color: Color32::LIGHT_RED,
             light_color: Color32::DARK_RED,
-            label: card.title,
-            description: card.description,
-            action: card.action,
-            targets: Some(card.targets),
+            label: card.title.value().to_string(),
+            description: card.description.value().to_string(),
+            action: Self::action_to_text(card.action),
+            targets: Some(Self::targets_to_strings(card.targets)),
             costs: None,
-            duration: Some(card.duration),
+            duration: Some(card.duration.value().unwrap_or(&0).clone()),
         }
     }
 
@@ -67,10 +83,10 @@ impl CardContent {
             id,
             dark_color: Color32::YELLOW,
             light_color: Color32::DARK_GRAY,
-            label: card.title,
-            description: card.description,
-            action: card.action,
-            targets: Some(card.targets),
+            label: card.title.value().to_string(),
+            description: card.description.value().to_string(),
+            action: Self::action_to_text(card.action),
+            targets: Some(Self::targets_to_strings(card.targets)),
             costs: Some(card.fix_cost),
             duration: None,
         }
@@ -82,9 +98,9 @@ impl CardContent {
             id,
             dark_color: Color32::GREEN,
             light_color: Color32::DARK_GREEN,
-            label: card.title,
-            description: card.description,
-            action: card.action,
+            label: card.title.value().to_string(),
+            description: card.description.value().to_string(),
+            action: Self::action_to_text(card.action),
             targets: None,
             costs: None,
             duration: None,
