@@ -25,10 +25,10 @@ impl Card {
     pub const LUCKY_CARD: &'static str = "Lucky";
 
     pub const CARD_TYPES: [&'static str; 4] = [
-        Self::EVENT_CARD,
         Self::ATTACK_CARD,
-        Self::OOPSIE_CARD,
+        Self::EVENT_CARD,
         Self::LUCKY_CARD,
+        Self::OOPSIE_CARD,
     ];
 }
 
