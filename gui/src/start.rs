@@ -1,8 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-
 use egui::Vec2;
-use game_lib::cards::model::Card;
+
+use game_lib::cards::types::card_model::Card;
+
 use crate::SecCardGameApp;
 
 // When compiling natively:
@@ -24,4 +25,3 @@ pub fn run(deck: Vec<Card>) -> eframe::Result<()> {
         Box::new(|cc| Box::new(SecCardGameApp::new(cc, deck))),
     )
 }
-

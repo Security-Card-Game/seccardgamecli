@@ -2,6 +2,16 @@
 
 ## next release
 
+## 0.4.2
+
+* Renames Incidents to Attack cards
+* Renames Action to Effect
+* Introduces fix cost modifying effects for lucky and event card
+* Major refactoring of game model types
+* [MIGRATION] Migrates cards from v1 and v2 to v3, also moves incident cards to attacks directory
+    * use the `migration version3` to migrate the game directory
+    * make sure your cards are at least version1 (version0 to version1 may not be working anymore, sorry)
+
 ## 0.4.1
 
 * [GUI] adds duration to incidents/attacks

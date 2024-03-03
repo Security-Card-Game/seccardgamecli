@@ -5,8 +5,12 @@ use std::path::PathBuf;
 use dialoguer::Input;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
+use game_lib::cards::types::attack::AttackCard;
+use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
 
-use game_lib::cards::model::{Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::get_files_in_directory_with_filter;
 
@@ -27,10 +31,10 @@ fn get_number_of_cards(prompt: &str) -> u8 {
 }
 
 pub fn create_deck(deck_path: String, config: &Config) -> CliResult<()> {
-    let event_card_count = get_number_of_cards("Enter number of event cards");
-    let incident_card_count = get_number_of_cards("Enter number of incident cards");
+    let event_card_count = get_number_of_cards("Enter number of event types");
+    let incident_card_count = get_number_of_cards("Enter number of attack types");
     let oopsie_card_count = get_number_of_cards("Enter number of oopsies");
-    let lucky_card_count = get_number_of_cards("Enter number of lucky cards");
+    let lucky_card_count = get_number_of_cards("Enter number of lucky types");
 
     let card_counts = CardCounts {
         events: event_card_count as usize,
@@ -67,11 +71,11 @@ fn write_cards_to_deck(deck: Vec<OsString>, path: String) -> CliResult<()> {
 }
 
 fn draw_cards(config: &&Config, card_counts: CardCounts) -> Result<Vec<OsString>, CliError> {
-    log::info!("Drawing cards");
+    log::info!("Drawing types");
 
     println!();
     println!(
-        "You are about to create a deck with {} cards in total.",
+        "You are about to create a deck with {} types in total.",
         card_counts.total
     );
     println!(
@@ -82,7 +86,7 @@ fn draw_cards(config: &&Config, card_counts: CardCounts) -> Result<Vec<OsString>
 
     let event_cards = get_cards(EventCard::empty(), card_counts.events, &config.game_path)?;
     let incident_cards = get_cards(
-        IncidentCard::empty(),
+        AttackCard::empty(),
         card_counts.incidents,
         &config.game_path,
     )?;
@@ -129,7 +133,7 @@ fn prepare_deck(
 }
 
 fn get_cards(card_type: Card, card_count: usize, game_path: &String) -> CliResult<Vec<OsString>> {
-    dbg!("Getting cards for {}", card_type.category());
+    dbg!("Getting types for {}", card_type.category());
     let card_path = get_card_directory(&card_type);
     let mut path = PathBuf::from(game_path);
     path.push(card_path);
@@ -144,7 +148,7 @@ fn get_cards(card_type: Card, card_count: usize, game_path: &String) -> CliResul
         })?;
 
     log::info!(
-        "Found {} {} cards",
+        "Found {} {} types",
         cards_total.len(),
         card_type.category().to_lowercase()
     );
@@ -152,7 +156,7 @@ fn get_cards(card_type: Card, card_count: usize, game_path: &String) -> CliResul
     let mut x = 0;
     let mut cards = vec![];
     while x < card_count {
-        let card_to_include = rand::thread_rng().gen_range(0..cards_total.len());
+        let card_to_include = thread_rng().gen_range(0..cards_total.len());
         cards.push(cards_total[card_to_include].clone());
         x += 1;
     }

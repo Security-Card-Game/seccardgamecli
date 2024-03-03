@@ -1,7 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
 
-use game_lib::cards::model::{Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::types::attack::AttackCard;
+use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
+
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
 use game_lib::file::general::get_files_in_directory_with_filter;
 
@@ -11,7 +16,7 @@ use crate::cli::config::Config;
 pub fn convert(config: &Config) -> CliResult<()> {
     convert_cards(EventCard::empty(), &config.game_path);
     convert_cards(OopsieCard::empty(), &config.game_path);
-    convert_cards(IncidentCard::empty(), &config.game_path);
+    convert_cards(AttackCard::empty(), &config.game_path);
     convert_cards(LuckyCard::empty(), &config.game_path);
 
     Ok(())
@@ -36,8 +41,8 @@ where
             Card::Event(_) => {
                 Card::Event(serde_json::from_str::<EventCard>(content.as_str()).unwrap())
             }
-            Card::Incident(_) => {
-                Card::Incident(serde_json::from_str::<IncidentCard>(content.as_str()).unwrap())
+            Card::Attack(_) => {
+                Card::Attack(serde_json::from_str::<AttackCard>(content.as_str()).unwrap())
             }
             Card::Oopsie(_) => {
                 Card::Oopsie(serde_json::from_str::<OopsieCard>(content.as_str()).unwrap())

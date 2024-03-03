@@ -1,7 +1,20 @@
 use dialoguer::{Confirm, Editor, Select};
+use game_lib::cards::properties::description::Description;
+use game_lib::cards::properties::duration::Duration;
+use game_lib::cards::properties::effect::Effect;
+use game_lib::cards::properties::effect_description::EffectDescription;
+use game_lib::cards::properties::fix_cost::FixCost;
+use game_lib::cards::properties::fix_modifier::FixModifier;
+use game_lib::cards::properties::target::Target;
+use game_lib::cards::properties::title::Title;
+use game_lib::cards::types::attack::AttackCard;
+use game_lib::cards::types::card_model::Card;
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
 use log::error;
 
-use game_lib::cards::model::{Card, EventCard, FixCost, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::world::resources::Resources;
 
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
@@ -60,7 +73,7 @@ fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
 fn deserialize_editor_content(content: String, original_card: &Card) -> serde_json::Result<Card> {
     match original_card {
         Card::Event(_) => serde_json::from_str(content.as_str()).map(|c| Card::Event(c)),
-        Card::Incident(_) => serde_json::from_str(content.as_str()).map(|c| Card::Incident(c)),
+        Card::Attack(_) => serde_json::from_str(content.as_str()).map(|c| Card::Attack(c)),
         Card::Oopsie(_) => serde_json::from_str(content.as_str()).map(|c| Card::Oopsie(c)),
         Card::Lucky(_) => serde_json::from_str(content.as_str()).map(|c| Card::Lucky(c)),
     }
@@ -78,7 +91,7 @@ pub fn create(cfg: &Config) -> CliResult<()> {
 
     let card = match Card::CARD_TYPES[card_type_index] {
         Card::EVENT_CARD => create_event_card(),
-        Card::INCIDENT_CARD => create_incident_card(),
+        Card::ATTACK_CARD => create_attack_card(),
         Card::LUCKY_CARD => create_lucky_card(),
         Card::OOPSIE_CARD => create_oopsie_card(),
         _ => {
@@ -97,12 +110,13 @@ fn create_event_card() -> Card {
     println!("Create a new Event Card");
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
-    let action: String = prompt("Card Action", None);
+
+    let effect = ask_for_modifying_effect();
 
     let card = EventCard {
-        title,
-        description,
-        action,
+        title: Title::from(title),
+        description: Description::from(description),
+        effect,
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -110,26 +124,60 @@ fn create_event_card() -> Card {
     Card::Event(card)
 }
 
-fn create_incident_card() -> Card {
-    println!("Create a new Incident Card");
+fn ask_for_modifying_effect() -> Effect {
+    let effect_desc: String = prompt("Card Effect", None);
+    let description = EffectDescription::new(&effect_desc);
+
+    if Confirm::new()
+        .with_prompt("Does this card alter fix costs?")
+        .interact()
+        .unwrap()
+    {
+        let time_point = ["next fix", "when used"];
+        let selection = Select::new()
+            .with_prompt("When does it alter it?")
+            .items(&time_point)
+            .default(0)
+            .interact()
+            .unwrap();
+
+        let amount: isize = prompt("How much does it affect it?", None);
+        let fix_modifier = if amount >= 0 {
+            FixModifier::Increase(Resources::new(amount.abs() as usize))
+        } else {
+            FixModifier::Decrease(Resources::new(amount.abs() as usize))
+        };
+
+        match selection {
+            0 => Effect::OnNextFix(description, fix_modifier.clone()),
+            1 => Effect::OnUsingForFix(description, fix_modifier.clone()),
+            _ => Effect::Other(description),
+        }
+    } else {
+        Effect::Other(description)
+    }
+}
+
+fn create_attack_card() -> Card {
+    println!("Create a new Attack Card");
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
-    let action: String = prompt("Card Action", None);
+    let effect: String = prompt("Card Effect", None);
     let duration: usize = prompt("Duration (rounds)", None);
 
     let targets = ask_for_targets();
 
-    let card = IncidentCard {
-        title,
-        description,
-        action,
-        targets,
-        duration,
-    };
+    let card = AttackCard::new(
+        Title::from(title),
+        Description::from(description),
+        targets.iter().map(|t| Target::from(t.clone())).collect(),
+        EffectDescription::from(effect),
+        Duration::Rounds(duration),
+    );
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
-    Card::Incident(card)
+    Card::Attack(card)
 }
 
 fn ask_for_targets() -> Vec<String> {
@@ -150,12 +198,12 @@ fn create_lucky_card() -> Card {
     println!("Create a new Lucky Card");
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
-    let action: String = prompt("Card Action", None);
+    let effect = ask_for_modifying_effect();
 
     let card = LuckyCard {
-        title,
-        description,
-        action,
+        title: Title::from(title),
+        description: Description::from(description),
+        effect
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -167,10 +215,10 @@ fn create_oopsie_card() -> Card {
     println!("Create a new Oopsie Card");
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
-    let action: String = prompt("Card Action", None);
+    let effect: String = prompt("Card Effect", None);
     let targets = ask_for_targets();
-    let mut min_cost: u8;
-    let mut max_cost: u8;
+    let mut min_cost: usize;
+    let mut max_cost: usize;
     loop {
         min_cost = prompt("Minimal fixing costs", None);
         max_cost = prompt("Maximal fixing costs", None);
@@ -179,38 +227,18 @@ fn create_oopsie_card() -> Card {
         }
         println!("Max cost must be greater or equal to min cost.")
     }
-    let card = OopsieCard {
-        title,
-        description,
-        action,
-        targets,
-        fix_cost: FixCost {
-            min: min_cost,
-            max: max_cost,
+    let card = OopsieCard::new(
+        Title::from(title),
+        Description::from(description),
+        targets.iter().map(|t| Target::from(t.clone())).collect(),
+        EffectDescription::from(effect),
+        FixCost {
+            min: Resources::new(min_cost),
+            max: Resources::new(max_cost),
         },
-    };
+    );
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
     Card::Oopsie(card)
-}
-
-#[cfg(test)]
-mod tests {
-    use game_lib::cards::model::CardTrait;
-
-    use super::*;
-
-    #[test]
-    fn test_card_creation() {
-        let card = Card::Event(EventCard {
-            title: "Magic Card".to_string(),
-            description: "This is a magical card.".to_string(),
-            action: "10".to_string(),
-        });
-
-        assert_eq!(card.title(), "Magic Card");
-        assert_eq!(card.description(), "This is a magical card.");
-        assert_eq!(card.action(), "10");
-    }
 }

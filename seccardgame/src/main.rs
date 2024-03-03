@@ -30,7 +30,7 @@ fn cli() -> Command {
         .allow_external_subcommands(true)
         .subcommand(
             Command::new("init")
-                .about("Initializes the cards and writes config")
+                .about("Initializes the types and writes config")
                 .arg_required_else_help(false)
                 .arg(Arg::new("path").default_missing_value("game")),
         )
@@ -70,7 +70,7 @@ fn cli() -> Command {
                 .subcommand_required(true)
                 .arg_required_else_help(true)
                 .subcommand(Command::new("version1").about("Migrates to version 1"))
-                .subcommand(Command::new("version2").about("Migrates from v1 to v2")),
+                .subcommand(Command::new("version3").about("Migrates from v1 to v3")),
         )
 }
 
@@ -141,7 +141,7 @@ fn handle_commands() -> CliResult<()> {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
                 Some(("version1", _)) => version_one::convert(&config),
-                Some(("version2", _)) => version_two::convert(&config),
+                Some(("version3", _)) => version_three::convert(&config),
                 _ => {
                     println!("Unknown command!");
                     exit(-1)
@@ -156,5 +156,5 @@ fn handle_commands() -> CliResult<()> {
 }
 
 fn load_config(cfg: String) -> Config {
-    cli::config::Config::read_config(cfg.as_str())
+    Config::read_config(cfg.as_str())
 }
