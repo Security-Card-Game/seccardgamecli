@@ -1,8 +1,8 @@
 use eframe::epaint::Color32;
 use uuid::Uuid;
 
-use game_lib::cards::card_content::{Action, FixCost, Target};
-use game_lib::cards::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::properties::card_content::{Action, FixCost, Target};
+use game_lib::cards::types::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 
 pub struct CardContent {
     pub id: Uuid,

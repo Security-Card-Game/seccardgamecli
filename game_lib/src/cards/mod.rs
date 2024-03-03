@@ -1,4 +1,6 @@
-pub mod card_content;
-pub mod card_model;
+pub mod properties;
+pub(crate) mod serialization;
+pub mod types;
+pub mod world;
+
 pub mod errors;
-pub mod game_model;

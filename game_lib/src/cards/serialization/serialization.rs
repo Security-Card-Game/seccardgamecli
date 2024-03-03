@@ -3,10 +3,10 @@ use std::fmt;
 use std::marker::PhantomData;
 
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
-use crate::cards::card_content::{Action, ActionDescription, Description, FixModifier, Target, Title};
-use crate::cards::game_model::Resources;
+use crate::cards::properties::card_content::{ActionDescription, Description, FixModifier, Target, Title};
+use crate::cards::world::game_model::Resources;
 
-struct StrVisitor<T>(std::marker::PhantomData<T>);
+struct StrVisitor<T>(PhantomData<T>);
 
 impl<'de, T> Visitor<'de> for StrVisitor<T>
 where
@@ -160,7 +160,7 @@ impl<'de> Deserialize<'de> for Resources {
 }
 
 impl Number for Resources {
-    fn from_i64(value: i64) -> Self {
+    fn from_i64(_value: i64) -> Self {
         panic!("Must be positive value")
     }
 

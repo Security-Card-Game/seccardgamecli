@@ -2,7 +2,7 @@
 
 use egui::Vec2;
 
-use game_lib::cards::card_model::Card;
+use game_lib::cards::types::card_model::Card;
 
 use crate::SecCardGameApp;
 

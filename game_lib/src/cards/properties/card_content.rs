@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::cards::errors::{ErrorKind, ModelError};
-use crate::cards::game_model::Resources;
+use crate::cards::world::game_model::Resources;
 
 #[derive(Debug, Clone)]
 pub struct Title(String);

@@ -4,8 +4,8 @@ use std::path::PathBuf;
 
 use log::warn;
 
-use game_lib::cards::card_content::Target;
-use game_lib::cards::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::properties::card_content::Target;
+use game_lib::cards::types::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_cards_in_directory;
 
@@ -69,7 +69,7 @@ impl CardStats {
     }
 
     fn read_targets(cfg: &Config) -> HashMap<String, TargetCounter> {
-        // only incident and oopsie cards have targets
+        // only incident and oopsie types have targets
         let oopsie_targets = Self::read_oopsie_targets(cfg);
         let incident_targets = Self::read_incident_targets(cfg);
         let mut result = HashMap::new();

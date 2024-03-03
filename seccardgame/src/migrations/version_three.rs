@@ -1,9 +1,8 @@
-use serde_json::{Number, Value};
+use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
 
-use game_lib::cards::card_content::Duration;
-use game_lib::cards::card_model::{
+use game_lib::cards::types::card_model::{
     Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard,
 };
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
@@ -60,11 +59,11 @@ where
             let min = &map["min"];
             let max = &map["max"];
 
-            let mut mapFix = serde_json::Map::new();
+            let mut map_fix = serde_json::Map::new();
 
-            mapFix.insert("max".to_string(), max.clone());
-            mapFix.insert("min".to_string(), min.clone());
-            v["fix_cost"] = Value::Object(mapFix.clone());
+            map_fix.insert("max".to_string(), max.clone());
+            map_fix.insert("min".to_string(), min.clone());
+            v["fix_cost"] = Value::Object(map_fix.clone());
         }
         println!("{}", serde_json::to_string_pretty(&v).unwrap());
         let card_content: Card = match card_type.as_enum() {

@@ -1,7 +1,7 @@
 use std::ffi::OsString;
 use std::fs;
 
-use game_lib::cards::card_model::Card;
+use game_lib::cards::types::card_model::Card;
 use game_lib::file::general::get_files_in_directory_with_filter;
 
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};

@@ -1,11 +1,11 @@
 use dialoguer::{Confirm, Editor, Select};
 use log::error;
 
-use game_lib::cards::card_content::{
+use game_lib::cards::properties::card_content::{
     Action, ActionDescription, Description, Duration, FixCost, Target, Title,
 };
-use game_lib::cards::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
-use game_lib::cards::game_model::Resources;
+use game_lib::cards::types::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
+use game_lib::cards::world::game_model::Resources;
 
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;

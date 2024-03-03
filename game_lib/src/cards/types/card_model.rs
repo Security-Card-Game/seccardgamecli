@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::cards::card_content::{Action, Description, Duration, FixCost, Target, Title};
+use crate::cards::properties::card_content::{Action, Description, Duration, FixCost, Target, Title};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]

@@ -30,13 +30,13 @@ fn cli() -> Command {
         .allow_external_subcommands(true)
         .subcommand(
             Command::new("init")
-                .about("Initializes the cards and writes config")
+                .about("Initializes the types and writes config")
                 .arg_required_else_help(false)
                 .arg(Arg::new("path").default_missing_value("game")),
         )
         .subcommand(
-            Command::new("cards")
-                .about("Operate on cards")
+            Command::new("types")
+                .about("Operate on types")
                 .subcommand_required(true)
                 .arg_required_else_help(true)
                 .subcommand(
@@ -105,7 +105,7 @@ fn handle_commands() -> CliResult<()> {
             };
             init(cfg_init)
         }
-        Some(("cards", sub_matches)) => {
+        Some(("types", sub_matches)) => {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
                 Some(("create", _)) => cards::crud::create(&config),

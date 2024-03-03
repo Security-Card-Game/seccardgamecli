@@ -4,7 +4,7 @@ use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use uuid::Uuid;
 
-use game_lib::cards::card_model::Card;
+use game_lib::cards::types::card_model::Card;
 
 use crate::card::{to_ui_deck, CardContent};
 use crate::card_window::display_card;
