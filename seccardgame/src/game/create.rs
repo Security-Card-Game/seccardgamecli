@@ -5,10 +5,12 @@ use std::path::PathBuf;
 use dialoguer::Input;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
+use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
 
-use game_lib::cards::types::card_model::{
-    Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard,
-};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::get_files_in_directory_with_filter;
 
@@ -154,7 +156,7 @@ fn get_cards(card_type: Card, card_count: usize, game_path: &String) -> CliResul
     let mut x = 0;
     let mut cards = vec![];
     while x < card_count {
-        let card_to_include = rand::thread_rng().gen_range(0..cards_total.len());
+        let card_to_include = thread_rng().gen_range(0..cards_total.len());
         cards.push(cards_total[card_to_include].clone());
         x += 1;
     }

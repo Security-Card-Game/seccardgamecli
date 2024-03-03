@@ -1,8 +1,9 @@
 use std::fs;
 use std::path::PathBuf;
+use game_lib::cards::properties::duration::Duration;
+use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::card_model::{Card, CardTrait};
 
-use game_lib::cards::properties::card_content::Duration;
-use game_lib::cards::types::card_model::{Card, CardTrait, IncidentCard};
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
 use game_lib::file::general::get_files_in_directory_with_filter;
 

@@ -1,1 +1,1 @@
-pub mod game_model;
+pub mod resources;

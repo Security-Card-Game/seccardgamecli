@@ -1,11 +1,19 @@
 use dialoguer::{Confirm, Editor, Select};
 use log::error;
+use game_lib::cards::properties::description::Description;
+use game_lib::cards::properties::duration::Duration;
+use game_lib::cards::properties::effect::Effect;
+use game_lib::cards::properties::effect_description::EffectDescription;
+use game_lib::cards::properties::fix_cost::FixCost;
+use game_lib::cards::properties::target::Target;
+use game_lib::cards::properties::title::Title;
+use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::card_model::Card;
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
 
-use game_lib::cards::properties::card_content::{
-    Action, ActionDescription, Description, Duration, FixCost, Target, Title,
-};
-use game_lib::cards::types::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
-use game_lib::cards::world::game_model::Resources;
+use game_lib::cards::world::resources::Resources;
 
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
@@ -106,7 +114,7 @@ fn create_event_card() -> Card {
     let card = EventCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Action::Immediate(ActionDescription::from(action)),
+        action: Effect::Immediate(EffectDescription::from(action)),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -126,7 +134,7 @@ fn create_incident_card() -> Card {
     let card = IncidentCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Action::Immediate(ActionDescription::from(action)),
+        action: Effect::Immediate(EffectDescription::from(action)),
         targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
         duration: Duration::Rounds(duration),
     };
@@ -159,7 +167,7 @@ fn create_lucky_card() -> Card {
     let card = LuckyCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Action::Immediate(ActionDescription::from(action)),
+        action: Effect::Immediate(EffectDescription::from(action)),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -186,7 +194,7 @@ fn create_oopsie_card() -> Card {
     let card = OopsieCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Action::Immediate(ActionDescription::from(action)),
+        action: Effect::Immediate(EffectDescription::from(action)),
         targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
         fix_cost: FixCost {
             min: Resources::new(min_cost),

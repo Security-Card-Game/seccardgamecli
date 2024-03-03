@@ -1,9 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
 
-use game_lib::cards::types::card_model::{
-    Card, CardTrait, EventCard, IncidentCard, LuckyCard, OopsieCard,
-};
+use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
+
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
 use game_lib::file::general::get_files_in_directory_with_filter;
 

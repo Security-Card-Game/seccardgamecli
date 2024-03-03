@@ -3,9 +3,13 @@ use std::fs;
 use std::path::PathBuf;
 
 use log::warn;
+use game_lib::cards::properties::target::Target;
+use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::card_model::Card;
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
 
-use game_lib::cards::properties::card_content::Target;
-use game_lib::cards::types::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_cards_in_directory;
 

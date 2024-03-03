@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
+use crate::cards::properties::description::Description;
+use crate::cards::properties::effect::Effect;
+use crate::cards::properties::title::Title;
+use crate::cards::types::attack::IncidentCard;
+use crate::cards::types::event::EventCard;
+use crate::cards::types::lucky::LuckyCard;
+use crate::cards::types::oopsie::OopsieCard;
 
-use crate::cards::properties::card_content::{Action, Description, Duration, FixCost, Target, Title};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -26,87 +32,10 @@ impl Card {
     ];
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct EventCard {
-    pub title: Title,
-    pub description: Description,
-    pub action: Action,
-}
-
-impl EventCard {
-    pub fn empty() -> Card {
-        Card::Event(EventCard {
-            title: Title::empty(),
-            description: Description::empty(),
-            action: Action::NOP,
-        })
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct IncidentCard {
-    pub title: Title,
-    pub description: Description,
-    pub targets: Vec<Target>,
-    pub action: Action,
-    #[serde(default)]
-    pub duration: Duration,
-}
-
-impl IncidentCard {
-    pub fn empty() -> Card {
-        Card::Incident(IncidentCard {
-            title: Title::empty(),
-            description: Description::empty(),
-            targets: vec![],
-            action: Action::default(),
-            duration: Duration::default(),
-        })
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct LuckyCard {
-    pub title: Title,
-    pub description: Description,
-    pub action: Action,
-}
-
-impl LuckyCard {
-    pub fn empty() -> Card {
-        Card::Lucky(LuckyCard {
-            title: Title::empty(),
-            description: Description::empty(),
-            action: Action::default(),
-        })
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OopsieCard {
-    pub title: Title,
-    pub description: Description,
-    pub targets: Vec<Target>,
-    pub action: Action,
-    pub fix_cost: FixCost,
-}
-
-impl OopsieCard {
-    pub fn empty() -> Card {
-        Card::Oopsie(OopsieCard {
-            title: Title::empty(),
-            description: Description::empty(),
-            targets: vec![],
-            action: Action::default(),
-            fix_cost: FixCost::default(),
-        })
-    }
-}
-
 pub trait CardTrait {
     fn title(&self) -> &Title;
     fn description(&self) -> &Description;
-    fn action(&self) -> &Action;
+    fn action(&self) -> &Effect;
     fn category(&self) -> &str;
 
     fn as_enum(&self) -> Card;
@@ -131,7 +60,7 @@ impl CardTrait for Card {
         }
     }
 
-    fn action(&self) -> &Action {
+    fn action(&self) -> &Effect {
         match self {
             Card::Event(card) => &card.action,
             Card::Incident(card) => &card.action,

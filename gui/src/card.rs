@@ -1,8 +1,14 @@
 use eframe::epaint::Color32;
 use uuid::Uuid;
+use game_lib::cards::properties::effect::Effect;
+use game_lib::cards::properties::fix_cost::FixCost;
+use game_lib::cards::properties::target::Target;
+use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::card_model::Card;
+use game_lib::cards::types::event::EventCard;
+use game_lib::cards::types::lucky::LuckyCard;
+use game_lib::cards::types::oopsie::OopsieCard;
 
-use game_lib::cards::properties::card_content::{Action, FixCost, Target};
-use game_lib::cards::types::card_model::{Card, EventCard, IncidentCard, LuckyCard, OopsieCard};
 
 pub struct CardContent {
     pub id: Uuid,
@@ -47,14 +53,14 @@ impl CardContent {
         }
     }
 
-    fn action_to_text(action: Action) -> String {
+    fn action_to_text(action: Effect) -> String {
         match action {
-            Action::Immediate(d) => d.value().to_string(),
-            Action::OnTargetAvailable(d) => d.value().to_string(),
-            Action::OnNextFix(d, m) => format!("{} {}", d.value(), m.value()),
-            Action::OnUsingForFix(d, m) => format!("{} {}", d.value(), m.value()),
-            Action::Other(d) => d.value().to_string(),
-            Action::NOP => "".to_string(),
+            Effect::Immediate(d) => d.value().to_string(),
+            Effect::OnTargetAvailable(d) => d.value().to_string(),
+            Effect::OnNextFix(d, m) => format!("{} {}", d.value(), m.value()),
+            Effect::OnUsingForFix(d, m) => format!("{} {}", d.value(), m.value()),
+            Effect::Other(d) => d.value().to_string(),
+            Effect::NOP => "".to_string(),
         }
     }
 
