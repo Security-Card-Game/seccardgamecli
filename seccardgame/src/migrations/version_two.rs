@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use game_lib::cards::properties::duration::Duration;
-use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
 
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
@@ -11,7 +11,7 @@ use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
 
 pub fn convert(config: &Config) -> CliResult<()> {
-    convert_cards(IncidentCard::empty(), &config.game_path);
+    convert_cards(AttackCard::empty(), &config.game_path);
 
     Ok(())
 }
@@ -31,13 +31,13 @@ where
                 original_message: None,
             })
             .unwrap();
-        let old_card: IncidentCard =
-            serde_json::from_str::<IncidentCard>(content.as_str()).unwrap();
-        let new_card: Card = Card::Incident(IncidentCard {
+        let old_card: AttackCard =
+            serde_json::from_str::<AttackCard>(content.as_str()).unwrap();
+        let new_card: Card = Card::Attack(AttackCard {
             title: old_card.title,
             description: old_card.description,
             targets: old_card.targets,
-            action: old_card.action,
+            effect: old_card.effect,
             duration: Duration::Rounds(3),
         });
         fs::remove_file(card).unwrap();

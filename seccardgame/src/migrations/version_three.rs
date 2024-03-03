@@ -1,8 +1,8 @@
-use serde_json::Value;
+use serde_json::{Number, Value};
 use std::fs;
 use std::path::PathBuf;
 
-use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
@@ -17,7 +17,7 @@ use crate::cli::config::Config;
 pub fn convert(config: &Config) -> CliResult<()> {
     convert_cards(EventCard::empty(), &config.game_path);
     convert_cards(OopsieCard::empty(), &config.game_path);
-    convert_cards(IncidentCard::empty(), &config.game_path);
+    convert_cards(AttackCard::empty(), &config.game_path);
     convert_cards(LuckyCard::empty(), &config.game_path);
 
     Ok(())
@@ -38,23 +38,38 @@ where
                 original_message: None,
             })
             .unwrap();
+
         let mut v: Value = serde_json::from_str(content.as_str())
             .map_err(|e| CliError {
                 kind: ErrorKind::CardError,
-                message: "Could not parse into jsons".to_string(),
+                message: "Could not parse into json".to_string(),
                 original_message: Some(e.to_string()),
             })
             .unwrap();
 
+        if let Value::String(s) = v["type"].clone() {
+            if s == "incident" {
+                v["type"] = Value::String("attack".to_string());
+            }
+        }
+
         if let Value::String(s) = v["action"].clone() {
             let mut map = serde_json::Map::new();
-            map.insert("Other".to_string(), Value::String(s.clone()));
-            v["action"] = Value::Object(map);
+            map.insert("other".to_string(), Value::String(s.clone()));
+            v["effect"] = Value::Object(map);
+        }
+
+        if let Some(map) = v.as_object_mut() {
+            map.remove("action");
         }
 
         if let Value::Number(n) = v["duration"].clone() {
             let mut map = serde_json::Map::new();
-            map.insert("Rounds".to_string(), Value::Number(n.clone()));
+            map.insert("rounds".to_string(), Value::Number(n.clone()));
+            v["duration"] = Value::Object(map);
+        } else {
+            let mut map = serde_json::Map::new();
+            map.insert("rounds".to_string(), Value::Number(Number::from(3)));
             v["duration"] = Value::Object(map);
         }
 
@@ -66,12 +81,18 @@ where
 
             map_fix.insert("max".to_string(), max.clone());
             map_fix.insert("min".to_string(), min.clone());
-            v["fix_cost"] = Value::Object(map_fix.clone());
+            v["fixCost"] = Value::Object(map_fix.clone());
         }
-        println!("{}", serde_json::to_string_pretty(&v).unwrap());
+
+        if let Some(map) = v.as_object_mut() {
+            map.remove("fix_cost");
+        }
+
+
+
         let card_content: Card = match card_type.as_enum() {
             Card::Event(_) => Card::Event(serde_json::from_value::<EventCard>(v).unwrap()),
-            Card::Incident(_) => Card::Incident(serde_json::from_value::<IncidentCard>(v).unwrap()),
+            Card::Attack(_) => Card::Attack(serde_json::from_value::<AttackCard>(v).unwrap()),
             Card::Oopsie(_) => Card::Oopsie(serde_json::from_value::<OopsieCard>(v).unwrap()),
             Card::Lucky(_) => Card::Lucky(serde_json::from_value::<LuckyCard>(v).unwrap()),
         };

@@ -2,18 +2,18 @@ use serde::{Deserialize, Serialize};
 use crate::cards::properties::description::Description;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::title::Title;
-use crate::cards::types::attack::IncidentCard;
+use crate::cards::types::attack::AttackCard;
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
 pub enum Card {
     Event(EventCard),
-    Incident(IncidentCard),
+    Attack(AttackCard),
     Oopsie(OopsieCard),
     Lucky(LuckyCard),
 }
@@ -45,7 +45,7 @@ impl CardTrait for Card {
     fn title(&self) -> &Title {
         match self {
             Card::Event(card) => &card.title,
-            Card::Incident(card) => &card.title,
+            Card::Attack(card) => &card.title,
             Card::Oopsie(card) => &card.title,
             Card::Lucky(card) => &card.title,
         }
@@ -54,7 +54,7 @@ impl CardTrait for Card {
     fn description(&self) -> &Description {
         match self {
             Card::Event(card) => &card.description,
-            Card::Incident(card) => &card.description,
+            Card::Attack(card) => &card.description,
             Card::Oopsie(card) => &card.description,
             Card::Lucky(card) => &card.description,
         }
@@ -62,17 +62,17 @@ impl CardTrait for Card {
 
     fn action(&self) -> &Effect {
         match self {
-            Card::Event(card) => &card.action,
-            Card::Incident(card) => &card.action,
-            Card::Oopsie(card) => &card.action,
-            Card::Lucky(card) => &card.action,
+            Card::Event(card) => &card.effect,
+            Card::Attack(card) => &card.effect,
+            Card::Oopsie(card) => &card.effect,
+            Card::Lucky(card) => &card.effect,
         }
     }
 
     fn category(&self) -> &str {
         match self {
             Card::Event(_) => Card::EVENT_CARD,
-            Card::Incident(_) => Card::INCIDENT_CARD,
+            Card::Attack(_) => Card::INCIDENT_CARD,
             Card::Oopsie(_) => Card::OOPSIE_CARD,
             Card::Lucky(_) => Card::LUCKY_CARD,
         }
@@ -81,7 +81,7 @@ impl CardTrait for Card {
     fn as_enum(&self) -> Card {
         match self {
             Card::Event(_) => EventCard::empty(),
-            Card::Incident(_) => IncidentCard::empty(),
+            Card::Attack(_) => AttackCard::empty(),
             Card::Oopsie(_) => OopsieCard::empty(),
             Card::Lucky(_) => LuckyCard::empty(),
         }

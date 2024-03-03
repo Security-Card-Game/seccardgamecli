@@ -5,10 +5,11 @@ use crate::cards::properties::title::Title;
 use crate::cards::types::card_model::Card;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct EventCard {
     pub title: Title,
     pub description: Description,
-    pub action: Effect,
+    pub effect: Effect,
 }
 
 impl EventCard {
@@ -16,7 +17,7 @@ impl EventCard {
         Card::Event(EventCard {
             title: Title::empty(),
             description: Description::empty(),
-            action: Effect::NOP,
+            effect: Effect::NOP,
         })
     }
 }

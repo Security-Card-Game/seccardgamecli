@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use log::warn;
 use game_lib::cards::properties::target::Target;
-use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::Card;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
@@ -52,7 +52,7 @@ impl CardStats {
     }
 
     fn count_incident_cards(cfg: &Config) -> u32 {
-        let card = IncidentCard::empty();
+        let card = AttackCard::empty();
         Self::count_files(&cfg, &card)
     }
 
@@ -146,7 +146,7 @@ impl CardStats {
     }
 
     fn read_incident_targets(cfg: &Config) -> Vec<Target> {
-        let incident_card = IncidentCard::empty();
+        let incident_card = AttackCard::empty();
         let mut path = PathBuf::from(&cfg.game_path.as_str());
         path.push(get_card_directory(&incident_card));
         let mut incident_targets = Vec::new();
@@ -156,7 +156,7 @@ impl CardStats {
                 && file.file_name().to_str().unwrap().contains(".json")
             {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
-                let card: IncidentCard = serde_json::from_str(content.as_str()).unwrap();
+                let card: AttackCard = serde_json::from_str(content.as_str()).unwrap();
                 incident_targets.extend(card.targets);
             }
         }

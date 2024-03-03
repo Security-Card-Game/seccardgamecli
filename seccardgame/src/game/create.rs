@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use dialoguer::Input;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
-use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
@@ -86,7 +86,7 @@ fn draw_cards(config: &&Config, card_counts: CardCounts) -> Result<Vec<OsString>
 
     let event_cards = get_cards(EventCard::empty(), card_counts.events, &config.game_path)?;
     let incident_cards = get_cards(
-        IncidentCard::empty(),
+        AttackCard::empty(),
         card_counts.incidents,
         &config.game_path,
     )?;

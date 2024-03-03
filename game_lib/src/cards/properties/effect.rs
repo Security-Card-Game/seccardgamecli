@@ -4,6 +4,7 @@ use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::properties::target::Target;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub enum Effect {
     Immediate(EffectDescription),
     Incident(EffectDescription, Vec<Target>),

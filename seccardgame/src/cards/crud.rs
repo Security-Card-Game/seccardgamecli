@@ -7,7 +7,7 @@ use game_lib::cards::properties::effect_description::EffectDescription;
 use game_lib::cards::properties::fix_cost::FixCost;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::properties::title::Title;
-use game_lib::cards::types::attack::IncidentCard;
+use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::Card;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
@@ -72,7 +72,7 @@ fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
 fn deserialize_editor_content(content: String, original_card: &Card) -> serde_json::Result<Card> {
     match original_card {
         Card::Event(_) => serde_json::from_str(content.as_str()).map(|c| Card::Event(c)),
-        Card::Incident(_) => serde_json::from_str(content.as_str()).map(|c| Card::Incident(c)),
+        Card::Attack(_) => serde_json::from_str(content.as_str()).map(|c| Card::Attack(c)),
         Card::Oopsie(_) => serde_json::from_str(content.as_str()).map(|c| Card::Oopsie(c)),
         Card::Lucky(_) => serde_json::from_str(content.as_str()).map(|c| Card::Lucky(c)),
     }
@@ -114,7 +114,7 @@ fn create_event_card() -> Card {
     let card = EventCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Effect::Immediate(EffectDescription::from(action)),
+        effect: Effect::Immediate(EffectDescription::from(action)),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -123,7 +123,7 @@ fn create_event_card() -> Card {
 }
 
 fn create_incident_card() -> Card {
-    println!("Create a new Incident Card");
+    println!("Create a new Attack Card");
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
     let action: String = prompt("Card Action", None);
@@ -131,17 +131,16 @@ fn create_incident_card() -> Card {
 
     let targets = ask_for_targets();
 
-    let card = IncidentCard {
-        title: Title::from(title),
-        description: Description::from(description),
-        action: Effect::Immediate(EffectDescription::from(action)),
-        targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
-        duration: Duration::Rounds(duration),
-    };
+    let card = AttackCard::new(
+        Title::from(title),
+        Description::from(description),
+        targets.iter().map(|t| Target::from(t.clone())).collect(),
+        EffectDescription::from(action),
+        Duration::Rounds(duration));
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
-    Card::Incident(card)
+    Card::Attack(card)
 }
 
 fn ask_for_targets() -> Vec<String> {
@@ -167,7 +166,7 @@ fn create_lucky_card() -> Card {
     let card = LuckyCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Effect::Immediate(EffectDescription::from(action)),
+        effect: Effect::Immediate(EffectDescription::from(action)),
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
@@ -194,7 +193,7 @@ fn create_oopsie_card() -> Card {
     let card = OopsieCard {
         title: Title::from(title),
         description: Description::from(description),
-        action: Effect::Immediate(EffectDescription::from(action)),
+        effect: Effect::Immediate(EffectDescription::from(action)),
         targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
         fix_cost: FixCost {
             min: Resources::new(min_cost),

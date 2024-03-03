@@ -5,10 +5,11 @@ use crate::cards::properties::title::Title;
 use crate::cards::types::card_model::Card;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct LuckyCard {
     pub title: Title,
     pub description: Description,
-    pub action: Effect,
+    pub effect: Effect,
 }
 
 impl LuckyCard {
@@ -16,7 +17,7 @@ impl LuckyCard {
         Card::Lucky(LuckyCard {
             title: Title::empty(),
             description: Description::empty(),
-            action: Effect::default(),
+            effect: Effect::default(),
         })
     }
 }

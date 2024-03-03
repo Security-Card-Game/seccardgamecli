@@ -7,11 +7,12 @@ use crate::cards::properties::title::Title;
 use crate::cards::types::card_model::Card;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct OopsieCard {
     pub title: Title,
     pub description: Description,
     pub targets: Vec<Target>,
-    pub action: Effect,
+    pub effect: Effect,
     pub fix_cost: FixCost,
 }
 
@@ -21,7 +22,7 @@ impl OopsieCard {
             title: Title::empty(),
             description: Description::empty(),
             targets: vec![],
-            action: Effect::default(),
+            effect: Effect::default(),
             fix_cost: FixCost::default(),
         })
     }

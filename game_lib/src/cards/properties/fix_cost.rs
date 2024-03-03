@@ -3,6 +3,7 @@ use crate::cards::errors::{ErrorKind, ModelError};
 use crate::cards::world::resources::Resources;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct FixCost {
     pub min: Resources,
     pub max: Resources,
