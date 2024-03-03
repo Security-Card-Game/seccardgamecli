@@ -32,7 +32,7 @@ fn get_number_of_cards(prompt: &str) -> u8 {
 
 pub fn create_deck(deck_path: String, config: &Config) -> CliResult<()> {
     let event_card_count = get_number_of_cards("Enter number of event types");
-    let incident_card_count = get_number_of_cards("Enter number of incident types");
+    let incident_card_count = get_number_of_cards("Enter number of attack types");
     let oopsie_card_count = get_number_of_cards("Enter number of oopsies");
     let lucky_card_count = get_number_of_cards("Enter number of lucky types");
 

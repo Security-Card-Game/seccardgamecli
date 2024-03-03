@@ -20,13 +20,13 @@ pub enum Card {
 
 impl Card {
     pub const EVENT_CARD: &'static str = "Event";
-    pub const INCIDENT_CARD: &'static str = "Incident";
+    pub const ATTACK_CARD: &'static str = "Attack";
     pub const OOPSIE_CARD: &'static str = "Oopsie";
     pub const LUCKY_CARD: &'static str = "Lucky";
 
     pub const CARD_TYPES: [&'static str; 4] = [
         Self::EVENT_CARD,
-        Self::INCIDENT_CARD,
+        Self::ATTACK_CARD,
         Self::OOPSIE_CARD,
         Self::LUCKY_CARD,
     ];
@@ -72,7 +72,7 @@ impl CardTrait for Card {
     fn category(&self) -> &str {
         match self {
             Card::Event(_) => Card::EVENT_CARD,
-            Card::Attack(_) => Card::INCIDENT_CARD,
+            Card::Attack(_) => Card::ATTACK_CARD,
             Card::Oopsie(_) => Card::OOPSIE_CARD,
             Card::Lucky(_) => Card::LUCKY_CARD,
         }

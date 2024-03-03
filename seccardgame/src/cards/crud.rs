@@ -90,7 +90,7 @@ pub fn create(cfg: &Config) -> CliResult<()> {
 
     let card = match Card::CARD_TYPES[card_type_index] {
         Card::EVENT_CARD => create_event_card(),
-        Card::INCIDENT_CARD => create_incident_card(),
+        Card::ATTACK_CARD => create_attack_card(),
         Card::LUCKY_CARD => create_lucky_card(),
         Card::OOPSIE_CARD => create_oopsie_card(),
         _ => {
@@ -122,7 +122,7 @@ fn create_event_card() -> Card {
     Card::Event(card)
 }
 
-fn create_incident_card() -> Card {
+fn create_attack_card() -> Card {
     println!("Create a new Attack Card");
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);

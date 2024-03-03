@@ -1,6 +1,8 @@
-use serde_json::{Number, Value};
+use std::ffi::OsString;
+use serde_json::{json, Number, Value};
 use std::fs;
-use std::path::PathBuf;
+use std::iter::Map;
+use std::path::{PathBuf, MAIN_SEPARATOR, MAIN_SEPARATOR_STR};
 
 use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
@@ -9,10 +11,10 @@ use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
-use game_lib::file::general::get_files_in_directory_with_filter;
+use game_lib::file::general::{ensure_directory_exists, get_files_in_directory_with_filter};
 
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::cli::config::Config;
+use crate::cli::config::{init, Config};
 
 pub fn convert(config: &Config) -> CliResult<()> {
     convert_cards(EventCard::empty(), &config.game_path);
@@ -27,8 +29,14 @@ fn convert_cards<T>(card_type: T, game_path: &String)
 where
     T: CardTrait,
 {
-    let binding = PathBuf::from(game_path).join(get_card_directory(&card_type.as_enum()));
+    let binding = match card_type.as_enum() {
+        Card::Attack(ac) => PathBuf::from(game_path).join("incidents"),
+        c => PathBuf::from(game_path).join(get_card_directory(&card_type.as_enum())),
+    };
     let card_path = binding.to_str().unwrap();
+    let attack_path = PathBuf::from(game_path).join("attack");
+    ensure_directory_exists(attack_path.to_str().expect("A path")).expect("Director attack to be existing");
+
     let cards = get_files_in_directory_with_filter(card_path, ".json").unwrap();
     for card in cards.iter() {
         let content = fs::read_to_string(card)
@@ -55,7 +63,17 @@ where
 
         if let Value::String(s) = v["action"].clone() {
             let mut map = serde_json::Map::new();
-            map.insert("other".to_string(), Value::String(s.clone()));
+            match card_type.as_enum() {
+                Card::Attack(_) => {
+                    if let Value::Array(targets) = v["targets"].clone() {
+                        let incident = json!([s.clone(), targets]);
+                        map.insert("incident".to_string(), incident);
+                    };
+                }
+                _ => {
+                    map.insert("other".to_string(), Value::String(s.clone()));
+                }
+            };
             v["effect"] = Value::Object(map);
         }
 
@@ -88,8 +106,6 @@ where
             map.remove("fix_cost");
         }
 
-
-
         let card_content: Card = match card_type.as_enum() {
             Card::Event(_) => Card::Event(serde_json::from_value::<EventCard>(v).unwrap()),
             Card::Attack(_) => Card::Attack(serde_json::from_value::<AttackCard>(v).unwrap()),
@@ -98,7 +114,18 @@ where
         };
         fs::remove_file(card).unwrap();
 
-        write_data_to_file(&card_content, PathBuf::from(card).as_path())
+        let new_card_path = match card_type.as_enum() {
+            Card::Attack(_) => {
+                let incident_dir = "incidents".to_string() + &MAIN_SEPARATOR_STR;
+                let attack_dir = "attack".to_string() + &MAIN_SEPARATOR_STR;
+                let old_path = card.to_str().expect("Valid UTF-8 string");
+                let new_path = old_path.replace(&incident_dir, &attack_dir);
+                OsString::from(new_path)
+            }
+            _ => card.clone(),
+        };
+        println!("{}", new_card_path.to_str().expect(""));
+        write_data_to_file(&card_content, PathBuf::from(new_card_path).as_path())
             .map_err(|e| CliError {
                 kind: ErrorKind::CardError,
                 message: "Could not write to file".to_string(),
