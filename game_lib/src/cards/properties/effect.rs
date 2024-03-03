@@ -7,6 +7,7 @@ use crate::cards::properties::target::Target;
 #[serde(rename_all = "camelCase")]
 pub enum Effect {
     Immediate(EffectDescription),
+    AttackSurface(EffectDescription, Vec<Target>),
     Incident(EffectDescription, Vec<Target>),
     OnNextFix(EffectDescription, FixModifier),
     OnUsingForFix(EffectDescription, FixModifier),

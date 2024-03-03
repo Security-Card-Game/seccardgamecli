@@ -190,16 +190,15 @@ fn create_oopsie_card() -> Card {
         }
         println!("Max cost must be greater or equal to min cost.")
     }
-    let card = OopsieCard {
-        title: Title::from(title),
-        description: Description::from(description),
-        effect: Effect::Immediate(EffectDescription::from(action)),
-        targets: targets.iter().map(|t| Target::from(t.clone())).collect(),
-        fix_cost: FixCost {
+    let card = OopsieCard::new(
+        Title::from(title),
+        Description::from(description),
+        targets.iter().map(|t| Target::from(t.clone())).collect(),
+        EffectDescription::from(action),
+        FixCost {
             min: Resources::new(min_cost),
             max: Resources::new(max_cost),
-        },
-    };
+        });
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
 

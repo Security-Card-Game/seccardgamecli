@@ -12,7 +12,6 @@ use crate::cards::types::card_model::Card;
 pub struct AttackCard {
     pub title: Title,
     pub description: Description,
-    pub targets: Vec<Target>,
     pub effect: Effect,
     pub duration: Duration,
 }
@@ -22,7 +21,6 @@ impl AttackCard {
         AttackCard {
             title,
             description,
-            targets: targets.clone(),
             effect: Effect::Incident(effect, targets),
             duration
         }
@@ -32,7 +30,6 @@ impl AttackCard {
         Card::Attack(AttackCard {
             title: Title::empty(),
             description: Description::empty(),
-            targets: vec![],
             effect: Effect::Incident(EffectDescription::empty(), vec![]),
             duration: Duration::default(),
         })

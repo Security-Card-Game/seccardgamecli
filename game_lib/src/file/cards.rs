@@ -70,7 +70,7 @@ pub fn write_data_to_file(card: &Card, path: &Path) -> std::io::Result<()> {
 pub fn get_card_directory(card: &Card) -> &'static str {
     match card {
         Card::Event(_) => "events",
-        Card::Attack(_) => "incidents",
+        Card::Attack(_) => "attacks",
         Card::Oopsie(_) => "oopsies",
         Card::Lucky(_) => "lucky",
     }

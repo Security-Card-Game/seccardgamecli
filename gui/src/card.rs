@@ -46,25 +46,35 @@ impl CardContent {
             light_color: Color32::DARK_BLUE,
             label: card.title.value().to_string(),
             description: card.description.value().to_string(),
-            action: Self::action_to_text(card.effect),
+            action: Self::effect_to_text(&card.effect),
             targets: None,
             costs: None,
             duration: None,
         }
     }
 
-    fn action_to_text(action: Effect) -> String {
+    fn effect_to_targets(action: &Effect) -> Option<Vec<String>> {
+        match action {
+            Effect::Incident(_, t) => Some(Self::targets_to_strings(t)),
+            Effect::AttackSurface(_, t) => Some(Self::targets_to_strings(t)),
+            _ => None
+        }
+    }
+
+
+    fn effect_to_text(action: &Effect) -> String {
         match action {
             Effect::Immediate(d) => d.value().to_string(),
             Effect::Incident(d, _) => d.value().to_string(),
             Effect::OnNextFix(d, m) => format!("{} {}", d.value(), m.value()),
             Effect::OnUsingForFix(d, m) => format!("{} {}", d.value(), m.value()),
             Effect::Other(d) => d.value().to_string(),
+            Effect::AttackSurface(d, _) => d.value().to_string(),
             Effect::NOP => "".to_string(),
         }
     }
 
-    fn targets_to_strings(targets: Vec<Target>) -> Vec<String> {
+    fn targets_to_strings(targets: &Vec<Target>) -> Vec<String> {
         targets.iter().map(|i| i.value().to_string()).collect()
     }
 
@@ -76,8 +86,8 @@ impl CardContent {
             light_color: Color32::DARK_RED,
             label: card.title.value().to_string(),
             description: card.description.value().to_string(),
-            action: Self::action_to_text(card.effect),
-            targets: Some(Self::targets_to_strings(card.targets)),
+            action: Self::effect_to_text(&card.effect),
+            targets: Self::effect_to_targets(&card.effect),
             costs: None,
             duration: Some(card.duration.value().unwrap_or(&0).clone()),
         }
@@ -91,8 +101,8 @@ impl CardContent {
             light_color: Color32::DARK_GRAY,
             label: card.title.value().to_string(),
             description: card.description.value().to_string(),
-            action: Self::action_to_text(card.effect),
-            targets: Some(Self::targets_to_strings(card.targets)),
+            action: Self::effect_to_text(&card.effect),
+            targets: Self::effect_to_targets(&card.effect),
             costs: Some(card.fix_cost),
             duration: None,
         }
@@ -106,7 +116,7 @@ impl CardContent {
             light_color: Color32::DARK_GREEN,
             label: card.title.value().to_string(),
             description: card.description.value().to_string(),
-            action: Self::action_to_text(card.effect),
+            action: Self::effect_to_text(&card.effect),
             targets: None,
             costs: None,
             duration: None,

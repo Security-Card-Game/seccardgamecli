@@ -35,8 +35,8 @@ fn cli() -> Command {
                 .arg(Arg::new("path").default_missing_value("game")),
         )
         .subcommand(
-            Command::new("types")
-                .about("Operate on types")
+            Command::new("cards")
+                .about("Operate on cards")
                 .subcommand_required(true)
                 .arg_required_else_help(true)
                 .subcommand(
@@ -70,8 +70,7 @@ fn cli() -> Command {
                 .subcommand_required(true)
                 .arg_required_else_help(true)
                 .subcommand(Command::new("version1").about("Migrates to version 1"))
-                .subcommand(Command::new("version2").about("Migrates from v1 to v2"))
-                .subcommand(Command::new("version3").about("Migrates from v2 to v3")),
+                .subcommand(Command::new("version3").about("Migrates from v1 to v3")),
         )
 }
 
@@ -105,7 +104,7 @@ fn handle_commands() -> CliResult<()> {
             };
             init(cfg_init)
         }
-        Some(("types", sub_matches)) => {
+        Some(("cards", sub_matches)) => {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
                 Some(("create", _)) => cards::crud::create(&config),
@@ -142,7 +141,6 @@ fn handle_commands() -> CliResult<()> {
             let config = load_config(cfg);
             match sub_matches.subcommand() {
                 Some(("version1", _)) => version_one::convert(&config),
-                Some(("version2", _)) => version_two::convert(&config),
                 Some(("version3", _)) => version_three::convert(&config),
                 _ => {
                     println!("Unknown command!");
@@ -158,5 +156,5 @@ fn handle_commands() -> CliResult<()> {
 }
 
 fn load_config(cfg: String) -> Config {
-    cli::config::Config::read_config(cfg.as_str())
+    Config::read_config(cfg.as_str())
 }

@@ -3,6 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use log::warn;
+use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::Card;
@@ -139,7 +140,10 @@ impl CardStats {
             {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
                 let card: OopsieCard = serde_json::from_str(content.as_str()).unwrap();
-                oopsie_targets.extend(card.targets);
+                match card.effect {
+                    Effect::AttackSurface(_, t) => { oopsie_targets.extend(t)}
+                    _ => {}
+                }
             }
         }
         oopsie_targets
@@ -157,7 +161,10 @@ impl CardStats {
             {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
                 let card: AttackCard = serde_json::from_str(content.as_str()).unwrap();
-                incident_targets.extend(card.targets);
+                match card.effect {
+                    Effect::Incident(_, t) => { incident_targets.extend(t)}
+                    _ => {}
+                }
             }
         }
         incident_targets
