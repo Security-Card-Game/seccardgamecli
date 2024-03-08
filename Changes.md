@@ -2,6 +2,9 @@
 
 ## next release
 
+* adds card repo to game_lib (file based)
+* moves deck creation to game_lib
+
 ## 0.4.2
 
 * Renames Incidents to Attack cards
