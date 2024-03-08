@@ -3,18 +3,16 @@ use std::collections::HashMap;
 use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use uuid::Uuid;
+use game_lib::world::current_turn::CurrentTurn;
 
-use game_lib::cards::world::deck::Deck;
+use game_lib::world::deck::{CardRc, Deck};
+use game_lib::world::resources::Resources;
 
-use crate::card::{to_ui_deck, CardContent};
+use crate::card::{CardContent};
 use crate::card_window::display_card;
 
 pub struct SecCardGameApp {
-    resources: usize,
-    current_card: usize,
-    total_cards: usize,
-    cards: Vec<CardContent>,
-    cards_to_display: HashMap<Uuid, CardContent>,
+    turn: CurrentTurn,
     resources_per_round: usize,
     input: Input,
 }
@@ -32,14 +30,10 @@ struct DiceRange {
     max: String,
 }
 impl SecCardGameApp {
-    fn init(deck: Vec<CardContent>) -> Self {
+    fn init(turn: CurrentTurn) -> Self {
         Self {
-            resources: 0,
+            turn,
             resources_per_round: 5,
-            current_card: 0,
-            total_cards: deck.len(),
-            cards: deck,
-            cards_to_display: HashMap::new(),
             input: Input {
                 next_res: "5".to_owned(),
                 pay_res: "0".to_owned(),
@@ -55,12 +49,19 @@ impl SecCardGameApp {
 
     fn refresh_cards(&mut self, ctx: &Context, ui: &mut Ui) {
         let mut ids_to_remove = vec![];
-        for card in self.cards_to_display.values() {
-            display_card(card, |id| ids_to_remove.push(id), ctx, ui);
+        for card in <HashMap<Uuid, CardRc> as Clone>::clone(&self.turn.open_cards).into_iter() {
+            let card_to_display = CardContent::from_card(&card.0, card.1.clone());
+            display_card(&card_to_display, |id| ids_to_remove.push(id), ctx, ui);
         }
 
+        let mut new_turn: Option<CurrentTurn> = None;
         for id in &ids_to_remove {
-            self.cards_to_display.remove(id);
+            new_turn = Some(self.turn.close_card(id));
+        }
+
+        match new_turn {
+            None => {}
+            Some(t) => { self.turn = t; },
         }
     }
 
@@ -101,7 +102,7 @@ impl SecCardGameApp {
                 self.dice_control(ui);
 
                 ui.add_space(10.0);
-                ui.label(format!("Cards {}/{}", self.current_card, self.total_cards));
+                ui.label(format!("Cards {}/{}", self.turn.deck.played_cards, self.turn.deck.total));
 
                 ui.add_space(20.0);
                 match &self.input.error {
@@ -147,7 +148,7 @@ impl SecCardGameApp {
     fn resource_control(&mut self, ui: &mut Ui) {
         ui.label("Resources");
         ui.add_space(5.0);
-        let available = RichText::new(format!("{} available", self.resources)).strong();
+        let available = RichText::new(format!("{} available", self.turn.current_resources.value())).strong();
         ui.label(available);
 
         ui.horizontal(|ui| {
@@ -156,12 +157,12 @@ impl SecCardGameApp {
 
             if ui.button("Pay").clicked() {
                 let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-                if to_pay > self.resources {
+                if &to_pay > self.turn.current_resources.value() {
                     self.input.error = Some("No money!".to_string())
                 } else {
-                    self.resources -= to_pay;
                     self.input.pay_res = "0".to_string();
                     self.input.error = None;
+                    self.turn = self.turn.pay_resources(&Resources::new(to_pay))
                 }
             };
         });
@@ -182,14 +183,12 @@ impl SecCardGameApp {
         }
 
         ui.add_space(5.0);
-        if self.current_card < self.total_cards && ui.button("Draw card").clicked() {
-            self.add_card_to_display();
-            self.resources += self.resources_per_round;
-            self.current_card += 1;
+        if self.turn.turns_remaining > 0 && ui.button("Draw card").clicked() {
             self.input.dice_result = None;
             self.input.error = None;
+            self.turn = self.turn.next_round(Resources::new(self.resources_per_round));
         }
-        if self.current_card == self.total_cards {
+        if self.turn.turns_remaining == 0 {
             ui.label("Game ended");
         }
     }
@@ -198,19 +197,10 @@ impl SecCardGameApp {
 impl SecCardGameApp {
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
-        let ui_deck = to_ui_deck(deck);
-        SecCardGameApp::init(ui_deck)
+        let turn = CurrentTurn::init(deck, Resources::new(0));
+        SecCardGameApp::init(turn)
     }
 
-    fn add_card_to_display(&mut self) {
-        let card = self.cards.pop();
-        match card {
-            None => log::error!("Could not draw card!"),
-            Some(c) => {
-                self.cards_to_display.insert(c.id, c);
-            }
-        }
-    }
 }
 
 impl eframe::App for SecCardGameApp {

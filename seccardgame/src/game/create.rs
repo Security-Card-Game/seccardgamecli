@@ -4,9 +4,9 @@ use std::path::PathBuf;
 use dialoguer::Input;
 use log::info;
 use game_lib::cards::types::card_model::Card;
-use game_lib::cards::world::deck::{Deck, DeckComposition, DeckPreparation, PreparedDeck};
 use game_lib::file::cards::write_data_to_file;
 use game_lib::file::repository::DeckLoader;
+use game_lib::world::deck::{Deck, DeckComposition, DeckPreparation, PreparedDeck};
 
 
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::cards::errors::{ErrorKind, ModelError};
-use crate::cards::world::resources::Resources;
+use crate::world::resources::Resources;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

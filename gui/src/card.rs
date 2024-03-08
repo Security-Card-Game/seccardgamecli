@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use eframe::epaint::Color32;
 use uuid::Uuid;
 use game_lib::cards::properties::effect::Effect;
@@ -8,9 +9,10 @@ use game_lib::cards::types::card_model::Card;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
-use game_lib::cards::world::deck::Deck;
+use game_lib::world::deck::CardRc;
 
 
+#[derive(Debug)]
 pub struct CardContent {
     pub id: Uuid,
     pub dark_color: Color32,
@@ -23,26 +25,20 @@ pub struct CardContent {
     pub duration: Option<usize>,
 }
 
-pub fn to_ui_deck(deck: Deck) -> Vec<CardContent> {
-    let mut ui_deck: Vec<_> = deck.cards.iter().map(|c| CardContent::from_card(c)).collect();
-    ui_deck.reverse();
-    ui_deck
-}
-
 impl CardContent {
-    fn from_card(card: &Card) -> CardContent {
-        match card {
-            Card::Event(c) => Self::event_card_content(c.clone()),
-            Card::Attack(c) => Self::incident_card_content(c.clone()),
-            Card::Oopsie(c) => Self::oopsie_card_content(c.clone()),
-            Card::Lucky(c) => Self::lucky_card_content(c.clone()),
+    pub fn from_card(id: &Uuid, card: CardRc) -> CardContent {
+
+        match &*card {
+            Card::Event(c) => Self::event_card_content(id, c.clone()),
+            Card::Attack(c) => Self::incident_card_content(id, c.clone()),
+            Card::Oopsie(c) => Self::oopsie_card_content(id, c.clone()),
+            Card::Lucky(c) => Self::lucky_card_content(id, c.clone()),
         }
     }
 
-    fn event_card_content(card: EventCard) -> CardContent {
-        let id = Uuid::new_v4();
+    fn event_card_content(id: &Uuid, card: EventCard) -> CardContent {
         CardContent {
-            id,
+            id: id.clone(),
             dark_color: Color32::LIGHT_BLUE,
             light_color: Color32::DARK_BLUE,
             label: card.title.value().to_string(),
@@ -79,10 +75,9 @@ impl CardContent {
         targets.iter().map(|i| i.value().to_string()).collect()
     }
 
-    fn incident_card_content(card: AttackCard) -> CardContent {
-        let id = Uuid::new_v4();
+    fn incident_card_content(id: &Uuid, card: AttackCard) -> CardContent {
         CardContent {
-            id,
+            id: id.clone(),
             dark_color: Color32::LIGHT_RED,
             light_color: Color32::DARK_RED,
             label: card.title.value().to_string(),
@@ -94,10 +89,9 @@ impl CardContent {
         }
     }
 
-    fn oopsie_card_content(card: OopsieCard) -> CardContent {
-        let id = Uuid::new_v4();
+    fn oopsie_card_content(id: &Uuid, card: OopsieCard) -> CardContent {
         CardContent {
-            id,
+            id: id.clone(),
             dark_color: Color32::YELLOW,
             light_color: Color32::DARK_GRAY,
             label: card.title.value().to_string(),
@@ -109,10 +103,9 @@ impl CardContent {
         }
     }
 
-    fn lucky_card_content(card: LuckyCard) -> CardContent {
-        let id = Uuid::new_v4();
+    fn lucky_card_content(id: &Uuid, card: LuckyCard) -> CardContent {
         CardContent {
-            id,
+            id: id.clone(),
             dark_color: Color32::GREEN,
             light_color: Color32::DARK_GREEN,
             label: card.title.value().to_string(),

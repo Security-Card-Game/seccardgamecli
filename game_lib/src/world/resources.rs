@@ -1,3 +1,4 @@
+use std::ops::{Add, Sub};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::cards::serialization::helper::Number;
 
@@ -10,6 +11,22 @@ impl Resources {
     }
     pub fn value(&self) -> &usize {
         &self.0
+    }
+}
+
+impl Add for Resources {
+    type Output = Resources;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Resources(self.0 + rhs.0)
+    }
+}
+
+impl Sub for Resources {
+    type Output = Resources;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Resources(self.0 - rhs.0)
     }
 }
 

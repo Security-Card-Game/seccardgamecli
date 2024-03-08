@@ -3,7 +3,6 @@ use crate::cards::types::card_model::{Card, CardTrait};
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
-use crate::cards::world::deck::{CardRc, DeckRepository};
 use crate::errors::{ErrorKind, GameLibError, GameLibResult};
 use crate::file::cards::get_card_directory;
 use crate::file::general::{count_cards_in_directory, get_files_in_directory_with_filter};
@@ -12,6 +11,7 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
 use std::rc::Rc;
+use crate::world::deck::{CardRc, DeckRepository};
 
 pub struct DeckLoader {
     base_path: String,

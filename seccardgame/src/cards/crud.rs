@@ -13,8 +13,8 @@ use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use log::error;
+use game_lib::world::resources::Resources;
 
-use game_lib::cards::world::resources::Resources;
 
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;

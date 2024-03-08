@@ -20,6 +20,7 @@ where
         min_size: Vec2::new(150.0, 300.0),
         content: card,
     };
+
     create_window(window, close_callback, ctx, ui)
 }
 
