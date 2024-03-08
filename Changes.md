@@ -2,6 +2,7 @@
 
 ## next release
 
+* creates a deck in memory when `game play` is used
 * adds card repo to game_lib (file based)
 * moves deck creation to game_lib
 

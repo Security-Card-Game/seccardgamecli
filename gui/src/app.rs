@@ -4,7 +4,7 @@ use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use uuid::Uuid;
 
-use game_lib::cards::types::card_model::Card;
+use game_lib::cards::world::deck::Deck;
 
 use crate::card::{to_ui_deck, CardContent};
 use crate::card_window::display_card;
@@ -197,7 +197,7 @@ impl SecCardGameApp {
 
 impl SecCardGameApp {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Vec<Card>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
         let ui_deck = to_ui_deck(deck);
         SecCardGameApp::init(ui_deck)
     }

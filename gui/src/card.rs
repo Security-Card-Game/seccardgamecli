@@ -8,6 +8,7 @@ use game_lib::cards::types::card_model::Card;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
+use game_lib::cards::world::deck::Deck;
 
 
 pub struct CardContent {
@@ -22,8 +23,8 @@ pub struct CardContent {
     pub duration: Option<usize>,
 }
 
-pub fn to_ui_deck(deck: Vec<Card>) -> Vec<CardContent> {
-    let mut ui_deck: Vec<_> = deck.iter().map(|c| CardContent::from_card(c)).collect();
+pub fn to_ui_deck(deck: Deck) -> Vec<CardContent> {
+    let mut ui_deck: Vec<_> = deck.cards.iter().map(|c| CardContent::from_card(c)).collect();
     ui_deck.reverse();
     ui_deck
 }

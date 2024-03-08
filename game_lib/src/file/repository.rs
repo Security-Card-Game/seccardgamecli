@@ -7,7 +7,7 @@ use crate::cards::world::deck::{CardRc, DeckRepository};
 use crate::errors::{ErrorKind, GameLibError, GameLibResult};
 use crate::file::cards::get_card_directory;
 use crate::file::general::{count_cards_in_directory, get_files_in_directory_with_filter};
-use log::{error, warn};
+use log::error;
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;

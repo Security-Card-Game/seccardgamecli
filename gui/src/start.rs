@@ -2,13 +2,13 @@
 
 use egui::Vec2;
 
-use game_lib::cards::types::card_model::Card;
+use game_lib::cards::world::deck::Deck;
 
 use crate::SecCardGameApp;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
-pub fn run(deck: Vec<Card>) -> eframe::Result<()> {
+pub fn run(deck: Deck) -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_decorations(true)
