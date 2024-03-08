@@ -90,12 +90,13 @@ impl Into<Card> for AttackCards {
     }
 }
 
-pub type SharedCard = Rc<Card>;
+pub type CardRc = Rc<Card>;
+
 pub trait DeckRepository {
-    fn get_event_cards(&self) -> Vec<SharedCard>;
-    fn get_lucky_cards(&self) -> Vec<SharedCard>;
-    fn get_oopsie_cards(&self) -> Vec<SharedCard>;
-    fn get_attack_cards(&self) -> Vec<SharedCard>;
+    fn get_event_cards(&self) -> Vec<CardRc>;
+    fn get_lucky_cards(&self) -> Vec<CardRc>;
+    fn get_oopsie_cards(&self) -> Vec<CardRc>;
+    fn get_attack_cards(&self) -> Vec<CardRc>;
 }
 
 pub trait DeckPreparation {
@@ -153,7 +154,7 @@ impl DeckPreparation for PreparedDeck {
     }
 }
 
-fn draw_event_cards_for_deck(count: usize, cards_available: Vec<SharedCard>) -> Vec<EventCards> {
+fn draw_event_cards_for_deck(count: usize, cards_available: Vec<CardRc>) -> Vec<EventCards> {
     let mut x = 0;
     let mut cards = vec![];
 
@@ -170,7 +171,7 @@ fn draw_event_cards_for_deck(count: usize, cards_available: Vec<SharedCard>) -> 
     cards
 }
 
-fn draw_attack_cards_for_deck(count: usize, cards_available: Vec<SharedCard>) -> Vec<AttackCards> {
+fn draw_attack_cards_for_deck(count: usize, cards_available: Vec<CardRc>) -> Vec<AttackCards> {
     let mut x = 0;
     let mut cards = vec![];
 

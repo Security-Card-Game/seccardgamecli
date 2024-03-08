@@ -16,7 +16,7 @@ use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::cards::world::deck::EventCards::Lucky;
 use game_lib::cards::world::deck::{
-    DeckComposition, DeckPreparation, DeckRepository, EventCards, PreparedDeck, SharedCard,
+    DeckComposition, DeckPreparation, DeckRepository, EventCards, PreparedDeck, CardRc,
 };
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
 use game_lib::file::general::{count_cards_in_directory, get_files_in_directory_with_filter};
@@ -37,19 +37,19 @@ struct DeckLoader {
 }
 
 impl DeckRepository for DeckLoader {
-    fn get_event_cards(&self) -> Vec<SharedCard> {
+    fn get_event_cards(&self) -> Vec<CardRc> {
         self.read_all_cards(&EventCard::empty())
     }
 
-    fn get_lucky_cards(&self) -> Vec<SharedCard> {
+    fn get_lucky_cards(&self) -> Vec<CardRc> {
         self.read_all_cards(&LuckyCard::empty())
     }
 
-    fn get_oopsie_cards(&self) -> Vec<SharedCard> {
+    fn get_oopsie_cards(&self) -> Vec<CardRc> {
         self.read_all_cards(&OopsieCard::empty())
     }
 
-    fn get_attack_cards(&self) -> Vec<SharedCard> {
+    fn get_attack_cards(&self) -> Vec<CardRc> {
         self.read_all_cards(&AttackCard::empty())
     }
 }
@@ -66,7 +66,7 @@ impl DeckLoader {
         })
     }
 
-    fn read_all_cards(&self, card_type: &Card) -> Vec<SharedCard> {
+    fn read_all_cards(&self, card_type: &Card) -> Vec<CardRc> {
         let path = PathBuf::from(&self.base_path).join(get_card_directory(card_type));
         let cards_path = path.to_str().expect("Card path");
         Self::load_cards(cards_path)
@@ -86,7 +86,7 @@ impl DeckLoader {
         }
     }
 
-    fn load_cards(cards_path: &str) -> Vec<SharedCard> {
+    fn load_cards(cards_path: &str) -> Vec<CardRc> {
         let files = get_files_in_directory_with_filter(cards_path, ".json")
             .map_err(|e| CliError {
                 kind: ErrorKind::FileSystemError,
