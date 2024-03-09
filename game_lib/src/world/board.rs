@@ -30,7 +30,7 @@ impl CurrentBoard {
     pub(crate) fn next_round(&self, new_resources: Resources) -> Self {
         let current_resources = &self.current_resources;
         let deck = &self.deck;
-        let cards = &self.deck.cards;
+        let cards = &self.deck.board;
         let mut open_cards = &mut self.open_cards.clone();
         let (drawn_card, rest) = cards.split_at(1);
         let card_ref = Rc::new(drawn_card[0].clone());

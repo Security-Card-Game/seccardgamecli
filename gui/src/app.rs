@@ -4,7 +4,7 @@ use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use uuid::Uuid;
 
-use game_lib::world::current_turn::CurrentBoard;
+use game_lib::world::board::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{Game, GameStatus};
 use game_lib::world::resources::Resources;

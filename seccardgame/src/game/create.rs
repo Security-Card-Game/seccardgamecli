@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 use dialoguer::Input;
 use log::info;
+
 use game_lib::cards::types::card_model::Card;
 use game_lib::file::cards::write_data_to_file;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{Deck, DeckComposition, DeckPreparation, PreparedDeck};
-
 
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
@@ -39,7 +39,7 @@ pub fn create_deck(config: &Config) -> Deck {
 
 pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliResult<()> {
     let deck = create_deck(config);
-    write_cards_to_deck(deck.cards, deck_path)?;
+    write_cards_to_deck(deck.board, deck_path)?;
 
     info!("Deck created!");
 

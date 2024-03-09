@@ -1,4 +1,4 @@
-pub mod current_turn;
+pub mod board;
 pub mod deck;
 pub mod resources;
 pub mod result;

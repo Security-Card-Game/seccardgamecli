@@ -4,7 +4,7 @@ use rand::{thread_rng, Rng};
 use uuid::Uuid;
 
 use crate::cards::types::card_model::Card;
-use crate::world::current_turn::CurrentBoard;
+use crate::world::board::CurrentBoard;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
 
