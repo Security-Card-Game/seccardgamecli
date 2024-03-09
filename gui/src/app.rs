@@ -8,7 +8,7 @@ use uuid::Uuid;
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
-use game_lib::world::game::{Game, GameStatus};
+use game_lib::world::game::{ActionResult, Game, GameStatus};
 use game_lib::world::resources::Resources;
 
 use crate::card::CardContent;
@@ -21,10 +21,7 @@ pub struct SecCardGameApp {
 
 struct Input {
     next_res: String,
-    pay_res: String,
-    dice: DiceRange,
     error: Option<String>,
-    dice_result: Option<usize>,
 }
 
 struct DiceRange {
@@ -39,12 +36,6 @@ impl SecCardGameApp {
             game,
             input: Input {
                 next_res: initial_gain.to_string(),
-                pay_res: "0".to_owned(),
-                dice: DiceRange {
-                    min: "0".to_string(),
-                    max: "0".to_string(),
-                },
-                dice_result: None,
                 error: None,
             },
         }
@@ -71,7 +62,18 @@ impl SecCardGameApp {
         // this handles the callback of the card to the board when the card is closed
         let mut new_turn: Option<Game> = None;
         for id in &ids_to_remove {
-            new_turn = Some(self.game.close_card(id));
+            let new_game_state = self.game.close_card(id);
+            match &new_game_state.action_status {
+                None => {}
+                Some(res) => match res {
+                    ActionResult::OopsieFixed => {}
+                    ActionResult::FixFailed => {
+                        self.input.error = Some("You are broke!".to_string())
+                    }
+                },
+            }
+
+            new_turn = Some(new_game_state);
         }
 
         match new_turn {
@@ -116,8 +118,6 @@ impl SecCardGameApp {
 
                 ui.add_space(15.0);
 
-                self.dice_control(ui);
-
                 ui.add_space(10.0);
                 match &self.game.status {
                     GameStatus::Start(board)
@@ -137,37 +137,6 @@ impl SecCardGameApp {
                     }
                 }
             });
-    }
-
-    fn dice_control(&mut self, ui: &mut Ui) {
-        ui.label("Dice");
-        ui.add_space(5.0);
-        ui.horizontal(|ui| {
-            ui.label("Min:\t");
-            ui.text_edit_singleline(&mut self.input.dice.min)
-        });
-        ui.horizontal(|ui| {
-            ui.label("Max:\t");
-            ui.text_edit_singleline(&mut self.input.dice.max)
-        });
-        if ui.button("Roll").clicked() {
-            let min: usize = self.input.dice.min.parse().unwrap_or_else(|_| 0);
-            let max: usize = self.input.dice.max.parse().unwrap_or_else(|_| 0);
-            let mut rng = rand::thread_rng();
-            let value = if min > max {
-                rng.gen_range(max..min)
-            } else if min == max {
-                min
-            } else {
-                rng.gen_range(min..max)
-            };
-            self.input.dice_result = Some(value);
-        }
-        ui.add_space(5.0);
-        match self.input.dice_result {
-            None => ui.label(""),
-            Some(value) => ui.label(format!("You rolled {}", value)),
-        };
     }
 
     fn resource_control(&mut self, ui: &mut Ui) {
@@ -195,23 +164,6 @@ impl SecCardGameApp {
                     },
                 };
                 ui.label(modifier);
-
-                ui.horizontal(|ui| {
-                    ui.text_edit_singleline(&mut self.input.pay_res);
-                    ui.add_space(5.0);
-
-                    if ui.button("Pay").clicked() {
-                        let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-
-                        if &to_pay > cloned_board.current_resources.value() {
-                            self.input.error = Some("No money!".to_string())
-                        } else {
-                            self.input.pay_res = "0".to_string();
-                            self.input.error = None;
-                            self.game = self.game.pay_resources(Resources::new(to_pay));
-                        }
-                    };
-                });
             }
             GameStatus::Finished(_) => {}
         }
@@ -237,7 +189,6 @@ impl SecCardGameApp {
             }
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
                 if board.turns_remaining > 0 && ui.button("Draw card").clicked() {
-                    self.input.dice_result = None;
                     self.input.error = None;
                     self.game = self.game.next_round();
                 }

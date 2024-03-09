@@ -1,8 +1,10 @@
 use std::ops::{Add, Sub};
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use crate::cards::serialization::helper::Number;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialOrd, PartialEq)]
 pub struct Resources(usize);
 
 impl Resources {
@@ -26,7 +28,11 @@ impl Sub for Resources {
     type Output = Resources;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Resources(self.0 - rhs.0)
+        if (self.0 <= rhs.0) {
+            Resources::new(0)
+        } else {
+            Resources(self.0 - rhs.0)
+        }
     }
 }
 
@@ -38,18 +44,20 @@ impl Default for Resources {
 
 impl Serialize for Resources {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_u64(**&self.value() as u64)
     }
 }
 impl<'de> Deserialize<'de> for Resources {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
-        deserializer.deserialize_u64(crate::cards::serialization::helper::NumberVisitor(std::marker::PhantomData))
+        deserializer.deserialize_u64(crate::cards::serialization::helper::NumberVisitor(
+            std::marker::PhantomData,
+        ))
     }
 }
 
