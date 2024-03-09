@@ -3,16 +3,17 @@ use std::collections::HashMap;
 use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use uuid::Uuid;
-use game_lib::world::current_turn::CurrentTurn;
 
+use game_lib::world::current_turn::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
+use game_lib::world::game::Game;
 use game_lib::world::resources::Resources;
 
-use crate::card::{CardContent};
+use crate::card::CardContent;
 use crate::card_window::display_card;
 
 pub struct SecCardGameApp {
-    turn: CurrentTurn,
+    game: Game,
     resources_per_round: usize,
     input: Input,
 }
@@ -30,9 +31,10 @@ struct DiceRange {
     max: String,
 }
 impl SecCardGameApp {
-    fn init(turn: CurrentTurn) -> Self {
+    fn init(turn: CurrentBoard) -> Self {
+        let game = Game::Start(turn);
         Self {
-            turn,
+            game,
             resources_per_round: 5,
             input: Input {
                 next_res: "5".to_owned(),
@@ -47,21 +49,33 @@ impl SecCardGameApp {
         }
     }
 
-    fn refresh_cards(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn update_cards(&mut self, ctx: &Context, ui: &mut Ui) {
+        match &self.game {
+            Game::Start(board) | Game::InProgress(board) => {
+                let cloned_board = board.clone();
+                self.display_cards(&cloned_board, ctx, ui);
+            }
+            Game::Finished => {}
+        }
+    }
+
+    fn display_cards(&mut self, board: &CurrentBoard, ctx: &Context, ui: &mut Ui) {
         let mut ids_to_remove = vec![];
-        for card in <HashMap<Uuid, CardRc> as Clone>::clone(&self.turn.open_cards).into_iter() {
+        for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
             let card_to_display = CardContent::from_card(&card.0, card.1.clone());
             display_card(&card_to_display, |id| ids_to_remove.push(id), ctx, ui);
         }
-
-        let mut new_turn: Option<CurrentTurn> = None;
+        // this handles the callback of the card to the board when the card is closed
+        let mut new_turn: Option<CurrentBoard> = None;
         for id in &ids_to_remove {
-            new_turn = Some(self.turn.close_card(id));
+            new_turn = Some(board.close_card(id));
         }
 
         match new_turn {
             None => {}
-            Some(t) => { self.turn = t; },
+            Some(b) => {
+                self.game = Game::InProgress(b);
+            }
         }
     }
 
@@ -102,8 +116,15 @@ impl SecCardGameApp {
                 self.dice_control(ui);
 
                 ui.add_space(10.0);
-                ui.label(format!("Cards {}/{}", self.turn.deck.played_cards, self.turn.deck.total));
-
+                match &self.game {
+                    Game::Finished => {}
+                    Game::Start(board) | Game::InProgress(board) => {
+                        ui.label(format!(
+                            "Cards {}/{}",
+                            board.deck.played_cards, board.deck.total
+                        ));
+                    }
+                }
                 ui.add_space(20.0);
                 match &self.input.error {
                     None => {}
@@ -148,24 +169,37 @@ impl SecCardGameApp {
     fn resource_control(&mut self, ui: &mut Ui) {
         ui.label("Resources");
         ui.add_space(5.0);
-        let available = RichText::new(format!("{} available", self.turn.current_resources.value())).strong();
-        ui.label(available);
+        match &self.game {
+            Game::Start(board) | Game::InProgress(board) => {
+                let cloned_board = board.clone();
+                let available = RichText::new(format!(
+                    "{} available",
+                    cloned_board.current_resources.value()
+                ))
+                .strong();
+                ui.label(available);
 
-        ui.horizontal(|ui| {
-            ui.text_edit_singleline(&mut self.input.pay_res);
-            ui.add_space(5.0);
+                ui.horizontal(|ui| {
+                    ui.text_edit_singleline(&mut self.input.pay_res);
+                    ui.add_space(5.0);
 
-            if ui.button("Pay").clicked() {
-                let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-                if &to_pay > self.turn.current_resources.value() {
-                    self.input.error = Some("No money!".to_string())
-                } else {
-                    self.input.pay_res = "0".to_string();
-                    self.input.error = None;
-                    self.turn = self.turn.pay_resources(&Resources::new(to_pay))
-                }
-            };
-        });
+                    if ui.button("Pay").clicked() {
+                        let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
+
+                        if &to_pay > cloned_board.current_resources.value() {
+                            self.input.error = Some("No money!".to_string())
+                        } else {
+                            self.input.pay_res = "0".to_string();
+                            self.input.error = None;
+                            self.game = Game::InProgress(
+                                cloned_board.pay_resources(&Resources::new(to_pay)),
+                            );
+                        }
+                    };
+                });
+            }
+            Game::Finished => {}
+        }
     }
 
     fn next_round_controls(&mut self, ui: &mut Ui) {
@@ -183,24 +217,29 @@ impl SecCardGameApp {
         }
 
         ui.add_space(5.0);
-        if self.turn.turns_remaining > 0 && ui.button("Draw card").clicked() {
-            self.input.dice_result = None;
-            self.input.error = None;
-            self.turn = self.turn.next_round(Resources::new(self.resources_per_round));
-        }
-        if self.turn.turns_remaining == 0 {
-            ui.label("Game ended");
-        }
+        match &self.game {
+            Game::Finished => {
+                ui.label("Game ended");
+            }
+            Game::Start(board) | Game::InProgress(board) => {
+                if board.turns_remaining > 0 && ui.button("Draw card").clicked() {
+                    self.input.dice_result = None;
+                    self.input.error = None;
+                    self.game = Game::InProgress(
+                        board.next_round(Resources::new(self.resources_per_round)),
+                    );
+                }
+            }
+        };
     }
 }
 
 impl SecCardGameApp {
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
-        let turn = CurrentTurn::init(deck, Resources::new(0));
+        let turn = CurrentBoard::init(deck, Resources::new(0));
         SecCardGameApp::init(turn)
     }
-
 }
 
 impl eframe::App for SecCardGameApp {
@@ -212,7 +251,7 @@ impl eframe::App for SecCardGameApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            self.refresh_cards(ctx, ui);
+            self.update_cards(ctx, ui);
         });
     }
 }
