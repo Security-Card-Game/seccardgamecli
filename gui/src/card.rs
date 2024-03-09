@@ -1,6 +1,6 @@
-use std::rc::Rc;
 use eframe::epaint::Color32;
 use uuid::Uuid;
+
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::fix_cost::FixCost;
 use game_lib::cards::properties::target::Target;
@@ -10,7 +10,6 @@ use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::world::deck::CardRc;
-
 
 #[derive(Debug)]
 pub struct CardContent {
@@ -27,7 +26,6 @@ pub struct CardContent {
 
 impl CardContent {
     pub fn from_card(id: &Uuid, card: CardRc) -> CardContent {
-
         match &*card {
             Card::Event(c) => Self::event_card_content(id, c.clone()),
             Card::Attack(c) => Self::incident_card_content(id, c.clone()),
@@ -54,19 +52,17 @@ impl CardContent {
         match action {
             Effect::Incident(_, t) => Some(Self::targets_to_strings(t)),
             Effect::AttackSurface(_, t) => Some(Self::targets_to_strings(t)),
-            _ => None
+            _ => None,
         }
     }
 
-
     fn effect_to_text(action: &Effect) -> String {
         match action {
-            Effect::Immediate(d) => d.value().to_string(),
-            Effect::Incident(d, _) => d.value().to_string(),
-            Effect::OnNextFix(d, m) => format!("{} {}", d.value(), m.value()),
-            Effect::OnUsingForFix(d, m) => format!("{} {}", d.value(), m.value()),
-            Effect::Other(d) => d.value().to_string(),
-            Effect::AttackSurface(d, _) => d.value().to_string(),
+            Effect::Immediate(d) | Effect::Other(d) => d.value().to_string(),
+            Effect::OnNextFix(d, _)
+            | Effect::Incident(d, _)
+            | Effect::OnUsingForFix(d, _)
+            | Effect::AttackSurface(d, _) => d.value().to_string(),
             Effect::NOP => "".to_string(),
         }
     }

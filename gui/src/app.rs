@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use std::fmt::format;
 
 use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
 use uuid::Uuid;
 
+use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{Game, GameStatus};
@@ -180,6 +182,19 @@ impl SecCardGameApp {
                 ))
                 .strong();
                 ui.label(available);
+
+                let modifier = match &self.game.get_current_fix_modifier() {
+                    None => "No cost modifier active!".to_string(),
+                    Some(m) => match m {
+                        FixModifier::Increase(r) => {
+                            format!("Next fix is increased by: {}", r.value()).to_string()
+                        }
+                        FixModifier::Decrease(r) => {
+                            format!("Next fix is decreased by: {}", r.value()).to_string()
+                        }
+                    },
+                };
+                ui.label(modifier);
 
                 ui.horizontal(|ui| {
                     ui.text_edit_singleline(&mut self.input.pay_res);

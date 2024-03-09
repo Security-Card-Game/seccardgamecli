@@ -10,9 +10,15 @@ use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
 
 #[derive(Debug, Clone)]
+pub(crate) struct CardRcWithId {
+    pub id: Uuid,
+    pub card: CardRc,
+}
+
+#[derive(Debug, Clone)]
 pub struct CurrentBoard {
     pub current_resources: Resources,
-    pub drawn_card: Option<CardRc>,
+    pub(crate) drawn_card: Option<CardRcWithId>,
     pub open_cards: HashMap<Uuid, CardRc>,
     pub deck: Deck,
     pub turns_remaining: usize,
@@ -37,12 +43,16 @@ impl CurrentBoard {
         let mut open_cards = &mut update_open_cards(self.open_cards.clone());
         let (drawn_card, rest) = cards.split_at(1);
         let card_ref = Rc::new(drawn_card[0].clone());
+        let card_id = Uuid::new_v4();
 
-        open_cards.insert(Uuid::new_v4(), card_ref.clone());
+        open_cards.insert(card_id.clone(), card_ref.clone());
 
         CurrentBoard {
             current_resources: new_resources + current_resources.clone(),
-            drawn_card: Some(card_ref),
+            drawn_card: Some(CardRcWithId {
+                id: card_id,
+                card: card_ref,
+            }),
             open_cards: open_cards.clone(),
             deck: deck.with_remaining_cards(rest),
             turns_remaining: self.turns_remaining - 1,

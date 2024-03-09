@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use rand::{thread_rng, Rng};
 use uuid::Uuid;
 
+use crate::cards::properties::effect::Effect;
+use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::card_model::Card;
 use crate::world::board::CurrentBoard;
 use crate::world::deck::{CardRc, Deck};
@@ -19,11 +21,37 @@ pub enum GameStatus {
 pub struct Game {
     pub status: GameStatus,
     pub resource_gain: Resources,
+    resource_effects: HashMap<Uuid, FixModifier>,
 }
 
 impl Game {
     pub fn get_open_cards(&self) -> HashMap<Uuid, CardRc> {
         self.get_board().open_cards.clone()
+    }
+
+    pub fn get_current_fix_modifier(&self) -> Option<FixModifier> {
+        if (self.resource_effects.is_empty()) {
+            None
+        } else {
+            let mut increase = 0;
+            let mut decrease = 0;
+            for (_, modifier) in self.resource_effects.iter() {
+                match modifier {
+                    FixModifier::Increase(r) => {
+                        increase += r.value().clone();
+                    }
+                    FixModifier::Decrease(r) => {
+                        decrease += r.value().clone();
+                    }
+                }
+            }
+            let value = increase as isize - decrease as isize;
+            if (value <= 0) {
+                Some(FixModifier::Decrease(Resources::new(value.abs() as usize)))
+            } else {
+                Some(FixModifier::Increase(Resources::new(value as usize)))
+            }
+        }
     }
 
     fn get_board(&self) -> &CurrentBoard {
@@ -41,13 +69,16 @@ impl Game {
         Game {
             status,
             resource_gain: initial_resource_gain.clone(),
+            resource_effects: HashMap::new(),
         }
     }
 
     pub fn next_round(&self) -> Self {
+        let mut drawn_card = None;
         let status = match &self.status {
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
                 let new_board = board.next_round(self.resource_gain.clone());
+                drawn_card = new_board.drawn_card.clone();
                 if new_board.turns_remaining == 0 {
                     GameStatus::Finished(new_board)
                 } else {
@@ -57,9 +88,27 @@ impl Game {
             GameStatus::Finished(board) => GameStatus::Finished(board.clone()),
         };
 
+        let resource_effects = match drawn_card {
+            None => self.resource_effects.clone(),
+            Some(card) => match &*card.card {
+                Card::Event(c) => match &c.effect {
+                    Effect::OnNextFix(_, m) => {
+                        let mut new_resource_effect = self.resource_effects.clone();
+                        new_resource_effect.insert(card.id.clone(), m.clone());
+                        new_resource_effect
+                    }
+                    _ => self.resource_effects.clone(),
+                },
+                Card::Attack(_) => self.resource_effects.clone(),
+                Card::Oopsie(_) => self.resource_effects.clone(),
+                Card::Lucky(_) => self.resource_effects.clone(),
+            },
+        };
+
         Game {
             status,
             resource_gain: self.resource_gain.clone(),
+            resource_effects,
         }
     }
 
@@ -68,10 +117,12 @@ impl Game {
             GameStatus::Start(_) | GameStatus::InProgress(_) => Game {
                 status: self.status.clone(),
                 resource_gain: new_gain,
+                resource_effects: self.resource_effects.clone(),
             },
             GameStatus::Finished(board) => Game {
                 status: self.status.clone(),
                 resource_gain: self.resource_gain.clone(),
+                resource_effects: self.resource_effects.clone(),
             },
         }
     }
@@ -83,12 +134,12 @@ impl Game {
                 Game {
                     status: GameStatus::InProgress(new_board),
                     resource_gain: self.resource_gain.clone(),
+                    resource_effects: self.resource_effects.clone(),
                 }
             }
             GameStatus::Start(_) | GameStatus::Finished(_) => self.clone(),
         }
     }
-
     pub fn roll_dice_for_card(card: CardRc) -> usize {
         let mut rng = thread_rng();
         match &*card {
@@ -105,9 +156,12 @@ impl Game {
         match &self.status {
             GameStatus::InProgress(board) => {
                 let new_board = board.close_card(card_id);
+                let mut new_resource_effects = self.resource_effects.clone();
+                new_resource_effects.remove(card_id);
                 Game {
                     status: GameStatus::InProgress(new_board),
                     resource_gain: self.resource_gain.clone(),
+                    resource_effects: new_resource_effects,
                 }
             }
             GameStatus::Start(_) | GameStatus::Finished(_) => self.clone(),
