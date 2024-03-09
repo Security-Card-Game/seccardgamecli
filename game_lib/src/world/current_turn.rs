@@ -27,7 +27,7 @@ impl CurrentBoard {
         }
     }
 
-    pub fn next_round(&self, new_resources: Resources) -> Self {
+    pub(crate) fn next_round(&self, new_resources: Resources) -> Self {
         let current_resources = &self.current_resources;
         let deck = &self.deck;
         let cards = &self.deck.cards;
@@ -46,7 +46,7 @@ impl CurrentBoard {
         }
     }
 
-    pub fn close_card(&self, card_id: &Uuid) -> Self {
+    pub(crate) fn close_card(&self, card_id: &Uuid) -> Self {
         let mut open_cards = &mut self.open_cards.clone();
         open_cards.remove(card_id);
 
@@ -59,7 +59,7 @@ impl CurrentBoard {
         }
     }
 
-    pub fn pay_resources(&self, resources: &Resources) -> Self {
+    pub(crate) fn pay_resources(&self, resources: &Resources) -> Self {
         CurrentBoard {
             current_resources: self.current_resources.clone() - resources.clone(),
             drawn_card: self.drawn_card.clone(),
