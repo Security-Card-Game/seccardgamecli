@@ -59,7 +59,13 @@ impl SecCardGameApp {
         let mut ids_to_remove = vec![];
         for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
             let card_to_display = CardContent::from_card(&card.0, card.1.clone());
-            display_card(&card_to_display, |id| ids_to_remove.push(id), ctx, ui);
+            display_card(
+                &card_to_display,
+                |id| ids_to_remove.push(id),
+                |id| { self.game = self.game.use_card_on_next_fix(&id); },
+                ctx,
+                ui
+            );
         }
 
         // this handles the callback of the card to the board when the card is closed

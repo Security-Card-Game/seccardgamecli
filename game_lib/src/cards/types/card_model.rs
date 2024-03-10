@@ -35,7 +35,7 @@ impl Card {
 pub trait CardTrait {
     fn title(&self) -> &Title;
     fn description(&self) -> &Description;
-    fn action(&self) -> &Effect;
+    fn effect(&self) -> &Effect;
     fn category(&self) -> &str;
 
     fn as_enum(&self) -> Card;
@@ -60,7 +60,7 @@ impl CardTrait for Card {
         }
     }
 
-    fn action(&self) -> &Effect {
+    fn effect(&self) -> &Effect {
         match self {
             Card::Event(card) => &card.effect,
             Card::Attack(card) => &card.effect,

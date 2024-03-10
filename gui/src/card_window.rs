@@ -11,9 +11,10 @@ pub struct CardWindow<'a> {
     content: &'a CardContent,
 }
 
-pub fn display_card<F>(card: &CardContent, close_callback: F, ctx: &Context, ui: &mut Ui)
+pub fn display_card<F, U>(card: &CardContent, close_callback: F, use_callback: U, ctx: &Context, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
+    U: FnMut(Uuid) -> (),
 {
     let window = CardWindow {
         max_size: Vec2::new(200.0, 400.0),
@@ -21,12 +22,13 @@ where
         content: card,
     };
 
-    create_window(window, close_callback, ctx, ui)
+    create_window(window, close_callback, use_callback, ctx, ui)
 }
 
-fn create_window<F>(data: CardWindow, close_callback: F, ctx: &Context, ui: &mut Ui)
+fn create_window<F, U>(data: CardWindow, close_callback: F, use_callback: U, ctx: &Context, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
+    U: FnMut(Uuid) -> (),
 {
     let card = data.content;
     let area = ui.available_size();
@@ -41,12 +43,13 @@ where
         .default_pos(new_pos)
         .max_size(data.max_size)
         .min_size(data.min_size)
-        .show(ctx, |ui| create_card_window(close_callback, card, ui));
+        .show(ctx, |ui| create_card_window(close_callback, use_callback, card, ui));
 }
 
-fn create_card_window<F>(close_callback: F, card: &CardContent, ui: &mut Ui)
+fn create_card_window<F, U>(close_callback: F, mut use_callback: U, card: &CardContent, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
+    U: FnMut(Uuid) -> (),
 {
     ui.vertical(|ui| {
         add_header(close_callback, &card, ui);
@@ -56,7 +59,6 @@ where
         add_explanation("Action:   ", &card.action.as_str(), ui);
         match &card.duration {
             None => {}
-
             Some(duration) => {
                 let content = format!("{} rounds", duration);
                 add_explanation("Duration: ", content.as_str(), ui);
@@ -78,6 +80,11 @@ where
                 add_explanation("Fix:      ", content.as_str(), ui);
             }
         };
+        if card.can_be_activated {
+            if (ui.button("Use").clicked()) {
+                use_callback(card.id);
+            }
+        }
     });
 }
 

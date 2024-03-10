@@ -7,7 +7,7 @@ use crate::cards::properties::duration::Duration;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::attack::AttackCard;
-use crate::cards::types::card_model::Card;
+use crate::cards::types::card_model::{Card, CardTrait};
 use crate::cards::types::oopsie::OopsieCard;
 use crate::world::board::CurrentBoard;
 use crate::world::deck::{CardRc, Deck};
@@ -46,8 +46,38 @@ impl Game {
         self.get_board().open_cards.clone()
     }
 
+    pub fn use_card_on_next_fix(&self, card_id: &Uuid) -> Game {
+        let open_cards = self.get_open_cards();
+        if let Some(card) = open_cards.get(card_id) {
+            let modifier = match card.effect() {
+                Effect::OnUsingForFix(_, m) => Some(m),
+                _ => None,
+            };
+            let res_effects = match modifier {
+                Some(m) => {
+                    let mut new_resource_effects = self.resource_effects.clone();
+                    new_resource_effects.insert(card_id.clone(), m.clone());
+                    new_resource_effects
+                }
+                None => self.resource_effects.clone(),
+            };
+            self.set_resource_effects(res_effects)
+        } else {
+            self.clone()
+        }
+    }
+
+    fn set_resource_effects(&self, resource_effects: HashMap<Uuid, FixModifier>) -> Game {
+        Game {
+            status: self.status.clone(),
+            resource_effects: resource_effects.clone(),
+            resource_gain: self.resource_gain.clone(),
+            action_status: self.action_status.clone(),
+        }
+    }
+
     pub fn get_current_fix_modifier(&self) -> Option<FixModifier> {
-        if (self.resource_effects.is_empty()) {
+        if self.resource_effects.is_empty() {
             None
         } else {
             let mut increase = 0;
@@ -236,7 +266,7 @@ impl Game {
                     resource_gain: game.resource_gain.clone(),
                     resource_effects: game.resource_effects.clone(),
                 }
-            },
+            }
             Duration::None => self.do_close_card(board, card_id),
         }
     }
@@ -270,7 +300,7 @@ impl Game {
     fn reset_resource_modifier(&self) -> Self {
         let mut game = self.clone();
         for card_id in self.resource_effects.keys() {
-           let game_with_closed_card = game.close_card(card_id);
+            let game_with_closed_card = game.close_card(card_id);
             game = game_with_closed_card;
         }
         game
