@@ -151,16 +151,16 @@ impl Game {
     pub fn pay_resources(&self, to_pay: Resources) -> Payment {
         match &self.status {
             GameStatus::InProgress(board) => {
-                let new_board = board.pay_resources(&to_pay);
-                let game = Game {
-                    status: GameStatus::InProgress(new_board),
-                    action_status: self.action_status.clone(),
-                    resource_gain: self.resource_gain.clone(),
-                    resource_effects: self.resource_effects.clone(),
-                };
                 if to_pay > board.current_resources {
-                    Payment::NotEnoughResources(game)
+                    Payment::NotEnoughResources(self.clone())
                 } else {
+                    let new_board = board.pay_resources(&to_pay);
+                    let game = Game {
+                        status: GameStatus::InProgress(new_board),
+                        action_status: self.action_status.clone(),
+                        resource_gain: self.resource_gain.clone(),
+                        resource_effects: self.resource_effects.clone(),
+                    };
                     Payment::Payed(game)
                 }
             }
