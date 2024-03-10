@@ -8,7 +8,7 @@ use uuid::Uuid;
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
-use game_lib::world::game::{ActionResult, Game, GameStatus};
+use game_lib::world::game::{ActionResult, Game, GameStatus, Payment};
 use game_lib::world::resources::Resources;
 
 use crate::card::CardContent;
@@ -21,6 +21,7 @@ pub struct SecCardGameApp {
 
 struct Input {
     next_res: String,
+    pay_res: String,
     error: Option<String>,
 }
 
@@ -36,6 +37,7 @@ impl SecCardGameApp {
             game,
             input: Input {
                 next_res: initial_gain.to_string(),
+                pay_res: "0".to_string(),
                 error: None,
             },
         }
@@ -68,7 +70,7 @@ impl SecCardGameApp {
                 Some(res) => match res {
                     ActionResult::OopsieFixed => {}
                     ActionResult::FixFailed => {
-                        self.input.error = Some("You are broke!".to_string())
+                        self.input.error = Some("Fix failed!".to_string())
                     }
                 },
             }
@@ -164,6 +166,28 @@ impl SecCardGameApp {
                     },
                 };
                 ui.label(modifier);
+
+                ui.horizontal(|ui| {
+                    ui.text_edit_singleline(&mut self.input.pay_res);
+                    ui.add_space(5.0);
+
+                    if ui.button("Pay").clicked() {
+                        let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
+                        self.game = match self.game.pay_resources(Resources::new(to_pay)) {
+                            Payment::Payed(g)
+                            | Payment::NothingPayed(g) => {
+                                self.input.pay_res = "0".to_string();
+                                self.input.error = None;
+                                g
+                            },
+                            Payment::NotEnoughResources(g) => {
+                                self.input.error = Some("Not enough resources!".to_string());
+                                g
+                            }
+                        };
+                    };
+                });
+
             }
             GameStatus::Finished(_) => {}
         }
