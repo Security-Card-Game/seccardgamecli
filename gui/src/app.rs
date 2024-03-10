@@ -7,13 +7,13 @@ use uuid::Uuid;
 
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
-use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::deck::EventCards::Oopsie;
+use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{ActionResult, Game, GameStatus, Payment};
 use game_lib::world::resources::Resources;
 
 use crate::card::CardContent;
-use crate::card_window::display_card;
+use crate::card_window::{display_card, CardMarker};
 
 pub struct SecCardGameApp {
     game: Game,
@@ -62,9 +62,18 @@ impl SecCardGameApp {
             display_card(
                 &card_to_display,
                 |id| ids_to_remove.push(id),
-                |id| { self.game = self.game.use_card_on_next_fix(&id); },
+                |id, marker| {
+                    match marker {
+                        CardMarker::MarkedForUse => {
+                            self.game = self.game.use_card_on_next_fix(&id);
+                        }
+                        CardMarker::None => {
+                            self.game = self.game.do_not_use_card_on_next_fix(&id)
+                        }
+                    }
+                },
                 ctx,
-                ui
+                ui,
             );
         }
 
@@ -186,12 +195,11 @@ impl SecCardGameApp {
                     if ui.button("Pay").clicked() {
                         let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
                         self.game = match self.game.pay_resources(Resources::new(to_pay)) {
-                            Payment::Payed(g)
-                            | Payment::NothingPayed(g) => {
+                            Payment::Payed(g) | Payment::NothingPayed(g) => {
                                 self.input.pay_res = "0".to_string();
                                 self.input.message = None;
                                 g
-                            },
+                            }
                             Payment::NotEnoughResources(g) => {
                                 self.input.message = Some("Not enough resources!".to_string());
                                 g
@@ -199,7 +207,6 @@ impl SecCardGameApp {
                         };
                     };
                 });
-
             }
             GameStatus::Finished(_) => {}
         }

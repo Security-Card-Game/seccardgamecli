@@ -1,5 +1,6 @@
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
+use log::info;
 use rand::Rng;
 use uuid::Uuid;
 
@@ -9,26 +10,34 @@ pub struct CardWindow<'a> {
     max_size: Vec2,
     min_size: Vec2,
     content: &'a CardContent,
+    marker: CardMarker,
+}
+
+#[derive(Clone, Debug)]
+pub enum CardMarker {
+    MarkedForUse,
+    None,
 }
 
 pub fn display_card<F, U>(card: &CardContent, close_callback: F, use_callback: U, ctx: &Context, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
-    U: FnMut(Uuid) -> (),
+    U: FnMut(Uuid, CardMarker) -> (),
 {
     let window = CardWindow {
         max_size: Vec2::new(200.0, 400.0),
         min_size: Vec2::new(150.0, 300.0),
         content: card,
+        marker: CardMarker::None
     };
 
     create_window(window, close_callback, use_callback, ctx, ui)
 }
 
-fn create_window<F, U>(data: CardWindow, close_callback: F, use_callback: U, ctx: &Context, ui: &mut Ui)
+fn create_window<F, U>(mut data: CardWindow, close_callback: F, use_callback: U, ctx: &Context, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
-    U: FnMut(Uuid) -> (),
+    U: FnMut(Uuid, CardMarker) -> (),
 {
     let card = data.content;
     let area = ui.available_size();
@@ -43,13 +52,13 @@ where
         .default_pos(new_pos)
         .max_size(data.max_size)
         .min_size(data.min_size)
-        .show(ctx, |ui| create_card_window(close_callback, use_callback, card, ui));
+        .show(ctx, |ui| create_card_window(close_callback, use_callback, card, &mut data, ui));
 }
 
-fn create_card_window<F, U>(close_callback: F, mut use_callback: U, card: &CardContent, ui: &mut Ui)
+fn create_card_window<F, U>(close_callback: F, mut use_callback: U, card: &CardContent, data: &mut CardWindow, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
-    U: FnMut(Uuid) -> (),
+    U: FnMut(Uuid, CardMarker) -> (),
 {
     ui.vertical(|ui| {
         add_header(close_callback, &card, ui);
@@ -81,8 +90,13 @@ where
             }
         };
         if card.can_be_activated {
-            if (ui.button("Use").clicked()) {
-                use_callback(card.id);
+            if ui.button("Use").clicked() {
+                match data.marker {
+                    CardMarker::MarkedForUse => { data.marker = CardMarker::None; }
+                    CardMarker::None => { data.marker = CardMarker::MarkedForUse; }
+                }
+                info!("Use clicked with {:?}", data.marker);
+                use_callback(card.id, data.marker.clone());
             }
         }
     });

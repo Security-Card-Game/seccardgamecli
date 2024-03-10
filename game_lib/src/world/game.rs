@@ -67,6 +67,17 @@ impl Game {
         }
     }
 
+    pub fn do_not_use_card_on_next_fix(&self, card_id: &Uuid) -> Game {
+        let open_cards = self.get_open_cards();
+        if let Some(card) = open_cards.get(card_id) {
+            let mut new_resource_effects = self.resource_effects.clone();
+            new_resource_effects.remove(card_id);
+            self.set_resource_effects(new_resource_effects)
+        } else {
+            self.clone()
+        }
+    }
+
     fn set_resource_effects(&self, resource_effects: HashMap<Uuid, FixModifier>) -> Game {
         Game {
             status: self.status.clone(),
