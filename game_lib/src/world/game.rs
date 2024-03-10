@@ -24,6 +24,7 @@ pub enum GameStatus {
 pub enum ActionResult {
     OopsieFixed,
     FixFailed,
+    AttackForceClosed,
 }
 
 #[derive(Debug, Clone)]
@@ -227,7 +228,15 @@ impl Game {
 
     fn close_attack_card(&self, board: &CurrentBoard, card_id: &Uuid, ac: &AttackCard) -> Self {
         match ac.duration {
-            Duration::Rounds(_) | Duration::UntilClosed => self.clone(),
+            Duration::Rounds(_) | Duration::UntilClosed => {
+                let game = self.do_close_card(board, card_id);
+                Game {
+                    status: game.status.clone(),
+                    action_status: Some(ActionResult::AttackForceClosed),
+                    resource_gain: game.resource_gain.clone(),
+                    resource_effects: game.resource_effects.clone(),
+                }
+            },
             Duration::None => self.do_close_card(board, card_id),
         }
     }

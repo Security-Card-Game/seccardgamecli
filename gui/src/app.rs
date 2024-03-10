@@ -8,6 +8,7 @@ use uuid::Uuid;
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
+use game_lib::world::deck::EventCards::Oopsie;
 use game_lib::world::game::{ActionResult, Game, GameStatus, Payment};
 use game_lib::world::resources::Resources;
 
@@ -22,7 +23,7 @@ pub struct SecCardGameApp {
 struct Input {
     next_res: String,
     pay_res: String,
-    error: Option<String>,
+    message: Option<String>,
 }
 
 struct DiceRange {
@@ -38,7 +39,7 @@ impl SecCardGameApp {
             input: Input {
                 next_res: initial_gain.to_string(),
                 pay_res: "0".to_string(),
-                error: None,
+                message: None,
             },
         }
     }
@@ -68,9 +69,14 @@ impl SecCardGameApp {
             match &new_game_state.action_status {
                 None => {}
                 Some(res) => match res {
-                    ActionResult::OopsieFixed => {}
+                    ActionResult::OopsieFixed => {
+                        self.input.message = None;
+                    }
                     ActionResult::FixFailed => {
-                        self.input.error = Some("Fix failed!".to_string())
+                        self.input.message = Some("Fix failed!".to_string());
+                    }
+                    ActionResult::AttackForceClosed => {
+                        self.input.message = Some("Attack forced to be over".to_string());
                     }
                 },
             }
@@ -132,7 +138,7 @@ impl SecCardGameApp {
                     }
                 }
                 ui.add_space(20.0);
-                match &self.input.error {
+                match &self.input.message {
                     None => {}
                     Some(e) => {
                         ui.label(RichText::new(e).color(Color32::RED));
@@ -177,11 +183,11 @@ impl SecCardGameApp {
                             Payment::Payed(g)
                             | Payment::NothingPayed(g) => {
                                 self.input.pay_res = "0".to_string();
-                                self.input.error = None;
+                                self.input.message = None;
                                 g
                             },
                             Payment::NotEnoughResources(g) => {
-                                self.input.error = Some("Not enough resources!".to_string());
+                                self.input.message = Some("Not enough resources!".to_string());
                                 g
                             }
                         };
@@ -213,7 +219,7 @@ impl SecCardGameApp {
             }
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
                 if board.turns_remaining > 0 && ui.button("Draw card").clicked() {
-                    self.input.error = None;
+                    self.input.message = None;
                     self.game = self.game.next_round();
                 }
             }
