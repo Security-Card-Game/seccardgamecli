@@ -36,7 +36,7 @@ pub struct Game {
 
 pub enum Payment {
     Payed(Game),
-    Broke(Game),
+    NotEnoughResources(Game),
     NothingPayed(Game),
 }
 
@@ -147,7 +147,7 @@ impl Game {
         }
     }
 
-    fn pay_resources(&self, to_pay: Resources) -> Payment {
+    pub fn pay_resources(&self, to_pay: Resources) -> Payment {
         match &self.status {
             GameStatus::InProgress(board) => {
                 let new_board = board.pay_resources(&to_pay);
@@ -158,12 +158,40 @@ impl Game {
                     resource_effects: self.resource_effects.clone(),
                 };
                 if to_pay > board.current_resources {
-                    Payment::Broke(game)
+                    Payment::NotEnoughResources(game)
                 } else {
                     Payment::Payed(game)
                 }
             }
             GameStatus::Start(_) | GameStatus::Finished(_) => Payment::NothingPayed(self.clone()),
+        }
+    }
+
+    fn set_available_resources(&self, available_resources: Resources) -> Game {
+        let board = match &self.status {
+            GameStatus::Start(board) | GameStatus::InProgress(board) => CurrentBoard {
+                current_resources: available_resources,
+                turns_remaining: board.turns_remaining.clone(),
+                deck: board.deck.clone(),
+                open_cards: board.open_cards.clone().clone(),
+                drawn_card: board.drawn_card.clone(),
+            },
+            GameStatus::Finished(board) => board.clone(),
+        };
+        self.set_board(board)
+    }
+
+    fn set_board(&self, board: CurrentBoard) -> Game {
+        let new_status = match &self.status {
+            GameStatus::Start(_) => GameStatus::Start(board),
+            GameStatus::InProgress(_) => GameStatus::InProgress(board),
+            GameStatus::Finished(_) => GameStatus::Finished(board),
+        };
+        Game {
+            status: new_status,
+            action_status: self.action_status.clone(),
+            resource_gain: self.resource_gain.clone(),
+            resource_effects: self.resource_effects.clone(),
         }
     }
 
@@ -221,19 +249,22 @@ impl Game {
                 let game = g.set_action_result(ActionResult::OopsieFixed);
                 game.do_close_card(game.get_board(), card_id)
             }
-            Payment::Broke(g) => g.set_action_result(ActionResult::FixFailed),
+            Payment::NotEnoughResources(g) => {
+                let failed_fix = g.set_action_result(ActionResult::FixFailed);
+                failed_fix.set_available_resources(Resources::new(0))
+            }
             Payment::NothingPayed(g) => g.clone(),
         };
         game.reset_resource_modifier()
     }
 
     fn reset_resource_modifier(&self) -> Self {
-        Game {
-            status: self.status.clone(),
-            action_status: self.action_status.clone(),
-            resource_effects: HashMap::new(),
-            resource_gain: self.resource_gain.clone(),
+        let mut game = self.clone();
+        for card_id in self.resource_effects.keys() {
+           let game_with_closed_card = game.close_card(card_id);
+            game = game_with_closed_card;
         }
+        game
     }
 
     fn set_action_result(&self, action_result: ActionResult) -> Self {
