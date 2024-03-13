@@ -12,8 +12,8 @@ use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{ActionResult, Game, GameStatus, Payment};
 use game_lib::world::resources::Resources;
 
-use crate::card::CardContent;
-use crate::card_window::{display_card, CardMarker};
+use crate::card_view_model::{CardContent, CardMarker};
+use crate::card_window::display_card;
 
 pub struct SecCardGameApp {
     game: Game,
@@ -30,6 +30,7 @@ struct DiceRange {
     min: String,
     max: String,
 }
+
 impl SecCardGameApp {
     fn init(deck: Deck) -> Self {
         let game = Game::create(deck, Resources::new(5));
@@ -58,19 +59,19 @@ impl SecCardGameApp {
     fn display_cards(&mut self, board: &CurrentBoard, ctx: &Context, ui: &mut Ui) {
         let mut ids_to_remove = vec![];
         for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
-            let card_to_display = CardContent::from_card(&card.0, card.1.clone());
+            let card_to_display = CardContent::from_card(
+                &card.0,
+                card.1.clone(),
+                self.game.active_cards.contains_key(&card.0),
+            );
             display_card(
                 &card_to_display,
                 |id| ids_to_remove.push(id),
-                |id, marker| {
-                    match marker {
-                        CardMarker::MarkedForUse => {
-                            self.game = self.game.use_card_on_next_fix(&id);
-                        }
-                        CardMarker::None => {
-                            self.game = self.game.do_not_use_card_on_next_fix(&id)
-                        }
+                |id, marker| match marker {
+                    CardMarker::MarkedForUse => {
+                        self.game = self.game.activate_card(&id);
                     }
+                    CardMarker::None => self.game = self.game.deactivate_card(&id),
                 },
                 ctx,
                 ui,

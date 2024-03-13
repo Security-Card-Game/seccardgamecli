@@ -22,7 +22,14 @@ pub struct CardContent {
     pub targets: Option<Vec<String>>,
     pub costs: Option<FixCost>,
     pub duration: Option<usize>,
-    pub can_be_activated: bool
+    pub can_be_activated: bool,
+    pub card_marker: CardMarker,
+}
+
+#[derive(Clone, Debug)]
+pub enum CardMarker {
+    MarkedForUse,
+    None,
 }
 
 impl CardContent {
@@ -44,17 +51,26 @@ impl CardContent {
             targets: Self::effect_to_targets(&card.effect()),
             costs,
             duration,
-            can_be_activated: Self::can_effect_be_activated(&card.effect())
+            can_be_activated: Self::can_effect_be_activated(&card.effect()),
+            card_marker: CardMarker::None,
         }
     }
 
-    pub fn from_card(id: &Uuid, card: CardRc) -> CardContent {
-        match &*card {
+    pub fn from_card(id: &Uuid, card: CardRc, is_active: bool) -> CardContent {
+        let mut card_view_model = match &*card {
             Card::Event(c) => Self::event_card_content(id, c.clone()),
             Card::Attack(c) => Self::incident_card_content(id, c.clone()),
             Card::Oopsie(c) => Self::oopsie_card_content(id, c.clone()),
             Card::Lucky(c) => Self::lucky_card_content(id, c.clone()),
-        }
+        };
+
+        card_view_model.card_marker = if is_active {
+            CardMarker::MarkedForUse
+        } else {
+            CardMarker::None
+        };
+
+        card_view_model
     }
 
     fn event_card_content(id: &Uuid, card: EventCard) -> CardContent {
@@ -114,7 +130,6 @@ impl CardContent {
             Some(duration),
         )
     }
-
 
     fn oopsie_card_content(id: &Uuid, card: OopsieCard) -> CardContent {
         let fix_cost = &card.fix_cost.clone();

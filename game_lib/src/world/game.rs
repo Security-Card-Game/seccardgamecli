@@ -32,6 +32,7 @@ pub struct Game {
     pub status: GameStatus,
     pub action_status: Option<ActionResult>,
     pub resource_gain: Resources,
+    pub active_cards: HashMap<Uuid, CardRc>,
     resource_effects: HashMap<Uuid, FixModifier>,
 }
 
@@ -67,21 +68,64 @@ impl Game {
         }
     }
 
-    pub fn do_not_use_card_on_next_fix(&self, card_id: &Uuid) -> Game {
-        let open_cards = self.get_open_cards();
-        if let Some(card) = open_cards.get(card_id) {
-            let mut new_resource_effects = self.resource_effects.clone();
-            new_resource_effects.remove(card_id);
-            self.set_resource_effects(new_resource_effects)
-        } else {
-            self.clone()
-        }
-    }
-
     fn set_resource_effects(&self, resource_effects: HashMap<Uuid, FixModifier>) -> Game {
         Game {
             status: self.status.clone(),
             resource_effects: resource_effects.clone(),
+            resource_gain: self.resource_gain.clone(),
+            action_status: self.action_status.clone(),
+            active_cards: self.active_cards.clone(),
+        }
+    }
+
+    pub fn activate_card(&self, card_id: &Uuid) -> Game {
+        let card = self.get_board().open_cards.get(&card_id);
+
+        match card {
+            None => self.clone(),
+            Some(activated_card) => {
+                let modifier = match activated_card.effect() {
+                    Effect::Immediate(_)
+                    | Effect::AttackSurface(_, _)
+                    | Effect::Incident(_, _)
+                    | Effect::Other(_)
+                    | Effect::NOP => None,
+                    Effect::OnNextFix(_, m) | Effect::OnUsingForFix(_, m) => Some(m),
+                };
+
+                let mut new_active_cards = self.active_cards.clone();
+                new_active_cards.insert(card_id.clone(), activated_card.clone());
+                let mut new_resource_effects = self.resource_effects.clone();
+
+                match modifier {
+                    None => {}
+                    Some(m) => {
+                        new_resource_effects.insert(card_id.clone(), m.clone());
+                    }
+                }
+
+                Game {
+                    status: self.status.clone(),
+                    resource_effects: new_resource_effects,
+                    active_cards: new_active_cards,
+                    action_status: self.action_status.clone(),
+                    resource_gain: self.resource_gain.clone(),
+                }
+            }
+        }
+    }
+
+    pub fn deactivate_card(&self, card_id: &Uuid) -> Game {
+        let mut new_active_cards = self.active_cards.clone();
+        let mut new_resource_effects = self.resource_effects.clone();
+
+        new_active_cards.remove(card_id);
+        new_resource_effects.remove(card_id);
+
+        Game {
+            status: self.status.clone(),
+            resource_effects: new_resource_effects,
+            active_cards: new_active_cards,
             resource_gain: self.resource_gain.clone(),
             action_status: self.action_status.clone(),
         }
@@ -129,6 +173,7 @@ impl Game {
             action_status: None,
             resource_gain: initial_resource_gain.clone(),
             resource_effects: HashMap::new(),
+            active_cards: HashMap::new(),
         }
     }
 
@@ -169,6 +214,7 @@ impl Game {
             action_status: None,
             resource_gain: self.resource_gain.clone(),
             resource_effects,
+            active_cards: HashMap::new(),
         }
     }
 
@@ -179,12 +225,14 @@ impl Game {
                 action_status: self.action_status.clone(),
                 resource_gain: new_gain,
                 resource_effects: self.resource_effects.clone(),
+                active_cards: self.active_cards.clone(),
             },
             GameStatus::Finished(board) => Game {
                 status: self.status.clone(),
                 action_status: self.action_status.clone(),
                 resource_gain: self.resource_gain.clone(),
                 resource_effects: self.resource_effects.clone(),
+                active_cards: self.active_cards.clone(),
             },
         }
     }
@@ -201,6 +249,7 @@ impl Game {
                         action_status: self.action_status.clone(),
                         resource_gain: self.resource_gain.clone(),
                         resource_effects: self.resource_effects.clone(),
+                        active_cards: self.active_cards.clone(),
                     };
                     Payment::Payed(game)
                 }
@@ -234,6 +283,7 @@ impl Game {
             action_status: self.action_status.clone(),
             resource_gain: self.resource_gain.clone(),
             resource_effects: self.resource_effects.clone(),
+            active_cards: self.active_cards.clone(),
         }
     }
 
@@ -259,11 +309,16 @@ impl Game {
         let new_board = board.close_card(card_id);
         let mut new_resource_effects = self.resource_effects.clone();
         new_resource_effects.remove(card_id);
+
+        let mut new_active_cards = self.active_cards.clone();
+        new_active_cards.remove(card_id);
+
         Game {
             status: GameStatus::InProgress(new_board),
             action_status: self.action_status.clone(),
             resource_gain: self.resource_gain.clone(),
             resource_effects: new_resource_effects,
+            active_cards: new_active_cards,
         }
     }
 
@@ -271,11 +326,16 @@ impl Game {
         match ac.duration {
             Duration::Rounds(_) | Duration::UntilClosed => {
                 let game = self.do_close_card(board, card_id);
+
+                let mut new_active_cards = self.active_cards.clone();
+                new_active_cards.remove(card_id);
+
                 Game {
                     status: game.status.clone(),
                     action_status: Some(ActionResult::AttackForceClosed),
                     resource_gain: game.resource_gain.clone(),
                     resource_effects: game.resource_effects.clone(),
+                    active_cards: new_active_cards,
                 }
             }
             Duration::None => self.do_close_card(board, card_id),
@@ -323,6 +383,7 @@ impl Game {
             action_status: Some(action_result),
             resource_gain: self.resource_gain.clone(),
             resource_effects: self.resource_effects.clone(),
+            active_cards: self.active_cards.clone(),
         }
     }
 }

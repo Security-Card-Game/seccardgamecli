@@ -1,6 +1,6 @@
-mod app;
 pub use app::SecCardGameApp;
 
-pub mod start;
-mod card;
+mod app;
+mod card_view_model;
 mod card_window;
+pub mod start;
