@@ -1,3 +1,10 @@
+use std::ffi::OsString;
+use std::fs;
+use std::path::PathBuf;
+use std::rc::Rc;
+
+use log::error;
+
 use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::{Card, CardTrait};
 use crate::cards::types::event::EventCard;
@@ -6,11 +13,6 @@ use crate::cards::types::oopsie::OopsieCard;
 use crate::errors::{ErrorKind, GameLibError, GameLibResult};
 use crate::file::cards::get_card_directory;
 use crate::file::general::{count_cards_in_directory, get_files_in_directory_with_filter};
-use log::error;
-use std::ffi::OsString;
-use std::fs;
-use std::path::PathBuf;
-use std::rc::Rc;
 use crate::world::deck::{CardRc, DeckRepository};
 
 pub struct DeckLoader {
@@ -36,10 +38,9 @@ impl DeckRepository for DeckLoader {
 }
 
 impl DeckLoader {
-
     pub fn create(base_path: &str) -> Self {
         DeckLoader {
-            base_path: base_path.to_string()
+            base_path: base_path.to_string(),
         }
     }
 
@@ -48,8 +49,12 @@ impl DeckLoader {
         let cards_path = path.to_str().expect("Card path");
         match Self::load_cards(cards_path) {
             Ok(cards) => cards,
-            Err(err) =>  {
-                error!("Could not read cars of type: {} (caused by {})", card_type.category(), err.to_string());
+            Err(err) => {
+                error!(
+                    "Could not read cars of type: {} (caused by {})",
+                    card_type.category(),
+                    err.to_string()
+                );
                 vec![]
             }
         }
@@ -70,14 +75,9 @@ impl DeckLoader {
     }
 
     fn load_cards(cards_path: &str) -> GameLibResult<Vec<CardRc>> {
-        let files = get_files_in_directory_with_filter(cards_path, ".json")
-            .map_err(|e| {
-                GameLibError::create_with_original(
-                    ErrorKind::IO,
-                    "Could not read cards",
-                    e.to_string(),
-                )
-            })?;
+        let files = get_files_in_directory_with_filter(cards_path, ".json").map_err(|e| {
+            GameLibError::create_with_original(ErrorKind::IO, "Could not read cards", e.to_string())
+        })?;
 
         let mut cards = vec![];
         for file in files {

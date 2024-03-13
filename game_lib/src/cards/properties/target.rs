@@ -1,4 +1,5 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
 use crate::cards::serialization::helper::StrVisitor;
 
 #[derive(Debug, Clone)]
@@ -26,18 +27,17 @@ impl From<String> for Target {
 
 impl Serialize for Target {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.value())
     }
 }
 impl<'de> Deserialize<'de> for Target {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_string(StrVisitor(std::marker::PhantomData))
     }
 }
-

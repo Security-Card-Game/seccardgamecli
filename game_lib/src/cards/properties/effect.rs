@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::cards::properties::effect_description::EffectDescription;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::properties::target::Target;

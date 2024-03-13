@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::cards::errors::{ErrorKind, ModelError};
 use crate::world::resources::Resources;
 

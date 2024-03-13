@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use egui::Vec2;
-use game_lib::world::deck::Deck;
 
+use game_lib::world::deck::Deck;
 
 use crate::SecCardGameApp;
 

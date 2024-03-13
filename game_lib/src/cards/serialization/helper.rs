@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt;
 use std::marker::PhantomData;
+
 use serde::de::Visitor;
 
 pub(crate) struct StrVisitor<T>(pub(crate) PhantomData<T>);
@@ -48,7 +49,9 @@ impl Number for u64 {
 pub(crate) struct NumberVisitor<T: Number>(pub(crate) PhantomData<T>);
 
 impl<'de, T> Visitor<'de> for NumberVisitor<T>
-    where T: Number {
+where
+    T: Number,
+{
     type Value = T;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -56,18 +59,16 @@ impl<'de, T> Visitor<'de> for NumberVisitor<T>
     }
 
     fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
-        where
-            E: Error,
+    where
+        E: Error,
     {
         Ok(T::from_i64(value))
     }
 
     fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-        where
-            E: Error,
+    where
+        E: Error,
     {
         Ok(T::from_u64(value))
     }
 }
-
-

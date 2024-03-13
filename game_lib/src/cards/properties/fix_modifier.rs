@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::world::resources::Resources;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -12,8 +13,7 @@ impl FixModifier {
     pub fn value(&self) -> isize {
         match self {
             FixModifier::Increase(r) => r.value().clone() as isize,
-            FixModifier::Decrease(r) => -1 * r.value().clone() as isize
+            FixModifier::Decrease(r) => -1 * r.value().clone() as isize,
         }
     }
 }
-

@@ -12,14 +12,18 @@ pub enum ErrorKind {
 pub struct GameLibError {
     kind: ErrorKind,
     message: String,
-    original_message: Option<String>
+    original_message: Option<String>,
 }
 
 impl Display for GameLibError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.original_message {
-            None =>  write!(f, "GameLibError: {:?}: {}", self.kind, self.message),
-            Some(orig) => write!(f, "GameLibError: {:?}: {} (was {})", self.kind, self.message,orig),
+            None => write!(f, "GameLibError: {:?}: {}", self.kind, self.message),
+            Some(orig) => write!(
+                f,
+                "GameLibError: {:?}: {} (was {})",
+                self.kind, self.message, orig
+            ),
         }
     }
 }
@@ -31,7 +35,7 @@ impl GameLibError {
         GameLibError {
             kind,
             message: message.to_string(),
-            original_message: None
+            original_message: None,
         }
     }
 
@@ -39,8 +43,7 @@ impl GameLibError {
         GameLibError {
             kind,
             message: message.to_string(),
-            original_message: Some(original_message)
+            original_message: Some(original_message),
         }
     }
-
 }

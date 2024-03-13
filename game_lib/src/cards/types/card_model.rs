@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::cards::properties::description::Description;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::title::Title;
@@ -6,7 +7,6 @@ use crate::cards::types::attack::AttackCard;
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

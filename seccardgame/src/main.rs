@@ -123,9 +123,7 @@ fn handle_commands() -> CliResult<()> {
                     };
                     create_deck_and_write_to_disk(path, &config)
                 }
-                Some(("play", _)) => {
-                    play_deck(&config)
-                }
+                Some(("play", _)) => play_deck(&config),
                 _ => {
                     println!("Unknown command!");
                     exit(-1)
