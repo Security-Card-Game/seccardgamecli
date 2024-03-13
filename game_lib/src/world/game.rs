@@ -22,8 +22,8 @@ pub enum GameStatus {
 
 #[derive(Debug, Clone)]
 pub enum ActionResult {
-    OopsieFixed,
-    FixFailed,
+    OopsieFixed(Resources),
+    FixFailed(Resources),
     AttackForceClosed,
 }
 
@@ -237,10 +237,10 @@ impl Game {
         }
     }
 
-    pub fn pay_resources(&self, to_pay: Resources) -> Payment {
+    pub fn pay_resources(&self, to_pay: &Resources) -> Payment {
         match &self.status {
             GameStatus::InProgress(board) => {
-                if to_pay > board.current_resources {
+                if to_pay > &board.current_resources {
                     Payment::NotEnoughResources(self.clone())
                 } else {
                     let new_board = board.pay_resources(&to_pay);
@@ -353,14 +353,14 @@ impl Game {
             fix_cost
         };
 
-        let payed = self.pay_resources(actual_cost);
+        let payed = self.pay_resources(&actual_cost);
         let game = match payed {
             Payment::Payed(g) => {
-                let game = g.set_action_result(ActionResult::OopsieFixed);
+                let game = g.set_action_result(ActionResult::OopsieFixed(actual_cost));
                 game.do_close_card(game.get_board(), card_id)
             }
             Payment::NotEnoughResources(g) => {
-                let failed_fix = g.set_action_result(ActionResult::FixFailed);
+                let failed_fix = g.set_action_result(ActionResult::FixFailed(actual_cost));
                 failed_fix.set_available_resources(Resources::new(0))
             }
             Payment::NothingPayed(g) => g.clone(),

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fmt::format;
+use std::fmt::{format, Display, Formatter};
 
 use egui::{Color32, Context, RichText, Ui};
 use rand::Rng;
@@ -20,10 +20,17 @@ pub struct SecCardGameApp {
     input: Input,
 }
 
+enum Message {
+    Success(String),
+    Failure(String),
+    Warning(String),
+    None,
+}
+
 struct Input {
     next_res: String,
     pay_res: String,
-    message: Option<String>,
+    message: Message,
 }
 
 struct DiceRange {
@@ -40,7 +47,7 @@ impl SecCardGameApp {
             input: Input {
                 next_res: initial_gain.to_string(),
                 pay_res: "0".to_string(),
-                message: None,
+                message: Message::None,
             },
         }
     }
@@ -83,16 +90,23 @@ impl SecCardGameApp {
         for id in &ids_to_remove {
             let new_game_state = self.game.close_card(id);
             match &new_game_state.action_status {
-                None => {}
+                None => {
+                    self.input.message = Message::None;
+                }
                 Some(res) => match res {
-                    ActionResult::OopsieFixed => {
-                        self.input.message = None;
+                    ActionResult::OopsieFixed(res) => {
+                        self.input.message =
+                            Message::Success(format!("Fixed for {} resources.", res.value()));
                     }
-                    ActionResult::FixFailed => {
-                        self.input.message = Some("Fix failed!".to_string());
+                    ActionResult::FixFailed(res) => {
+                        self.input.message = Message::Failure(format!(
+                            "Fix failed! It would have needed {} resources.",
+                            res.value()
+                        ));
                     }
                     ActionResult::AttackForceClosed => {
-                        self.input.message = Some("Attack forced to be over".to_string());
+                        self.input.message =
+                            Message::Warning("Attack forced to be over".to_string());
                     }
                 },
             }
@@ -155,12 +169,16 @@ impl SecCardGameApp {
                 }
                 ui.add_space(20.0);
                 match &self.input.message {
-                    None => {}
-                    Some(e) => {
-                        ui.label(RichText::new(e).color(Color32::RED));
-                    }
+                    Message::Success(m) => Self::show_message(m, Color32::GREEN, ui),
+                    Message::Failure(m) => Self::show_message(m, Color32::RED, ui),
+                    Message::Warning(m) => Self::show_message(m, Color32::GOLD, ui),
+                    Message::None => {}
                 }
             });
+    }
+
+    fn show_message(message: &String, color: Color32, ui: &mut Ui) {
+        ui.label(RichText::new(message).color(color));
     }
 
     fn resource_control(&mut self, ui: &mut Ui) {
@@ -195,14 +213,15 @@ impl SecCardGameApp {
 
                     if ui.button("Pay").clicked() {
                         let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-                        self.game = match self.game.pay_resources(Resources::new(to_pay)) {
+                        self.game = match self.game.pay_resources(&Resources::new(to_pay)) {
                             Payment::Payed(g) | Payment::NothingPayed(g) => {
                                 self.input.pay_res = "0".to_string();
-                                self.input.message = None;
+                                self.input.message = Message::None;
                                 g
                             }
                             Payment::NotEnoughResources(g) => {
-                                self.input.message = Some("Not enough resources!".to_string());
+                                self.input.message =
+                                    Message::Warning("Not enough resources!".to_string());
                                 g
                             }
                         };
@@ -233,7 +252,7 @@ impl SecCardGameApp {
             }
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
                 if board.turns_remaining > 0 && ui.button("Draw card").clicked() {
-                    self.input.message = None;
+                    self.input.message = Message::None;
                     self.game = self.game.next_round();
                 }
             }
