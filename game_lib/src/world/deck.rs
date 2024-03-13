@@ -9,13 +9,9 @@ use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
 
-pub struct CurrentTurn {
-    drawn_card: Card,
-    deck: Deck,
-}
-
+#[derive(Debug, Clone)]
 pub struct Deck {
-    pub cards: Vec<Card>,
+    pub board: Vec<Card>,
     pub played_cards: usize,
     pub total: usize,
 }
@@ -24,26 +20,17 @@ impl Deck {
     fn new(cards: Vec<Card>) -> Deck {
         let total = cards.len();
         Deck {
-            cards,
+            board: cards,
             played_cards: 0,
             total,
         }
     }
 
-    fn with_remaining_cards(&self, cards: &[Card]) -> Deck {
+    pub(crate) fn with_remaining_cards(&self, cards: &[Card]) -> Self {
         Deck {
-            cards: cards.to_vec(),
+            board: cards.to_vec(),
             played_cards: self.played_cards + 1,
             total: self.total,
-        }
-    }
-
-    pub fn draw_card(&self) -> CurrentTurn {
-        let cards = &self.cards;
-        let (drawn_card, rest) = cards.split_at(1);
-        CurrentTurn {
-            drawn_card: drawn_card[0].clone(),
-            deck: self.with_remaining_cards(rest),
         }
     }
 }

@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, Clone)]
@@ -24,11 +25,10 @@ impl From<String> for Title {
     }
 }
 
-
 impl Serialize for Title {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.value())
     }
@@ -36,10 +36,10 @@ impl Serialize for Title {
 
 impl<'de> Deserialize<'de> for Title {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
-        deserializer.deserialize_string(crate::cards::serialization::helper::StrVisitor(PhantomData))
+        deserializer
+            .deserialize_string(crate::cards::serialization::helper::StrVisitor(PhantomData))
     }
 }
-

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::cards::properties::description::Description;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::effect_description::EffectDescription;
@@ -17,14 +18,19 @@ pub struct OopsieCard {
 }
 
 impl OopsieCard {
-
-    pub fn new(title: Title, description: Description, targets: Vec<Target>, effect: EffectDescription, fix_cost: FixCost) -> Self {
-            OopsieCard {
-                title,
-                description,
-                effect: Effect::AttackSurface(effect, targets),
-                fix_cost
-            }
+    pub fn new(
+        title: Title,
+        description: Description,
+        targets: Vec<Target>,
+        effect: EffectDescription,
+        fix_cost: FixCost,
+    ) -> Self {
+        OopsieCard {
+            title,
+            description,
+            effect: Effect::AttackSurface(effect, targets),
+            fix_cost,
+        }
     }
 
     pub fn empty() -> Card {

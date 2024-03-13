@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::cards::properties::description::Description;
 use crate::cards::properties::duration::Duration;
 use crate::cards::properties::effect::Effect;
@@ -17,12 +18,18 @@ pub struct AttackCard {
 }
 
 impl AttackCard {
-    pub fn new(title: Title, description: Description, targets: Vec<Target>, effect: EffectDescription, duration: Duration) ->  Self {
+    pub fn new(
+        title: Title,
+        description: Description,
+        targets: Vec<Target>,
+        effect: EffectDescription,
+        duration: Duration,
+    ) -> Self {
         AttackCard {
             title,
             description,
             effect: Effect::Incident(effect, targets),
-            duration
+            duration,
         }
     }
 

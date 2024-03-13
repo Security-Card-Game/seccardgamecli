@@ -3,7 +3,7 @@ use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
 use uuid::Uuid;
 
-use crate::card::CardContent;
+use crate::card_view_model::{CardContent, CardMarker};
 
 pub struct CardWindow<'a> {
     max_size: Vec2,
@@ -11,21 +11,34 @@ pub struct CardWindow<'a> {
     content: &'a CardContent,
 }
 
-pub fn display_card<F>(card: &CardContent, close_callback: F, ctx: &Context, ui: &mut Ui)
-where
+pub fn display_card<F, U>(
+    card: &CardContent,
+    close_callback: F,
+    use_callback: U,
+    ctx: &Context,
+    ui: &mut Ui,
+) where
     F: FnMut(Uuid) -> (),
+    U: FnMut(Uuid, CardMarker) -> (),
 {
     let window = CardWindow {
         max_size: Vec2::new(200.0, 400.0),
         min_size: Vec2::new(150.0, 300.0),
         content: card,
     };
-    create_window(window, close_callback, ctx, ui)
+
+    create_window(window, close_callback, use_callback, ctx, ui)
 }
 
-fn create_window<F>(data: CardWindow, close_callback: F, ctx: &Context, ui: &mut Ui)
-where
+fn create_window<F, U>(
+    mut data: CardWindow,
+    close_callback: F,
+    use_callback: U,
+    ctx: &Context,
+    ui: &mut Ui,
+) where
     F: FnMut(Uuid) -> (),
+    U: FnMut(Uuid, CardMarker) -> (),
 {
     let card = data.content;
     let area = ui.available_size();
@@ -40,12 +53,15 @@ where
         .default_pos(new_pos)
         .max_size(data.max_size)
         .min_size(data.min_size)
-        .show(ctx, |ui| create_card_window(close_callback, card, ui));
+        .show(ctx, |ui| {
+            create_card_window(close_callback, use_callback, card, ui)
+        });
 }
 
-fn create_card_window<F>(close_callback: F, card: &CardContent, ui: &mut Ui)
+fn create_card_window<F, U>(close_callback: F, mut use_callback: U, card: &CardContent, ui: &mut Ui)
 where
     F: FnMut(Uuid) -> (),
+    U: FnMut(Uuid, CardMarker) -> (),
 {
     ui.vertical(|ui| {
         add_header(close_callback, &card, ui);
@@ -55,7 +71,6 @@ where
         add_explanation("Action:   ", &card.action.as_str(), ui);
         match &card.duration {
             None => {}
-
             Some(duration) => {
                 let content = format!("{} rounds", duration);
                 add_explanation("Duration: ", content.as_str(), ui);
@@ -77,6 +92,18 @@ where
                 add_explanation("Fix:      ", content.as_str(), ui);
             }
         };
+        if card.can_be_activated {
+            let label = match card.card_marker {
+                CardMarker::MarkedForUse => "Do not use",
+                CardMarker::None => "Use",
+            };
+            if ui.button(label).clicked() {
+                match card.card_marker {
+                    CardMarker::MarkedForUse => use_callback(card.id, CardMarker::None),
+                    CardMarker::None => use_callback(card.id, CardMarker::MarkedForUse),
+                }
+            }
+        }
     });
 }
 

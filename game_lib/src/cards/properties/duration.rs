@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub enum Duration {
     Rounds(usize),
     UntilClosed,
+    None,
 }
 
 impl Default for Duration {
@@ -17,7 +18,13 @@ impl Duration {
     pub fn new(round: Option<usize>) -> Self {
         match round {
             None => Duration::UntilClosed,
-            Some(r) => Duration::Rounds(r),
+            Some(r) => {
+                if r == 0 {
+                    Duration::None
+                } else {
+                    Duration::Rounds(r)
+                }
+            }
         }
     }
 
@@ -29,6 +36,15 @@ impl Duration {
         match &self {
             Duration::Rounds(r) => Some(r),
             Duration::UntilClosed => None,
+            Duration::None => None,
+        }
+    }
+
+    pub fn decrease(&self) -> Self {
+        match &self {
+            Duration::Rounds(v) => Duration::new(Some(v - 1)),
+            Duration::UntilClosed => Duration::UntilClosed,
+            Duration::None => Duration::None,
         }
     }
 }

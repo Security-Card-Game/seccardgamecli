@@ -17,8 +17,8 @@ This CLI supports:
 Important, this game runs locally on your computer. If you want to play
 together, share your screen!
 
-Run `seccardgame` with the `init` command. Then run it `game create` to create a deck. After the
-deck is created, run it with `game play` top start the UI. 
+Run `seccardgame` with the `init` command. Then run it `game play`. This will ask you about the deck composition
+and then opens the UI.
 
 On the left side panel you can enter the resources you will gain every turn and also start a
 new turn with the `Draw card` button. Also, your available resources are displayed there. To pay

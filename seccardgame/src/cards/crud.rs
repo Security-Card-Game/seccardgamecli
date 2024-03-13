@@ -1,4 +1,6 @@
 use dialoguer::{Confirm, Editor, Select};
+use log::error;
+
 use game_lib::cards::properties::description::Description;
 use game_lib::cards::properties::duration::Duration;
 use game_lib::cards::properties::effect::Effect;
@@ -12,9 +14,7 @@ use game_lib::cards::types::card_model::Card;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
-use log::error;
-
-use game_lib::cards::world::resources::Resources;
+use game_lib::world::resources::Resources;
 
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
@@ -203,7 +203,7 @@ fn create_lucky_card() -> Card {
     let card = LuckyCard {
         title: Title::from(title),
         description: Description::from(description),
-        effect
+        effect,
     };
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());

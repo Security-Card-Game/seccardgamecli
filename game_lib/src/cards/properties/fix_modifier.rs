@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use crate::cards::world::resources::Resources;
+
+use crate::world::resources::Resources;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -12,8 +13,7 @@ impl FixModifier {
     pub fn value(&self) -> isize {
         match self {
             FixModifier::Increase(r) => r.value().clone() as isize,
-            FixModifier::Decrease(r) => -1 * r.value().clone() as isize
+            FixModifier::Decrease(r) => -1 * r.value().clone() as isize,
         }
     }
 }
-

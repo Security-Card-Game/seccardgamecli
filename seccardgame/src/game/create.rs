@@ -3,11 +3,11 @@ use std::path::PathBuf;
 
 use dialoguer::Input;
 use log::info;
+
 use game_lib::cards::types::card_model::Card;
-use game_lib::cards::world::deck::{DeckComposition, DeckPreparation, PreparedDeck};
 use game_lib::file::cards::write_data_to_file;
 use game_lib::file::repository::DeckLoader;
-
+use game_lib::world::deck::{Deck, DeckComposition, DeckPreparation, PreparedDeck};
 
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
@@ -16,7 +16,7 @@ fn get_number_of_cards(prompt: &str) -> u8 {
     Input::new().with_prompt(prompt).interact().unwrap()
 }
 
-pub fn create_deck(deck_path: String, config: &Config) -> CliResult<()> {
+pub fn create_deck(config: &Config) -> Deck {
     let event_card_count = get_number_of_cards("Enter number of event types");
     let attack_card_count = get_number_of_cards("Enter number of attack types");
     let oopsie_card_count = get_number_of_cards("Enter number of oopsies");
@@ -33,9 +33,13 @@ pub fn create_deck(deck_path: String, config: &Config) -> CliResult<()> {
         deck_composition,
         DeckLoader::create(config.game_path.as_str()),
     );
-    let deck = prepared_deck.shuffle();
 
-    write_cards_to_deck(deck.cards, deck_path)?;
+    prepared_deck.shuffle()
+}
+
+pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliResult<()> {
+    let deck = create_deck(config);
+    write_cards_to_deck(deck.board, deck_path)?;
 
     info!("Deck created!");
 

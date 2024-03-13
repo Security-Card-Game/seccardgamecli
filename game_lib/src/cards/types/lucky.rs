@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 use crate::cards::properties::description::Description;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::title::Title;

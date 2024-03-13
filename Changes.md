@@ -1,9 +1,16 @@
 # Changes
 
-## next release
+## 0.5.0
 
+* creates a deck in memory when `game play` is used
 * adds card repo to game_lib (file based)
 * moves deck creation to game_lib
+* [GUI] counts down duration of attacks and closes them if over
+* [GUI] automatically rolls a dice when an oopsie is closed 
+  * reports the results as message
+  * does not close the card when resources are exceeded
+* [GUI] automatically applys "next fix" modifiers
+* [GUI] allows to select/deselect cards to be used in next fix attemtp
 
 ## 0.4.2
 

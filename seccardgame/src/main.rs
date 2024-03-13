@@ -6,7 +6,7 @@ use log::error;
 
 use crate::cli::cli_result::CliResult;
 use crate::cli::config::{init, CfgInit, Config};
-use crate::game::create::create_deck;
+use crate::game::create::create_deck_and_write_to_disk;
 use crate::game::play::play_deck;
 use crate::migrations::*;
 
@@ -59,7 +59,7 @@ fn cli() -> Command {
                 )
                 .subcommand(
                     Command::new("play")
-                        .about("Plays a game with a deck")
+                        .about("Prompts for deck creation and then starts the UI")
                         .arg_required_else_help(false)
                         .arg(Arg::new("path").default_missing_value("deck")),
                 ),
@@ -121,16 +121,9 @@ fn handle_commands() -> CliResult<()> {
                     } else {
                         "deck".to_string()
                     };
-                    create_deck(path, &config)
+                    create_deck_and_write_to_disk(path, &config)
                 }
-                Some(("play", sub_matches)) => {
-                    let path = if let Some(deck_path) = sub_matches.get_one::<String>("path") {
-                        deck_path.clone()
-                    } else {
-                        "deck".to_string()
-                    };
-                    play_deck(path)
-                }
+                Some(("play", _)) => play_deck(&config),
                 _ => {
                     println!("Unknown command!");
                     exit(-1)
