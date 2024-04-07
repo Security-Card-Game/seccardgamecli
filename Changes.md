@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.1
+
+* [GUI, GAME] adds a fix multiplier which will be used on all oopsies, effects and lucky cards if possible,
+this allows to increase the roundly resource gain to more sensible numbers
+* [CLI] Limits the targets for incidents and oopsies to pre-defined ones
+
 ## 0.5.0
 
 * creates a deck in memory when `game play` is used
