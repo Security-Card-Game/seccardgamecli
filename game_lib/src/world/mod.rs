@@ -4,3 +4,4 @@ pub mod resources;
 pub mod result;
 
 pub mod game;
+pub mod resource_fix_multiplier;

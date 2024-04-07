@@ -1,8 +1,9 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::cards::serialization::helper::Number;
+use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 
 #[derive(Clone, Debug, PartialOrd, PartialEq)]
 pub struct Resources(usize);
@@ -28,7 +29,7 @@ impl Sub for Resources {
     type Output = Resources;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        if (self.0 <= rhs.0) {
+        if self.0 <= rhs.0 {
             Resources::new(0)
         } else {
             Resources(self.0 - rhs.0)
@@ -68,5 +69,13 @@ impl Number for Resources {
 
     fn from_u64(value: u64) -> Self {
         Resources::new(value as usize)
+    }
+}
+
+impl Mul<ResourceFixMultiplier> for Resources {
+    type Output = Self;
+
+    fn mul(self, rhs: ResourceFixMultiplier) -> Self::Output {
+        Resources(self.0 * rhs.value())
     }
 }

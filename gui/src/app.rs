@@ -1,15 +1,13 @@
 use std::collections::HashMap;
-use std::fmt::{format, Display, Formatter};
 
 use egui::{Color32, Context, RichText, Ui};
-use rand::Rng;
 use uuid::Uuid;
 
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
-use game_lib::world::deck::EventCards::Oopsie;
 use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{ActionResult, Game, GameStatus, Payment};
+use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
 use crate::card_view_model::{CardContent, CardMarker};
@@ -33,14 +31,9 @@ struct Input {
     message: Message,
 }
 
-struct DiceRange {
-    min: String,
-    max: String,
-}
-
 impl SecCardGameApp {
     fn init(deck: Deck) -> Self {
-        let game = Game::create(deck, Resources::new(5));
+        let game = Game::create(deck, Resources::new(5), ResourceFixMultiplier::default());
         let initial_gain = game.resource_gain.value().clone();
         Self {
             game,

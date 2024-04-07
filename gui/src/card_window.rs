@@ -31,7 +31,7 @@ pub fn display_card<F, U>(
 }
 
 fn create_window<F, U>(
-    mut data: CardWindow,
+    data: CardWindow,
     close_callback: F,
     use_callback: U,
     ctx: &Context,

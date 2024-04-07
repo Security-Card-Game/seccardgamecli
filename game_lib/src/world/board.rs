@@ -20,7 +20,7 @@ pub struct CurrentBoard {
     pub current_resources: Resources,
     pub(crate) drawn_card: Option<CardRcWithId>,
     pub open_cards: HashMap<Uuid, CardRc>,
-    pub deck: Deck,
+    pub deck: Deck, // this should not be public, but is needed at the moment for game creation
     pub turns_remaining: usize,
 }
 
@@ -40,7 +40,7 @@ impl CurrentBoard {
         let current_resources = &self.current_resources;
         let deck = &self.deck;
         let cards = &self.deck.board;
-        let mut open_cards = &mut update_open_cards(self.open_cards.clone());
+        let open_cards = &mut update_open_cards(self.open_cards.clone());
         let (drawn_card, rest) = cards.split_at(1);
         let card_ref = Rc::new(drawn_card[0].clone());
         let card_id = Uuid::new_v4();
@@ -60,7 +60,7 @@ impl CurrentBoard {
     }
 
     pub(crate) fn close_card(&self, card_id: &Uuid) -> Self {
-        let mut open_cards = &mut self.open_cards.clone();
+        let open_cards = &mut self.open_cards.clone();
         open_cards.remove(card_id);
 
         CurrentBoard {
