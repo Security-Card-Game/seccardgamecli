@@ -183,10 +183,28 @@ fn create_attack_card() -> Card {
 fn ask_for_targets() -> Vec<String> {
     println!("Add targets of this card, enter a blank target when finished");
     let mut targets: Vec<String> = Vec::new();
-
+    let available_targets = [
+        "backend",
+        "backup",
+        "database",
+        "frontend",
+        "hardware",
+        "infrastructure",
+        "mobile",
+        "network",
+        "social",
+        "supply chain",
+        "Finished",
+    ];
     loop {
-        let target: String = prompt_allow_empty("Add incident target");
-        if target.is_empty() {
+        let selection = Select::new()
+            .with_prompt("Add incident target (use Finished to end)")
+            .items(&available_targets)
+            .default(0)
+            .interact()
+            .unwrap();
+        let target = available_targets.get(selection).unwrap().to_string();
+        if target == "Finished" {
             break;
         }
         targets.push(target);
