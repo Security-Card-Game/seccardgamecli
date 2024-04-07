@@ -31,3 +31,14 @@ impl Mul<ResourceFixMultiplier> for FixModifier {
         }
     }
 }
+
+impl Mul<&ResourceFixMultiplier> for FixModifier {
+    type Output = Self;
+
+    fn mul(self, rhs: &ResourceFixMultiplier) -> Self::Output {
+        match self {
+            FixModifier::Increase(r) => FixModifier::Increase(r * rhs),
+            FixModifier::Decrease(r) => FixModifier::Decrease(r * rhs),
+        }
+    }
+}

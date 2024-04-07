@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::{Add, Mul, Sub};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -76,6 +77,14 @@ impl Mul<ResourceFixMultiplier> for Resources {
     type Output = Self;
 
     fn mul(self, rhs: ResourceFixMultiplier) -> Self::Output {
+        Resources(self.0 * rhs.value())
+    }
+}
+
+impl Mul<&ResourceFixMultiplier> for Resources {
+    type Output = Self;
+
+    fn mul(self, rhs: &ResourceFixMultiplier) -> Self::Output {
         Resources(self.0 * rhs.value())
     }
 }

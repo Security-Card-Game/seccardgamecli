@@ -81,6 +81,16 @@ impl Game {
             fix_multiplier: self.fix_multiplier.clone(),
         }
     }
+    pub fn set_fix_multiplier(&self, resource_fix_multiplier: ResourceFixMultiplier) -> Game {
+        Game {
+            status: self.status.clone(),
+            resource_effects: self.resource_effects.clone(),
+            active_cards: self.active_cards.clone(),
+            action_status: self.action_status.clone(),
+            resource_gain: self.resource_gain.clone(),
+            fix_multiplier: resource_fix_multiplier,
+        }
+    }
 
     pub fn activate_card(&self, card_id: &Uuid) -> Game {
         let card = self.get_board().open_cards.get(&card_id);
@@ -156,9 +166,11 @@ impl Game {
             }
             let value = increase as isize - decrease as isize;
             if value <= 0 {
-                Some(FixModifier::Decrease(Resources::new(value.abs() as usize)))
+                Some(FixModifier::Decrease(
+                    Resources::new(value.abs() as usize) * &self.fix_multiplier,
+                ))
             } else {
-                Some(FixModifier::Increase(Resources::new(value as usize)))
+                Some(FixModifier::Increase(Resources::new(value as usize)) * &self.fix_multiplier)
             }
         }
     }
@@ -210,8 +222,7 @@ impl Game {
                 Card::Event(c) => match &c.effect {
                     Effect::OnNextFix(_, m) => {
                         let mut new_resource_effect = self.resource_effects.clone();
-                        new_resource_effect
-                            .insert(card.id.clone(), m.clone() * self.fix_multiplier.clone());
+                        new_resource_effect.insert(card.id.clone(), m.clone());
                         new_resource_effect
                     }
                     _ => self.resource_effects.clone(),
@@ -363,7 +374,7 @@ impl Game {
     }
 
     fn close_oopsie_card(&self, card_id: &Uuid, oc: &OopsieCard) -> Self {
-        let fix_cost = roll_dice_for_card(oc, self.fix_multiplier.clone());
+        let fix_cost = roll_dice_for_card(oc, &self.fix_multiplier);
         let actual_cost = if let Some(modifier) = self.get_current_fix_modifier() {
             match modifier {
                 FixModifier::Increase(r) => fix_cost + r,
@@ -409,7 +420,7 @@ impl Game {
     }
 }
 
-fn roll_dice_for_card(card: &OopsieCard, multiplier: ResourceFixMultiplier) -> Resources {
+fn roll_dice_for_card(card: &OopsieCard, multiplier: &ResourceFixMultiplier) -> Resources {
     let mut rng = thread_rng();
     let cost = rng.gen_range(card.fix_cost.min.value().clone()..card.fix_cost.max.value().clone());
     Resources::new(cost) * multiplier
