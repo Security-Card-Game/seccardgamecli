@@ -11,6 +11,7 @@ use crate::cards::types::card_model::{Card, CardTrait};
 use crate::cards::types::oopsie::OopsieCard;
 use crate::world::board::CurrentBoard;
 use crate::world::deck::{CardRc, Deck};
+use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
 
 #[derive(Debug, Clone)]
@@ -33,6 +34,7 @@ pub struct Game {
     pub action_status: Option<ActionResult>,
     pub resource_gain: Resources,
     pub active_cards: HashMap<Uuid, CardRc>,
+    pub fix_multiplier: ResourceFixMultiplier,
     resource_effects: HashMap<Uuid, FixModifier>,
 }
 
@@ -57,7 +59,8 @@ impl Game {
             let res_effects = match modifier {
                 Some(m) => {
                     let mut new_resource_effects = self.resource_effects.clone();
-                    new_resource_effects.insert(card_id.clone(), m.clone());
+                    new_resource_effects
+                        .insert(card_id.clone(), m.clone() * self.fix_multiplier.clone());
                     new_resource_effects
                 }
                 None => self.resource_effects.clone(),
@@ -75,6 +78,17 @@ impl Game {
             resource_gain: self.resource_gain.clone(),
             action_status: self.action_status.clone(),
             active_cards: self.active_cards.clone(),
+            fix_multiplier: self.fix_multiplier.clone(),
+        }
+    }
+    pub fn set_fix_multiplier(&self, resource_fix_multiplier: ResourceFixMultiplier) -> Game {
+        Game {
+            status: self.status.clone(),
+            resource_effects: self.resource_effects.clone(),
+            active_cards: self.active_cards.clone(),
+            action_status: self.action_status.clone(),
+            resource_gain: self.resource_gain.clone(),
+            fix_multiplier: resource_fix_multiplier,
         }
     }
 
@@ -100,7 +114,8 @@ impl Game {
                 match modifier {
                     None => {}
                     Some(m) => {
-                        new_resource_effects.insert(card_id.clone(), m.clone());
+                        new_resource_effects
+                            .insert(card_id.clone(), m.clone() * self.fix_multiplier.clone());
                     }
                 }
 
@@ -110,6 +125,7 @@ impl Game {
                     active_cards: new_active_cards,
                     action_status: self.action_status.clone(),
                     resource_gain: self.resource_gain.clone(),
+                    fix_multiplier: self.fix_multiplier.clone(),
                 }
             }
         }
@@ -128,6 +144,7 @@ impl Game {
             active_cards: new_active_cards,
             resource_gain: self.resource_gain.clone(),
             action_status: self.action_status.clone(),
+            fix_multiplier: self.fix_multiplier.clone(),
         }
     }
 
@@ -148,10 +165,12 @@ impl Game {
                 }
             }
             let value = increase as isize - decrease as isize;
-            if (value <= 0) {
-                Some(FixModifier::Decrease(Resources::new(value.abs() as usize)))
+            if value <= 0 {
+                Some(FixModifier::Decrease(
+                    Resources::new(value.abs() as usize) * &self.fix_multiplier,
+                ))
             } else {
-                Some(FixModifier::Increase(Resources::new(value as usize)))
+                Some(FixModifier::Increase(Resources::new(value as usize)) * &self.fix_multiplier)
             }
         }
     }
@@ -164,7 +183,11 @@ impl Game {
         }
     }
 
-    pub fn create(deck: Deck, initial_resource_gain: Resources) -> Self {
+    pub fn create(
+        deck: Deck,
+        initial_resource_gain: Resources,
+        fix_modifier: ResourceFixMultiplier,
+    ) -> Self {
         let board = CurrentBoard::init(deck, Resources::new(0));
         let status = GameStatus::Start(board);
 
@@ -174,6 +197,7 @@ impl Game {
             resource_gain: initial_resource_gain.clone(),
             resource_effects: HashMap::new(),
             active_cards: HashMap::new(),
+            fix_multiplier: fix_modifier,
         }
     }
 
@@ -215,6 +239,7 @@ impl Game {
             resource_gain: self.resource_gain.clone(),
             resource_effects,
             active_cards: HashMap::new(),
+            fix_multiplier: self.fix_multiplier.clone(),
         }
     }
 
@@ -226,13 +251,15 @@ impl Game {
                 resource_gain: new_gain,
                 resource_effects: self.resource_effects.clone(),
                 active_cards: self.active_cards.clone(),
+                fix_multiplier: self.fix_multiplier.clone(),
             },
-            GameStatus::Finished(board) => Game {
+            GameStatus::Finished(_) => Game {
                 status: self.status.clone(),
                 action_status: self.action_status.clone(),
                 resource_gain: self.resource_gain.clone(),
                 resource_effects: self.resource_effects.clone(),
                 active_cards: self.active_cards.clone(),
+                fix_multiplier: self.fix_multiplier.clone(),
             },
         }
     }
@@ -250,6 +277,7 @@ impl Game {
                         resource_gain: self.resource_gain.clone(),
                         resource_effects: self.resource_effects.clone(),
                         active_cards: self.active_cards.clone(),
+                        fix_multiplier: self.fix_multiplier.clone(),
                     };
                     Payment::Payed(game)
                 }
@@ -284,6 +312,7 @@ impl Game {
             resource_gain: self.resource_gain.clone(),
             resource_effects: self.resource_effects.clone(),
             active_cards: self.active_cards.clone(),
+            fix_multiplier: self.fix_multiplier.clone(),
         }
     }
 
@@ -292,9 +321,9 @@ impl Game {
             GameStatus::InProgress(board) => {
                 if let Some(card_to_close) = board.open_cards.get(card_id) {
                     match &**card_to_close {
-                        Card::Event(ec) => self.do_close_card(board, card_id),
+                        Card::Event(_) => self.do_close_card(board, card_id),
                         Card::Attack(ac) => self.close_attack_card(board, card_id, ac),
-                        Card::Oopsie(oc) => self.close_oopsie_card(board, card_id, oc),
+                        Card::Oopsie(oc) => self.close_oopsie_card(card_id, oc),
                         Card::Lucky(_) => self.do_close_card(board, card_id),
                     }
                 } else {
@@ -319,6 +348,7 @@ impl Game {
             resource_gain: self.resource_gain.clone(),
             resource_effects: new_resource_effects,
             active_cards: new_active_cards,
+            fix_multiplier: self.fix_multiplier.clone(),
         }
     }
 
@@ -336,14 +366,15 @@ impl Game {
                     resource_gain: game.resource_gain.clone(),
                     resource_effects: game.resource_effects.clone(),
                     active_cards: new_active_cards,
+                    fix_multiplier: self.fix_multiplier.clone(),
                 }
             }
             Duration::None => self.do_close_card(board, card_id),
         }
     }
 
-    fn close_oopsie_card(&self, board: &CurrentBoard, card_id: &Uuid, oc: &OopsieCard) -> Self {
-        let fix_cost = roll_dice_for_card(oc);
+    fn close_oopsie_card(&self, card_id: &Uuid, oc: &OopsieCard) -> Self {
+        let fix_cost = roll_dice_for_card(oc, &self.fix_multiplier);
         let actual_cost = if let Some(modifier) = self.get_current_fix_modifier() {
             match modifier {
                 FixModifier::Increase(r) => fix_cost + r,
@@ -384,12 +415,13 @@ impl Game {
             resource_gain: self.resource_gain.clone(),
             resource_effects: self.resource_effects.clone(),
             active_cards: self.active_cards.clone(),
+            fix_multiplier: self.fix_multiplier.clone(),
         }
     }
 }
 
-fn roll_dice_for_card(card: &OopsieCard) -> Resources {
+fn roll_dice_for_card(card: &OopsieCard, multiplier: &ResourceFixMultiplier) -> Resources {
     let mut rng = thread_rng();
     let cost = rng.gen_range(card.fix_cost.min.value().clone()..card.fix_cost.max.value().clone());
-    Resources::new(cost)
+    Resources::new(cost) * multiplier
 }

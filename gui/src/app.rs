@@ -1,15 +1,13 @@
 use std::collections::HashMap;
-use std::fmt::{format, Display, Formatter};
 
 use egui::{Color32, Context, RichText, Ui};
-use rand::Rng;
 use uuid::Uuid;
 
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
-use game_lib::world::deck::EventCards::Oopsie;
 use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{ActionResult, Game, GameStatus, Payment};
+use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
 use crate::card_view_model::{CardContent, CardMarker};
@@ -31,23 +29,21 @@ struct Input {
     next_res: String,
     pay_res: String,
     message: Message,
-}
-
-struct DiceRange {
-    min: String,
-    max: String,
+    multiplier: String,
 }
 
 impl SecCardGameApp {
     fn init(deck: Deck) -> Self {
-        let game = Game::create(deck, Resources::new(5));
+        let game = Game::create(deck, Resources::new(5), ResourceFixMultiplier::default());
         let initial_gain = game.resource_gain.value().clone();
+        let initial_multiplier = game.fix_multiplier.value().clone();
         Self {
             game,
             input: Input {
                 next_res: initial_gain.to_string(),
                 pay_res: "0".to_string(),
                 message: Message::None,
+                multiplier: initial_multiplier.to_string(),
             },
         }
     }
@@ -70,6 +66,7 @@ impl SecCardGameApp {
                 &card.0,
                 card.1.clone(),
                 self.game.active_cards.contains_key(&card.0),
+                self.game.fix_multiplier.clone(),
             );
             display_card(
                 &card_to_display,
@@ -156,6 +153,8 @@ impl SecCardGameApp {
 
                 ui.add_space(15.0);
 
+                self.tweak_control(ui);
+
                 ui.add_space(10.0);
                 match &self.game.status {
                     GameStatus::Start(board)
@@ -167,6 +166,7 @@ impl SecCardGameApp {
                         ));
                     }
                 }
+
                 ui.add_space(20.0);
                 match &self.input.message {
                     Message::Success(m) => Self::show_message(m, Color32::GREEN, ui),
@@ -179,6 +179,24 @@ impl SecCardGameApp {
 
     fn show_message(message: &String, color: Color32, ui: &mut Ui) {
         ui.label(RichText::new(message).color(color));
+    }
+
+    fn tweak_control(&mut self, ui: &mut Ui) {
+        ui.label("Tweaks");
+        ui.add_space(5.0);
+
+        ui.label("Mutliply all fix costs by:");
+        ui.horizontal(|ui| {
+            ui.text_edit_singleline(&mut self.input.multiplier);
+            ui.add_space(5.0);
+
+            if ui.button("Set Multiplier").clicked() {
+                let new_multiplier = self.input.multiplier.parse().unwrap_or_else(|_| 1);
+                self.game = self
+                    .game
+                    .set_fix_multiplier(ResourceFixMultiplier::new(new_multiplier));
+            }
+        });
     }
 
     fn resource_control(&mut self, ui: &mut Ui) {

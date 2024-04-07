@@ -12,7 +12,7 @@ use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
 use crate::errors::{ErrorKind, GameLibError, GameLibResult};
 use crate::file::cards::get_card_directory;
-use crate::file::general::{count_cards_in_directory, get_files_in_directory_with_filter};
+use crate::file::general::get_files_in_directory_with_filter;
 use crate::world::deck::{CardRc, DeckRepository};
 
 pub struct DeckLoader {
