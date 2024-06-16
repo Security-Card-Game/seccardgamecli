@@ -246,7 +246,14 @@ impl SecCardGameApp {
                     };
                 });
             }
-            GameStatus::Finished(_) => {}
+            GameStatus::Finished(board) => {
+                let available = RichText::new(format!(
+                    "{} left",
+                    board.current_resources.value().clone()
+                ))
+                    .strong();
+                ui.label(available);
+            }
         }
     }
 
