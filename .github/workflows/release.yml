@@ -32,12 +32,12 @@ jobs:
             bin: seccardgame.exe
             name: seccardgamecli-Windows-x86_64.zip    
           - os_name: macOS-x86_64
-            os: macOS-x86_64-latest
+            os: macOS-13 # this runs on non M1 processors and uses maxOS 13
             target: x86_64-apple-darwin
             bin: seccardgame
             name: seccardgamecli-MacOs-x86_64.tar.gz
           - os_name: macOS-aarch64
-            os: macOS-aarch64-latest
+            os: macOS-latest # this runs on a M1 processor and currently uses macOS 14
             target: aarch64-apple-darwin
             bin: seccardgame
             name: seccardgamecli-MacOs-aarch64.tar.gz
