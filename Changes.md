@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.2
+
+* version updates in github actions
+* adds aarch64 artifact for maxOS
+  * this uses openssl vendored
+
 ## 0.5.1
 
 * [GUI, GAME] adds a fix multiplier which will be used on all oopsies, effects and lucky cards if possible,
