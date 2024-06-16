@@ -76,14 +76,14 @@ jobs:
           fi
           cd -        
       - name: Publish release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: seccardgamecli-${{ matrix.platform.os_name }}
           path: "seccardgamecli-*"        
       - name: Generate SHA-256
         run: shasum -a 256 ${{ matrix.platform.name }}        
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           files: "seccardgamecli-*"
