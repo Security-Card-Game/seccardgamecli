@@ -36,9 +36,9 @@ jobs:
             target: x86_64-apple-darwin
             bin: seccardgame
             name: seccardgamecli-MacOs-x86_64.tar.gz
-          - os_name: macOS-aarch4
+          - os_name: macOS-aarch64
             os: macOS-latest
-            target: aarch-apple-darwin
+            target: aarch64-apple-darwin
             bin: seccardgame
             name: seccardgamecli-MacOs-aarch64.tar.gz
           #  skip_tests: true
