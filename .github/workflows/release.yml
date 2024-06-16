@@ -32,12 +32,12 @@ jobs:
             bin: seccardgame.exe
             name: seccardgamecli-Windows-x86_64.zip    
           - os_name: macOS-x86_64
-            os: macOS-latest
+            os: macOS-x86_64-latest
             target: x86_64-apple-darwin
             bin: seccardgame
             name: seccardgamecli-MacOs-x86_64.tar.gz
           - os_name: macOS-aarch64
-            os: macOS-latest
+            os: macOS-aarch64-latest
             target: aarch64-apple-darwin
             bin: seccardgame
             name: seccardgamecli-MacOs-aarch64.tar.gz
