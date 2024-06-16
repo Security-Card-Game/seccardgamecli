@@ -20,7 +20,7 @@ use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
-use crate::cli::prompts::{prompt, prompt_allow_empty};
+use crate::cli::prompts::{prompt};
 
 fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {
     let mut card_to_save: Card = card.clone();
