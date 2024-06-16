@@ -2,10 +2,7 @@
 
 # SecCardGame CLI and GUI
 
-At some time in point this will be a simple tool to create cards and decks 
-for the [securityDeckGame](https://github.com/maschmi/securityDeckGame).
-
-This CLI supports:
+This Tool supports:
 
 * card creation
 * checkout the card repository
@@ -26,6 +23,13 @@ costs for fixing enter the amount in the entry field and hit `Pay`. If you need 
 to get fixing costs, enter min and max and press `Roll`.
 
 There is little validation, be gentle. 
+
+# Resources
+
+* [Why the game is created and how it all began](https://blog.maschmi.net/seccardgame/)
+* [How to play the game in its very early stage and how to contribute cards](https://blog.maschmi.net/seccardgame-play/)
+* [A simple UI and CLI for playing and creating card](https://github.com/Security-Card-Game/seccardgamecli)
+* [A repo full of cards](https://github.com/Security-Card-Game/securityDeckGame)
 
 ## How to add cards
 
