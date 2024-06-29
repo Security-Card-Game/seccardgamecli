@@ -1,8 +1,10 @@
 use egui::{RichText, Ui};
+
 use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::CurrentBoard;
 use game_lib::world::game::{GameStatus, Payment};
 use game_lib::world::resources::Resources;
+
 use crate::{Message, SecCardGameApp};
 
 impl SecCardGameApp {

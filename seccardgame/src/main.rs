@@ -5,7 +5,7 @@ use flexi_logger::Logger;
 use log::error;
 
 use crate::cli::cli_result::CliResult;
-use crate::cli::config::{init, CfgInit, Config};
+use crate::cli::config::{CfgInit, Config, init};
 use crate::game::create::create_deck_and_write_to_disk;
 use crate::game::play::play_deck;
 use crate::migrations::*;

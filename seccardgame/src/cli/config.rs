@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 
 use game_lib::file::general::ensure_directory_exists;
 
-use crate::cli::cli_result::ErrorKind::{FileSystemError, GameCloneError};
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
+use crate::cli::cli_result::ErrorKind::{FileSystemError, GameCloneError};
 
 pub struct CfgInit {
     pub game_path: String,

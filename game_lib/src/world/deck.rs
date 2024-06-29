@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
+use rand::{Rng, thread_rng};
 use rand::prelude::SliceRandom;
-use rand::{thread_rng, Rng};
 
 use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;

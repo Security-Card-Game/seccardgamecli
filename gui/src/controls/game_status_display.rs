@@ -1,6 +1,8 @@
 use eframe::epaint::Color32;
 use egui::{RichText, Ui};
+
 use game_lib::world::game::GameStatus;
+
 use crate::{Message, SecCardGameApp};
 
 impl SecCardGameApp {

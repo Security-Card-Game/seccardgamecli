@@ -1,13 +1,6 @@
-use eframe::epaint::Color32;
-use egui::{Context, RichText, Ui};
+use egui::Context;
 
-use game_lib::cards::properties::fix_modifier::FixModifier;
-use game_lib::world::board::CurrentBoard;
-use game_lib::world::game::{GameStatus, Payment};
-use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
-use game_lib::world::resources::Resources;
-
-use super::{Message, SecCardGameApp};
+use super::SecCardGameApp;
 
 impl SecCardGameApp {
     pub(crate) fn create_control_panel(&mut self, ctx: &Context) {
