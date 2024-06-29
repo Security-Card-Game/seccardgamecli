@@ -5,6 +5,7 @@ mod card_view_model;
 mod card_window;
 pub mod start;
 mod control_panel;
+mod controls;
 
 pub struct SecCardGameApp {
     game: Game,
