@@ -24,7 +24,7 @@ impl SecCardGameApp {
 
     fn game_in_progress(&mut self, ui: &mut Ui, board: &CurrentBoard) {
         let cloned_board = board.clone();
-        let available = create_resource_label(&cloned_board, "{} available");
+        let available = create_resource_label(&cloned_board, "available");
         ui.label(available);
 
         let modifier = create_fix_modifier_label(self.game.get_current_fix_modifier());
@@ -53,16 +53,16 @@ impl SecCardGameApp {
 }
 
 fn game_ended(ui: &mut Ui, board: &CurrentBoard) {
-    let available = create_resource_label(board, "{} left");
+    let available = create_resource_label(board, "left");
     ui.label(available);
 }
 
 
 // helper function to create rich text for resource amount,
 // will be used in match arms for GameStatus
-fn create_resource_label(board: &CurrentBoard, label_format: &str) -> RichText {
+fn create_resource_label(board: &CurrentBoard, postfix: &str) -> RichText {
     let resource_str = format!(
-        "{} {}", label_format, board.current_resources.value()
+        "{} {}", board.current_resources.value(), postfix
     );
     RichText::new(resource_str)
         .strong()
