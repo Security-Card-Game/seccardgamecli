@@ -1,6 +1,6 @@
+use std::{fs, io};
 use std::ffi::OsString;
 use std::path::Path;
-use std::{fs, io};
 
 pub fn ensure_directory_exists(path: &str) -> std::io::Result<()> {
     if !Path::new(path).exists() {

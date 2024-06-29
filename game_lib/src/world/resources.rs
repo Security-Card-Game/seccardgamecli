@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::ops::{Add, Mul, Sub};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

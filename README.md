@@ -52,8 +52,3 @@ please create pull request to this [repo](https://github.com/Security-Card-Game/
 ## Why in rust?
 
 Because I want to learn it ;)
-
-## Why not Apple Silicon binary`?
-
-Because it was not working out of the box. Feel free to fix it - otherwise if time allows
-it will be done.

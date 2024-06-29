@@ -15,14 +15,3 @@ where
     input.interact_text().unwrap()
 }
 
-pub fn prompt_allow_empty(prompt_msg: &str) -> String {
-    let default = "";
-
-    Input::<String>::new()
-        .with_prompt(prompt_msg)
-        .allow_empty(true)
-        .default(default.into())
-        .show_default(false)
-        .interact_text()
-        .unwrap()
-}
