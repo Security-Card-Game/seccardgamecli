@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.3
+* shows game resources at end of game
+* reorganizes control panel code
+
 ## 0.5.2
 
 * version updates in github actions
