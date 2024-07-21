@@ -6,7 +6,7 @@ use crate::cards::errors::{ErrorKind, ModelError};
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct FixCost {
     pub min: Resources,
@@ -64,6 +64,25 @@ impl Mul<&ResourceFixMultiplier> for FixCost {
         FixCost {
             min: self.min * rhs,
             max: self.max * rhs,
+        }
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::Dummy;
+    use rand::Rng;
+
+    use super::*;
+
+    pub struct FakeFixCost;
+
+    impl Dummy<FakeFixCost> for FixCost {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeFixCost, rng: &mut R) -> Self {
+            FixCost::from_resources(
+                Resources::new(rng.gen_range(1..10)),
+                Resources::new(rng.gen_range(11..20)))
+                .unwrap()
         }
     }
 }

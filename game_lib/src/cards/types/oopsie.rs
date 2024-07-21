@@ -1,5 +1,4 @@
-use fake::Dummy;
-use fake::faker::lorem::en::{ Words, Sentences};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::cards::properties::description::Description;
@@ -10,17 +9,12 @@ use crate::cards::properties::target::Target;
 use crate::cards::properties::title::Title;
 use crate::cards::types::card_model::Card;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[derive(Dummy)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct OopsieCard {
-    #[dummy(faker = "Words(3)")]
     pub title: Title,
-    #[dummy(faker = "Sentences(3)")]
     pub description: Description,
-    #[dummy(default)]
     pub effect: Effect,
-    #[dummy(default)]
     pub fix_cost: FixCost,
 }
 
@@ -47,5 +41,30 @@ impl OopsieCard {
             effect: Effect::default(),
             fix_cost: FixCost::default(),
         })
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::{Dummy, Fake};
+
+    use crate::cards::properties::description::tests::FakeDescription;
+    use crate::cards::properties::effect::tests::FakeEffect;
+    use crate::cards::properties::fix_cost::tests::FakeFixCost;
+    use crate::cards::properties::title::tests::FakeTitle;
+
+    use super::*;
+
+    pub struct FakeOopsieCard;
+
+    impl Dummy<FakeOopsieCard> for OopsieCard {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeOopsieCard, _: &mut R) -> Self {
+            OopsieCard {
+                title: FakeTitle.fake(),
+                description: FakeDescription.fake(),
+                effect: FakeEffect.fake(),
+                fix_cost: FakeFixCost.fake(),
+            }
+        }
     }
 }

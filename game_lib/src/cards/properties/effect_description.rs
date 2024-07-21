@@ -2,7 +2,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::cards::serialization::helper::StrVisitor;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EffectDescription(String);
 
 impl EffectDescription {
@@ -39,5 +39,24 @@ impl<'de> Deserialize<'de> for EffectDescription {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_string(StrVisitor(std::marker::PhantomData))
+    }
+}
+
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::Dummy;
+    use fake::Fake;
+    use fake::faker::lorem::en::*;
+    use rand::Rng;
+
+    use super::*;
+
+    pub struct FakeEffectDescription;
+    impl Dummy<FakeEffectDescription> for EffectDescription {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeEffectDescription, _: &mut R) -> Self {
+            let words: Vec<String> = Words(3..10).fake();
+            EffectDescription(words.join(" ").to_string())
+        }
     }
 }

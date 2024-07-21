@@ -66,7 +66,7 @@ impl Deck {
     ///
     /// let deck = Deck::new(cards);
     /// ```
-    fn new(cards: Vec<Card>) -> Deck {
+    pub(crate) fn new(cards: Vec<Card>) -> Deck {
         let total = cards.len();
         Deck {
             remaining_cards: cards,

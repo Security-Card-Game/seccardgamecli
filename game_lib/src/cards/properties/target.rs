@@ -2,7 +2,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::cards::serialization::helper::StrVisitor;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Target(String);
 
 impl Target {
@@ -41,3 +41,22 @@ impl<'de> Deserialize<'de> for Target {
         deserializer.deserialize_string(StrVisitor(std::marker::PhantomData))
     }
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::Dummy;
+    use rand::Rng;
+
+    use super::*;
+
+    const TEST_TARGETS: [&'static str; 5] = ["backend", "frontend", "infrastructure", "social", "supply chain"];
+
+    pub struct FakeTarget;
+    impl Dummy<FakeTarget> for Target {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeTarget, rng: &mut R) -> Self {
+            let target = TEST_TARGETS[rng.gen_range(0..TEST_TARGETS.len())];
+            Target(target.to_string())
+        }
+    }
+}
+

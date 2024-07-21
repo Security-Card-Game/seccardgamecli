@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Title(String);
 
 impl Title {
@@ -43,3 +43,22 @@ impl<'de> Deserialize<'de> for Title {
             .deserialize_string(crate::cards::serialization::helper::StrVisitor(PhantomData))
     }
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::Dummy;
+    use fake::Fake;
+    use fake::faker::lorem::en::*;
+    use rand::Rng;
+
+    use super::*;
+
+    pub struct FakeTitle;
+    impl Dummy<FakeTitle> for Title {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeTitle, _: &mut R) -> Self {
+            let words: Vec<String> = Words(1..5).fake();
+            Title(words.join(" "))
+        }
+    }
+}
+
