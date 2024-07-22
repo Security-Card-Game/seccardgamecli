@@ -88,7 +88,7 @@ fn close_attack_card(duration: &Duration, board: Board, id: &Uuid) -> ActionResu
     };
 
     match duration {
-        Duration::Rounds(r) =>  if (r == &0usize) { Ok(updated_board) } else { Err(ActionError::AttackForceClosed(updated_board))}
+        Duration::Rounds(r) =>  if r == &0usize { Ok(updated_board) } else { Err(ActionError::AttackForceClosed(updated_board))}
         Duration::UntilClosed => Err(ActionError::AttackForceClosed(updated_board)),
         Duration::None => Ok(updated_board)
     }

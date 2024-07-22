@@ -100,7 +100,6 @@ mod tests {
     #[test]
     fn calculate_remaining_rounds() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
-        let oopsie_card_rc = Rc::new(oopsie_card.clone());
 
         let deck = Deck {
             remaining_cards: vec!(oopsie_card),
@@ -154,7 +153,7 @@ mod tests {
 
         let result = get_modifier_from_effect(&effect, true);
 
-        assert!(result.is_none())
+        assert_eq!(result, expectation);
     }
 
 
@@ -226,7 +225,6 @@ mod tests {
     #[test]
     fn calculate_board_no_fix_modifiers() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
-        let oopsie_card_rc = Rc::new(oopsie_card.clone());
         let event_card_base: EventCard = FakeEventCard.fake();
         let event_modifier: FixModifier = FakeFixModifier.fake();
         let event_card = Card::from(EventCard {

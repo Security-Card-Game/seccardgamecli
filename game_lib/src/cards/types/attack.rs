@@ -1,4 +1,3 @@
-use fake::{Dummy, Fake};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -47,6 +46,7 @@ impl AttackCard {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use fake::{Dummy, Fake};
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::duration::tests::FakeDuration;
     use crate::cards::properties::effect::tests::FakeEffect;

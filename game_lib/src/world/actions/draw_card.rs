@@ -79,7 +79,7 @@ mod tests {
 
         let deck = Deck::new(cards);
 
-        let CardAndNewDeck { drawn_card, new_deck: deck_after_draw} = draw_card(deck).unwrap();
+        let CardAndNewDeck { drawn_card: _, new_deck: deck_after_draw} = draw_card(deck).unwrap();
 
         // assert deck has one played card
         assert_eq!(deck_after_draw.played_cards, 1);
@@ -140,7 +140,7 @@ mod tests {
         let deck = Deck::new(cards);
         let board = Board::empty();
 
-        let (deck_after_draw, board_after_draw) = draw_card_and_place_on_board(deck, board).unwrap();
+        let (_, board_after_draw) = draw_card_and_place_on_board(deck, board).unwrap();
 
         // assert board
         let next_card_rc = Rc::from(next_card.clone()); // board is only managing references
