@@ -1,26 +1,43 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use uuid::Uuid;
 
 use crate::cards::properties::duration::Duration;
+use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct CardRcWithId {
     pub id: Uuid,
     pub card: CardRc,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Board {
     pub current_resources: Resources,
     pub(crate) drawn_card: Option<CardRcWithId>,
     pub open_cards: HashMap<Uuid, CardRc>,
+    pub cards_to_use: HashSet<Uuid>,
+    pub fix_modifier: Option<FixModifier>,
     pub turns_remaining: usize,
+}
+
+impl Board {
+
+    pub fn empty() -> Self{
+        Board {
+            current_resources: Resources::new(0),
+            drawn_card: None,
+            open_cards: HashMap::new(),
+            cards_to_use: HashSet::new(),
+            fix_modifier: None,
+            turns_remaining: 0,
+        }
+    }
 }
 
 

@@ -54,7 +54,7 @@ pub(crate) mod tests {
 
     use super::*;
 
-    struct FakeAttackCard;
+    pub struct FakeAttackCard;
 
     impl Dummy<FakeAttackCard> for AttackCard {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeAttackCard, _: &mut R) -> Self {

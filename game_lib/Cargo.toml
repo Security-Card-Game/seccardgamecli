@@ -11,4 +11,7 @@ serde_json = "1.0.108"
 rand = { version = "0.8.5", features = [] }
 log = "0.4.20"
 uuid = { version = "1.7.0", features = ["v4"] }
+
+[dev-dependencies]
 fake = { version = "2.9.2", features = ["derive", "dummy", "uuid"] }
+rstest = "0.21.0"

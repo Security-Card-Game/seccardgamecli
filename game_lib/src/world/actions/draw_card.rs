@@ -111,9 +111,8 @@ mod tests {
 
         let board = Board {
             current_resources: Resources::new(10),
-            drawn_card: None,
-            open_cards: HashMap::new(),
             turns_remaining: 10,
+            ..Board::empty()
         };
 
 
@@ -141,12 +140,7 @@ mod tests {
         let cards = vec![next_card.clone(), remaining_card.clone()];
 
         let deck = Deck::new(cards);
-        let board = Board {
-            current_resources: Default::default(),
-            drawn_card: None,
-            open_cards: Default::default(),
-            turns_remaining: 0,
-        };
+        let board = Board::empty();
 
         let (deck_after_draw, board_after_draw) = draw_card_and_place_on_board(deck, board).unwrap();
 

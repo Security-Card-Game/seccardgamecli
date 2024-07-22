@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::ops::{Add, Mul};
 
 use serde::{Deserialize, Serialize};
 
@@ -43,11 +43,25 @@ impl Mul<&ResourceFixMultiplier> for FixModifier {
     }
 }
 
+impl Add for FixModifier {
+    type Output = FixModifier;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let new_value = self.value() + rhs.value();
+
+        return if new_value <= 0 {
+            FixModifier::Decrease(Resources::new(new_value.unsigned_abs()))
+        } else {
+            FixModifier::Increase(Resources::new(new_value.unsigned_abs()))
+        }
+    }
+}
+
+
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;
     use rand::Rng;
-
     use super::*;
 
     pub struct FakeFixModifier;
@@ -61,4 +75,78 @@ pub(crate) mod tests {
             }
         }
     }
+
+    #[test]
+    fn add_two_increasing() {
+        let add1 = FixModifier::Increase(Resources::new(10));
+        let add2 = FixModifier::Increase(Resources::new(1));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Increase(Resources::new(11)))
+    }
+
+    #[test]
+    fn add_two_decreasing() {
+        let add1 = FixModifier::Decrease(Resources::new(9));
+        let add2 = FixModifier::Decrease(Resources::new(4));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Decrease(Resources::new(13)))
+    }
+
+    #[test]
+    fn add_increasing_to_higher_decreasing() {
+        let add1 = FixModifier::Decrease(Resources::new(9));
+        let add2 = FixModifier::Increase(Resources::new(4));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Decrease(Resources::new(5)))
+    }
+
+    #[test]
+    fn add_increasing_to_lower_decreasing() {
+        let add1 = FixModifier::Decrease(Resources::new(2));
+        let add2 = FixModifier::Increase(Resources::new(4));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Increase(Resources::new(2)))
+    }
+
+
+    #[test]
+    fn add_decreasing_to_higher_increasing() {
+        let add1 = FixModifier::Increase(Resources::new(9));
+        let add2 = FixModifier::Decrease(Resources::new(4));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Increase(Resources::new(5)))
+    }
+
+    #[test]
+    fn add_decreasing_to_same_value_increasing() {
+        let add1 = FixModifier::Increase(Resources::new(9));
+        let add2 = FixModifier::Decrease(Resources::new(9));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Decrease(Resources::new(0)))
+    }
+
+    #[test]
+    fn add_increasing_to_same_value_decreasing() {
+        let add1 = FixModifier::Decrease(Resources::new(9));
+        let add2 = FixModifier::Increase(Resources::new(9));
+
+        let sum = add1 + add2;
+
+        assert_eq!(sum, FixModifier::Decrease(Resources::new(0)))
+    }
+
+
+
 }
