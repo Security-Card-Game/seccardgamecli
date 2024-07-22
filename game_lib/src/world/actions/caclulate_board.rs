@@ -6,15 +6,16 @@ It has to be called when
 - Any card is applied
  */
 use std::collections::HashSet;
+
 use uuid::Uuid;
+
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::card_model::Card;
-use crate::world::actions::action_error::{ActionResult};
+use crate::world::actions::action_error::ActionResult;
 use crate::world::board::Board;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
-
 
 pub(crate) fn calculate_board(board: Board, deck: &Deck) -> ActionResult<Board> {
     let remaining_rounds = calculate_remaining_rounds(deck);
@@ -72,12 +73,13 @@ fn calculate_remaining_rounds(deck: &Deck) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashMap;
     use std::rc::Rc;
-    use fake::{Fake};
+
+    use fake::Fake;
     use rstest::rstest;
     use uuid::Uuid;
+
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
     use crate::cards::types::attack::AttackCard;
@@ -91,8 +93,9 @@ mod tests {
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
     use crate::world::actions::caclulate_board::calculate_board;
     use crate::world::board::Board;
-    use crate::world::deck::{Deck};
+    use crate::world::deck::Deck;
 
+    use super::*;
 
     #[test]
     fn calculate_remaining_rounds() {

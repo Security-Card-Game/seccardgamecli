@@ -59,19 +59,17 @@ fn add_drawn_card_to_board(board: Board, card: CardRc) -> ActionResult<Board> {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use fake::Fake;
 
-    use crate::cards::types::event::tests::FakeEventCard;
     use crate::cards::types::event::EventCard;
-    use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::event::tests::FakeEventCard;
     use crate::cards::types::oopsie::OopsieCard;
-    use crate::world::board::{Board, CurrentBoard};
+    use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::world::board::Board;
     use crate::world::deck::Deck;
     use crate::world::resources::Resources;
 
     use super::*;
-
 
     #[test]
     fn draw_card_from_deck() {

@@ -62,6 +62,7 @@ impl Add for FixModifier {
 pub(crate) mod tests {
     use fake::Dummy;
     use rand::Rng;
+
     use super::*;
 
     pub struct FakeFixModifier;

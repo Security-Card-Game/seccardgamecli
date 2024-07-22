@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+
 use crate::world::board::Board;
 
 pub type ActionResult<T> = Result<T, ActionError>;
