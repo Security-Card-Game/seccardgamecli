@@ -16,6 +16,15 @@ pub(crate) struct CardRcWithId {
 }
 
 #[derive(Debug, Clone)]
+pub struct Board {
+    pub current_resources: Resources,
+    pub(crate) drawn_card: Option<CardRcWithId>,
+    pub open_cards: HashMap<Uuid, CardRc>,
+    pub turns_remaining: usize,
+}
+
+
+#[derive(Debug, Clone)]
 pub struct CurrentBoard {
     pub current_resources: Resources,
     pub(crate) drawn_card: Option<CardRcWithId>,
