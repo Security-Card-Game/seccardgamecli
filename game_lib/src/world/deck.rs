@@ -9,27 +9,6 @@ use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
 
-/// `Deck` is a struct that represents a deck of cards.
-///
-/// `board` is a vector of `Card` objects representing the cards in the deck. It is public to allow direct access to the cards.
-///
-/// `played_cards` is an integer representing the number of cards that have been played from the deck.
-///
-/// `total` is an integer representing the total number of cards in the deck.
-///
-/// # Examples
-///
-/// ```rust
-/// use my_library::Deck;
-///
-/// let mut deck = Deck {
-///     board: vec![],
-///     played_cards: 0,
-///     total: 52,
-/// };
-/// println!("{:?}", deck);
-/// ```
-/// This will create a new deck with an empty board, no played cards, and a total of 52 cards. It will then print the deck using debug formatting.
 #[derive(Debug, Clone)]
 pub struct Deck {
     pub remaining_cards: Vec<Card>,
@@ -38,34 +17,7 @@ pub struct Deck {
 }
 
 impl Deck {
-    /// Creates a new `Deck` with the given `cards`.
-    ///
-    /// The `Deck` struct represents a playing deck, with a collection of `Card` objects.
-    /// The `total` field represents the total number of cards in the deck, and the `played_cards` field
-    /// represents the number of cards that have been played from the deck.
-    ///
-    /// # Arguments
-    ///
-    /// * `cards` - A vector containing the initial set of cards for the deck.
-    ///
-    /// # Returns
-    ///
-    /// A new `Deck` object initialized with the provided `cards`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crate::Deck;
-    /// use crate::Card;
-    ///
-    /// let cards = vec![
-    ///     Card { value: 2, suit: "hearts".to_string() },
-    ///     Card { value: 5, suit: "clubs".to_string() },
-    ///     Card { value: 10, suit: "spades".to_string() },
-    /// ];
-    ///
-    /// let deck = Deck::new(cards);
-    /// ```
+
     pub(crate) fn new(cards: Vec<Card>) -> Deck {
         let total = cards.len();
         Deck {
@@ -75,21 +27,16 @@ impl Deck {
         }
     }
 
-    /// Returns a new instance of `Deck` with the given `cards` replacing the `board` field.
-    ///
-    /// # Arguments
-    ///
-    /// * `cards` - A slice of `Card` objects representing the new board configuration.
-    ///
-    /// # Returns
-    ///
-    /// A new `Deck` instance with the updated `board` field and incremented `played_cards` field.
     pub(crate) fn with_remaining_cards(&self, cards: &[Card]) -> Self {
         Deck {
             remaining_cards: cards.to_vec(),
             played_cards: self.played_cards + 1,
             total: self.total,
         }
+    }
+
+    pub(crate) fn get_remaining_card_count(&self) -> usize {
+        self.remaining_cards.len()
     }
 }
 

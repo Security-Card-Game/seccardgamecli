@@ -3,6 +3,7 @@ This action should go over all open cards and calculate fix costs and modifiers.
 It has to be called when
 - A new card is drawn
 - Any card is closed
+- Any card is applied
  */
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -18,7 +19,6 @@ use crate::world::resources::Resources;
 pub(crate) fn calculate_board(board: Board, deck: &Deck) -> ActionResult<Board> {
     let remaining_rounds = calculate_remaining_rounds(deck);
     let fix_modifier = calculate_fix_modifier(&board);
-
     Ok(Board {
         turns_remaining: remaining_rounds,
         fix_modifier,
@@ -67,7 +67,7 @@ fn get_modifier_from_effect(effect: &Effect, card_is_active: bool) -> Option<Fix
 }
 
 fn calculate_remaining_rounds(deck: &Deck) -> usize {
-    deck.remaining_cards.len()
+    deck.get_remaining_card_count()
 }
 
 #[cfg(test)]
@@ -91,8 +91,7 @@ mod tests {
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
     use crate::world::actions::caclulate_board::calculate_board;
     use crate::world::board::Board;
-    use crate::world::deck::AttackCards::Attack;
-    use crate::world::deck::{AttackCards, Deck};
+    use crate::world::deck::{Deck};
 
 
     #[test]
