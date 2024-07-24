@@ -27,8 +27,7 @@ pub struct Board {
 }
 
 impl Board {
-
-    pub fn empty() -> Self{
+    pub fn empty() -> Self {
         Board {
             current_resources: Resources::new(0),
             drawn_card: None,
@@ -39,7 +38,6 @@ impl Board {
         }
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct CurrentBoard {
@@ -141,5 +139,26 @@ fn update_attack_card(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
         }
         Duration::UntilClosed => Some(card.clone()),
         Duration::None => None,
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use crate::cards::types::card_model::Card;
+    use crate::world::board::Board;
+    use std::rc::Rc;
+    use uuid::Uuid;
+
+    pub fn generate_board_with_open_card(card: Card) -> (Uuid, Board, Rc<Card>) {
+        let card_rc = Rc::new(card.clone());
+        let card_id = Uuid::new_v4();
+
+        let open_cards = vec![(card_id.clone(), card_rc.clone())];
+
+        let board = Board {
+            open_cards: open_cards.into_iter().collect(),
+            ..Board::empty()
+        };
+        (card_id, board, card_rc)
     }
 }
