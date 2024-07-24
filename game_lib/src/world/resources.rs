@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::ops::{Add, Mul, Sub};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -25,6 +26,14 @@ impl Add for Resources {
     }
 }
 
+impl Add for &Resources {
+    type Output = Resources;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Resources(self.0 + rhs.0)
+    }
+}
+
 impl Sub for Resources {
     type Output = Resources;
 
@@ -36,6 +45,18 @@ impl Sub for Resources {
         }
     }
 }
+
+impl Sub for &Resources {
+    type Output = Resources;
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.0 <= rhs.0 {
+            Resources::new(0)
+        } else {
+            Resources(self.0 - rhs.0)
+        }
+    }
+}
+
 
 impl Default for Resources {
     fn default() -> Self {
@@ -85,5 +106,19 @@ impl Mul<&ResourceFixMultiplier> for Resources {
 
     fn mul(self, rhs: &ResourceFixMultiplier) -> Self::Output {
         Resources(self.0 * rhs.value())
+    }
+}
+
+impl Mul<&ResourceFixMultiplier> for &Resources {
+    type Output = Resources;
+
+    fn mul(self, rhs: &ResourceFixMultiplier) -> Self::Output {
+        Resources(self.0 * rhs.value())
+    }
+}
+
+impl Display for Resources {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} resources", self.0)
     }
 }

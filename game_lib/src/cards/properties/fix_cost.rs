@@ -18,7 +18,7 @@ impl FixCost {
         if min > max {
             Err(ModelError {
                 kind: ErrorKind::Validation,
-                message: format!("min {} grater then max {}", min, max),
+                message: format!("min {} grater then or equal max {}", min, max),
             })
         } else {
             Ok(FixCost {

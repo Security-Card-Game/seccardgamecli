@@ -127,12 +127,10 @@ mod tests {
 
         if let Some(err) = result.err() {
             match err {
-                ActionError::NoCardsLeft
-                | ActionError::WrongCardType(_)
-                | ActionError::AttackForceClosed(_) => panic!("Expected InvalidState"),
                 ActionError::InvalidState(b) => {
                     assert_eq!(b, board)
                 }
+                _ => panic!("Expected invalid state!")
             }
         } else {
             println!("Expected and error!");
@@ -157,12 +155,10 @@ mod tests {
 
         if let Some(err) = result.err() {
             match err {
-                ActionError::NoCardsLeft
-                | ActionError::InvalidState(_)
-                | ActionError::AttackForceClosed(_) => panic!("Expected WrongCardType"),
                 ActionError::WrongCardType(b) => {
                     assert_eq!(b, board)
                 }
+                _ => panic!("Expected WrongCardType"),
             }
         } else {
             println!("Expected and error!");
@@ -232,12 +228,10 @@ mod tests {
 
         if let Some(err) = result.err() {
             match err {
-                ActionError::NoCardsLeft
-                | ActionError::WrongCardType(_)
-                | ActionError::AttackForceClosed(_) => panic!("Expected InvalidState"),
                 ActionError::InvalidState(b) => {
                     assert_eq!(b, board)
-                }
+                },
+                _ => panic!("Expected InvalidState"),
             }
         } else {
             println!("Expected and error!");
@@ -262,12 +256,10 @@ mod tests {
 
         if let Some(err) = result.err() {
             match err {
-                ActionError::NoCardsLeft
-                | ActionError::InvalidState(_)
-                | ActionError::AttackForceClosed(_) => panic!("Expected WrongCardType"),
                 ActionError::WrongCardType(b) => {
                     assert_eq!(b, board)
-                }
+                },
+                _ => panic!("Expected WrongCardType")
             }
         } else {
             println!("Expected and error!");
