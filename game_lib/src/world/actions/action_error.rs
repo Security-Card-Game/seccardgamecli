@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use crate::cards::properties::fix_cost::FixCost;
 use crate::world::board::Board;
 use crate::world::resources::Resources;
 

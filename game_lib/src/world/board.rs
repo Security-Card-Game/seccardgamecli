@@ -27,6 +27,18 @@ pub struct Board {
 }
 
 impl Board {
+
+    pub fn init(deck: &Deck, start_resources: Resources) -> Self {
+        Board {
+            current_resources: start_resources,
+            drawn_card: None,
+            open_cards: HashMap::new(),
+            cards_to_use: HashSet::new(),
+            fix_modifier: None,
+            turns_remaining: deck.total.clone(),
+        }
+    }
+
     pub fn empty() -> Self {
         Board {
             current_resources: Resources::new(0),
@@ -35,6 +47,23 @@ impl Board {
             cards_to_use: HashSet::new(),
             fix_modifier: None,
             turns_remaining: 0,
+        }
+    }
+}
+
+struct BoardAndDeck {
+    board: Board,
+    deck: Deck
+}
+
+impl From<BoardAndDeck> for CurrentBoard {
+    fn from(value: BoardAndDeck) -> Self {
+        CurrentBoard {
+            current_resources: value.board.current_resources,
+            drawn_card: value.board.drawn_card,
+            open_cards: value.board.open_cards,
+            deck: value.deck,
+            turns_remaining: value.board.turns_remaining,
         }
     }
 }
