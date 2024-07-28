@@ -43,7 +43,6 @@ impl<'de> Deserialize<'de> for Description {
     }
 }
 
-
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;

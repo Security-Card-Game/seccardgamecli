@@ -6,8 +6,8 @@ use uuid::Uuid;
 use crate::cards::properties::duration::Duration;
 use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;
-use crate::world::actions::action_error::ActionError::WrongCardType;
 use crate::world::actions::action_error::{ActionError, ActionResult};
+use crate::world::actions::action_error::ActionError::WrongCardType;
 use crate::world::board::Board;
 use crate::world::deck::CardRc;
 
@@ -26,7 +26,7 @@ pub fn update_attack_cards(board: Board) -> Board {
         match card_to_insert {
             None => {}
             Some(c) => {
-                open_cards.insert(key.clone(), c);
+                open_cards.insert(*key, c);
             }
         }
     }
@@ -40,7 +40,7 @@ pub fn update_attack_cards(board: Board) -> Board {
 fn update_attack_card(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
     let new_duration = ac.duration.decrease();
     if let Some(value) = new_duration.value() {
-        if value.clone() == 0 {
+        if *value == 0 {
             return None;
         }
     };
@@ -100,24 +100,26 @@ fn close_attack_card(duration: &Duration, board: Board, id: &Uuid) -> ActionResu
 
 #[cfg(test)]
 mod tests {
-    use crate::cards::properties::duration::Duration;
-    use crate::cards::types::attack::tests::FakeAttackCard;
-    use crate::cards::types::attack::AttackCard;
-    use crate::cards::types::card_model::Card;
-    use crate::cards::types::event::tests::FakeEventCard;
-    use crate::cards::types::event::EventCard;
-    use crate::cards::types::lucky::tests::FakeLuckyCard;
-    use crate::cards::types::lucky::LuckyCard;
-    use crate::cards::types::oopsie::tests::FakeOopsieCard;
-    use crate::cards::types::oopsie::OopsieCard;
-    use crate::world::actions::action_error::ActionError;
-    use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
-    use crate::world::board::tests::generate_board_with_open_card;
-    use crate::world::board::Board;
+    use std::rc::Rc;
+
     use fake::Fake;
     use rstest::rstest;
-    use std::rc::Rc;
     use uuid::Uuid;
+
+    use crate::cards::properties::duration::Duration;
+    use crate::cards::types::attack::AttackCard;
+    use crate::cards::types::attack::tests::FakeAttackCard;
+    use crate::cards::types::card_model::Card;
+    use crate::cards::types::event::EventCard;
+    use crate::cards::types::event::tests::FakeEventCard;
+    use crate::cards::types::lucky::LuckyCard;
+    use crate::cards::types::lucky::tests::FakeLuckyCard;
+    use crate::cards::types::oopsie::OopsieCard;
+    use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::world::actions::action_error::ActionError;
+    use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
+    use crate::world::board::Board;
+    use crate::world::board::tests::generate_board_with_open_card;
 
     #[test]
     fn update_attack_cards_reduces_attack_duration() {
@@ -146,7 +148,7 @@ mod tests {
             duration: Duration::new(Some(1)),
             ..FakeAttackCard.fake()
         };
-        let (card_id, board, card_rc) = generate_board_with_open_card(Card::from(attack));
+        let (_, board, _) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
@@ -160,7 +162,7 @@ mod tests {
             ..FakeAttackCard.fake()
         };
 
-        let (card_id, board, card_rc) = generate_board_with_open_card(Card::from(attack));
+        let (_, board, card_rc) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
@@ -188,7 +190,7 @@ mod tests {
     #[case::EventCard(Card::from(FakeEventCard.fake::<EventCard>()))]
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::<OopsieCard>()))]
     fn update_attack_cards_does_not_affect_other_cards(#[case] card: Card) {
-        let (card_id, board, card_rc) = generate_board_with_open_card(card);
+        let (_, board, _) = generate_board_with_open_card(card);
 
         let expected_board = Board { ..board.clone() };
 

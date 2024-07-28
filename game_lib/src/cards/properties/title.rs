@@ -61,4 +61,3 @@ pub(crate) mod tests {
         }
     }
 }
-

@@ -79,7 +79,10 @@ mod tests {
 
         let deck = Deck::new(cards);
 
-        let CardAndNewDeck { drawn_card: _, new_deck: deck_after_draw} = draw_card(deck).unwrap();
+        let CardAndNewDeck {
+            drawn_card: _,
+            new_deck: deck_after_draw,
+        } = draw_card(deck).unwrap();
 
         // assert deck has one played card
         assert_eq!(deck_after_draw.played_cards, 1);
@@ -96,7 +99,10 @@ mod tests {
 
         let deck = Deck::new(cards);
 
-        let CardAndNewDeck { drawn_card: _, new_deck: deck_after_first_draw} = draw_card(deck).unwrap();
+        let CardAndNewDeck {
+            drawn_card: _,
+            new_deck: deck_after_first_draw,
+        } = draw_card(deck).unwrap();
         let result = draw_card(deck_after_first_draw);
 
         assert!(matches!(result, Err(ActionError::NoCardsLeft)));
@@ -113,7 +119,6 @@ mod tests {
             ..Board::empty()
         };
 
-
         let new_board = add_drawn_card_to_board(board, next_card_rc.clone()).unwrap();
 
         // unchanged values
@@ -123,13 +128,12 @@ mod tests {
         // updated values
         assert_eq!(new_board.drawn_card.unwrap().card, next_card_rc);
         assert_eq!(new_board.open_cards.len(), 1);
-        assert!(new_board.open_cards
+        assert!(new_board
+            .open_cards
             .iter()
             .find(|(_k, v)| **v == next_card_rc)
             .is_some());
     }
-
-
 
     #[test]
     fn action_draw_card_and_place_on_board() {

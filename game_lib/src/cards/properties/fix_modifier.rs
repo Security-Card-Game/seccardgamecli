@@ -53,10 +53,9 @@ impl Add for FixModifier {
             FixModifier::Decrease(Resources::new(new_value.unsigned_abs()))
         } else {
             FixModifier::Increase(Resources::new(new_value.unsigned_abs()))
-        }
+        };
     }
 }
-
 
 #[cfg(test)]
 pub(crate) mod tests {
@@ -73,7 +72,7 @@ pub(crate) mod tests {
                 FixModifier::Decrease(Resources::new(rng.gen_range(1..10)))
             } else {
                 FixModifier::Increase(Resources::new(rng.gen_range(1..10)))
-            }
+            };
         }
     }
 
@@ -117,7 +116,6 @@ pub(crate) mod tests {
         assert_eq!(sum, FixModifier::Increase(Resources::new(2)))
     }
 
-
     #[test]
     fn add_decreasing_to_higher_increasing() {
         let add1 = FixModifier::Increase(Resources::new(9));
@@ -147,7 +145,4 @@ pub(crate) mod tests {
 
         assert_eq!(sum, FixModifier::Decrease(Resources::new(0)))
     }
-
-
-
 }

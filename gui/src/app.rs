@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use game_lib::world::board::CurrentBoard;
 use game_lib::world::deck::{CardRc, Deck};
-use game_lib::world::game::{ActionResult, Game, GameStatus};
+use game_lib::world::game::{GameActionResult, Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
@@ -55,9 +55,9 @@ impl SecCardGameApp {
                 |id| ids_to_remove.push(id),
                 |id, marker| match marker {
                     CardMarker::MarkedForUse => {
-                        self.game = self.game.activate_card(&id);
+                        self.game = self.game.activate_lucky_card(&id);
                     }
-                    CardMarker::None => self.game = self.game.deactivate_card(&id),
+                    CardMarker::None => self.game = self.game.deactivate_lucky_card(&id),
                 },
                 ctx,
                 ui,
@@ -73,17 +73,17 @@ impl SecCardGameApp {
                     self.input.message = Message::None;
                 }
                 Some(res) => match res {
-                    ActionResult::OopsieFixed(res) => {
+                    GameActionResult::OopsieFixed(res) => {
                         self.input.message =
                             Message::Success(format!("Fixed for {} resources.", res.value()));
                     }
-                    ActionResult::FixFailed(res) => {
+                    GameActionResult::FixFailed(res) => {
                         self.input.message = Message::Failure(format!(
                             "Fix failed! It would have needed {} resources.",
                             res.value()
                         ));
                     }
-                    ActionResult::AttackForceClosed => {
+                    GameActionResult::AttackForceClosed => {
                         self.input.message =
                             Message::Warning("Attack forced to be over".to_string());
                     }

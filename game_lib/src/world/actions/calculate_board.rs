@@ -28,27 +28,31 @@ pub(crate) fn calculate_board(board: Board, deck: &Deck) -> ActionResult<Board> 
 }
 
 fn calculate_fix_modifier(board: &Board) -> Option<FixModifier> {
-
-    let new_modifier = board.open_cards.iter()
+    let new_modifier = board
+        .open_cards
+        .iter()
         .map(|(id, card)| get_modifier(id, card, &board.cards_to_use))
-        .filter(|m| m.is_some())
-        .map(|m| m.unwrap())
-        .fold(FixModifier::Decrease(Resources::new(0)), | acc ,e| acc + e);
+        .flatten()
+        .fold(FixModifier::Decrease(Resources::new(0)), |acc, e| acc + e);
 
-    return if new_modifier.value() == 0 {
+    if new_modifier.value() == 0 {
         None
     } else {
         Some(new_modifier.clone())
     }
 }
 
-fn get_modifier(card_id: &Uuid, card: &CardRc, cards_to_use: &HashSet<Uuid>) -> Option<FixModifier> {
-   match &**card {
-       Card::Event(e) => get_modifier_from_effect(&e.effect, cards_to_use.contains(card_id)),
-       Card::Attack(_) => None,
-       Card::Oopsie(_) => None,
-       Card::Lucky(l) => get_modifier_from_effect(&l.effect, cards_to_use.contains(card_id)),
-   }
+fn get_modifier(
+    card_id: &Uuid,
+    card: &CardRc,
+    cards_to_use: &HashSet<Uuid>,
+) -> Option<FixModifier> {
+    match &**card {
+        Card::Event(e) => get_modifier_from_effect(&e.effect, cards_to_use.contains(card_id)),
+        Card::Attack(_) => None,
+        Card::Oopsie(_) => None,
+        Card::Lucky(l) => get_modifier_from_effect(&l.effect, cards_to_use.contains(card_id)),
+    }
 }
 
 fn get_modifier_from_effect(effect: &Effect, card_is_active: bool) -> Option<FixModifier> {
@@ -57,11 +61,13 @@ fn get_modifier_from_effect(effect: &Effect, card_is_active: bool) -> Option<Fix
         Effect::AttackSurface(_, _) => None,
         Effect::Incident(_, _) => None,
         Effect::OnNextFix(_, m) => Some(m.clone()),
-        Effect::OnUsingForFix(_, m) => if card_is_active {
-            Some(m.clone())
-        } else {
-            None
-        },
+        Effect::OnUsingForFix(_, m) => {
+            if card_is_active {
+                Some(m.clone())
+            } else {
+                None
+            }
+        }
         Effect::Other(_) => None,
         Effect::NOP => None,
     }
@@ -91,7 +97,6 @@ mod tests {
     use crate::cards::types::lucky::tests::FakeLuckyCard;
     use crate::cards::types::oopsie::OopsieCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
-    use crate::world::actions::caclulate_board::calculate_board;
     use crate::world::board::Board;
     use crate::world::deck::Deck;
 
@@ -102,7 +107,7 @@ mod tests {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
 
         let deck = Deck {
-            remaining_cards: vec!(oopsie_card),
+            remaining_cards: vec![oopsie_card],
             played_cards: 2,
             total: 3,
         };
@@ -142,20 +147,20 @@ mod tests {
         assert_eq!(result, modifier)
     }
 
-
     #[rstest]
     #[case::NOP(Effect::NOP, None)]
     #[case::Immediate(Effect::Immediate(FakeEffectDescription.fake()), None)]
     #[case::AttackSurface(Effect::AttackSurface(FakeEffectDescription.fake(), vec![]), None)]
     #[case::Incident(Effect::Incident(FakeEffectDescription.fake(), vec![]), None)]
     #[case::Other(Effect::Other(FakeEffectDescription.fake()), None)]
-    fn calculate_fix_modifier_of_non_modifying_effect(#[case] effect: Effect, #[case] expectation: Option<FixModifier>) {
-
+    fn calculate_fix_modifier_of_non_modifying_effect(
+        #[case] effect: Effect,
+        #[case] expectation: Option<FixModifier>,
+    ) {
         let result = get_modifier_from_effect(&effect, true);
 
         assert_eq!(result, expectation);
     }
-
 
     #[test]
     fn calculate_fix_modifier_for_board() {
@@ -189,7 +194,6 @@ mod tests {
         });
         let unused_lucky_card_rc = Rc::new(unused_lucky_card);
 
-
         let cards = vec![
             (Uuid::new_v4(), oopsie_card_rc),
             (Uuid::new_v4(), event_card_rc),
@@ -198,7 +202,7 @@ mod tests {
             (used_card_id.clone(), used_lucky_card_rc),
         ];
 
-        let open_cards: HashMap<_,_> = cards.into_iter().collect();
+        let open_cards: HashMap<_, _> = cards.into_iter().collect();
         let cards_to_use = &mut HashSet::new();
         cards_to_use.insert(used_card_id);
 
@@ -210,14 +214,12 @@ mod tests {
 
         let test_result = used_card_modifier + event_modifier;
         let expected_result = if test_result.value() == 0 {
-           None
+            None
         } else {
             Some(test_result)
         };
 
-        let result = super::calculate_fix_modifier(&board);
-
-
+        let result = calculate_fix_modifier(&board);
 
         assert_eq!(result, expected_result);
     }
@@ -233,13 +235,11 @@ mod tests {
         });
         let event_card_rc = Rc::new(event_card.clone());
 
-        let cards = vec![
-            (Uuid::new_v4(), event_card_rc),
-        ];
-        let open_cards: HashMap<_,_> = cards.into_iter().collect();
+        let cards = vec![(Uuid::new_v4(), event_card_rc)];
+        let open_cards: HashMap<_, _> = cards.into_iter().collect();
 
         let deck = Deck {
-            remaining_cards: vec!(oopsie_card),
+            remaining_cards: vec![oopsie_card],
             played_cards: 2,
             total: 3,
         };
@@ -263,13 +263,11 @@ mod tests {
     fn calculate_board_fix_modifiers() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let oopsie_card_rc = Rc::new(oopsie_card.clone());
-        let cards = vec![
-            (Uuid::new_v4(), oopsie_card_rc)
-        ];
-        let open_cards: HashMap<_,_> = cards.into_iter().collect();
+        let cards = vec![(Uuid::new_v4(), oopsie_card_rc)];
+        let open_cards: HashMap<_, _> = cards.into_iter().collect();
 
         let deck = Deck {
-            remaining_cards: vec!(oopsie_card),
+            remaining_cards: vec![oopsie_card],
             played_cards: 2,
             total: 3,
         };
@@ -288,5 +286,4 @@ mod tests {
 
         assert_eq!(new_board, expected_board)
     }
-
 }

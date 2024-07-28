@@ -49,7 +49,6 @@ impl Duration {
     }
 }
 
-
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;
@@ -66,8 +65,8 @@ pub(crate) mod tests {
                 0 => Duration::None,
                 1 => Duration::UntilClosed,
                 2 => Duration::Rounds(rng.gen_range(1..100)),
-                _ => panic!("only three types 0 - 2 supported!")
-            }
+                _ => panic!("only three types 0 - 2 supported!"),
+            };
         }
     }
 }

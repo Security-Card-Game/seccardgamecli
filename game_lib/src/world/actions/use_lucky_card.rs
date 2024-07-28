@@ -29,7 +29,7 @@ where
 
 fn add_lucky_card(board: Board, id: &Uuid) -> Board {
     let active_cards = &mut board.cards_to_use.clone();
-    active_cards.insert(id.clone());
+    active_cards.insert(*id);
     Board {
         cards_to_use: active_cards.clone(),
         ..board
@@ -48,23 +48,24 @@ fn remove_lucky_card(board: Board, id: &Uuid) -> Board {
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
-    use crate::cards::types::attack::tests::FakeAttackCard;
-    use crate::cards::types::attack::AttackCard;
-    use crate::cards::types::card_model::Card;
-    use crate::cards::types::event::tests::FakeEventCard;
-    use crate::cards::types::event::EventCard;
-    use crate::cards::types::lucky::tests::FakeLuckyCard;
-    use crate::cards::types::lucky::LuckyCard;
-    use crate::cards::types::oopsie::tests::FakeOopsieCard;
-    use crate::cards::types::oopsie::OopsieCard;
+    use std::rc::Rc;
 
+    use fake::Fake;
+    use rstest::rstest;
+    use uuid::Uuid;
+
+    use crate::cards::types::attack::AttackCard;
+    use crate::cards::types::attack::tests::FakeAttackCard;
+    use crate::cards::types::card_model::Card;
+    use crate::cards::types::event::EventCard;
+    use crate::cards::types::event::tests::FakeEventCard;
+    use crate::cards::types::lucky::LuckyCard;
+    use crate::cards::types::lucky::tests::FakeLuckyCard;
+    use crate::cards::types::oopsie::OopsieCard;
+    use crate::cards::types::oopsie::tests::FakeOopsieCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::use_lucky_card::{activate_lucky_card, deactivate_lucky_card};
     use crate::world::board::Board;
-    use fake::Fake;
-    use rstest::rstest;
-    use std::rc::Rc;
-    use uuid::Uuid;
 
     #[test]
     fn activate_existing_lucky_card() {
@@ -130,7 +131,7 @@ mod tests {
                 ActionError::InvalidState(b) => {
                     assert_eq!(b, board)
                 }
-                _ => panic!("Expected invalid state!")
+                _ => panic!("Expected invalid state!"),
             }
         } else {
             println!("Expected and error!");
@@ -230,7 +231,7 @@ mod tests {
             match err {
                 ActionError::InvalidState(b) => {
                     assert_eq!(b, board)
-                },
+                }
                 _ => panic!("Expected InvalidState"),
             }
         } else {
@@ -258,12 +259,11 @@ mod tests {
             match err {
                 ActionError::WrongCardType(b) => {
                     assert_eq!(b, board)
-                },
-                _ => panic!("Expected WrongCardType")
+                }
+                _ => panic!("Expected WrongCardType"),
             }
         } else {
             println!("Expected and error!");
         }
     }
-
 }

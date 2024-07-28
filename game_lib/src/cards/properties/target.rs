@@ -49,7 +49,13 @@ pub(crate) mod tests {
 
     use super::*;
 
-    const TEST_TARGETS: [&'static str; 5] = ["backend", "frontend", "infrastructure", "social", "supply chain"];
+    const TEST_TARGETS: [&'static str; 5] = [
+        "backend",
+        "frontend",
+        "infrastructure",
+        "social",
+        "supply chain",
+    ];
 
     pub struct FakeTarget;
     impl Dummy<FakeTarget> for Target {
@@ -59,4 +65,3 @@ pub(crate) mod tests {
         }
     }
 }
-

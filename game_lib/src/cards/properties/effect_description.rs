@@ -42,7 +42,6 @@ impl<'de> Deserialize<'de> for EffectDescription {
     }
 }
 
-
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;

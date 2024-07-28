@@ -27,7 +27,6 @@ pub struct Board {
 }
 
 impl Board {
-
     pub fn init(deck: &Deck, start_resources: Resources) -> Self {
         Board {
             current_resources: start_resources,
@@ -53,7 +52,7 @@ impl Board {
 
 struct BoardAndDeck {
     board: Board,
-    deck: Deck
+    deck: Deck,
 }
 
 impl From<BoardAndDeck> for CurrentBoard {
@@ -173,10 +172,12 @@ fn update_attack_card(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use std::rc::Rc;
+
+    use uuid::Uuid;
+
     use crate::cards::types::card_model::Card;
     use crate::world::board::Board;
-    use std::rc::Rc;
-    use uuid::Uuid;
 
     pub fn generate_board_with_open_card(card: Card) -> (Uuid, Board, Rc<Card>) {
         let card_rc = Rc::new(card.clone());

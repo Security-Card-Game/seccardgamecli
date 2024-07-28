@@ -29,6 +29,7 @@ impl Default for Effect {
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::{Dummy, Fake};
+
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
     use crate::cards::properties::target::tests::FakeTarget;
@@ -55,5 +56,4 @@ pub(crate) mod tests {
             }
         }
     }
-
 }

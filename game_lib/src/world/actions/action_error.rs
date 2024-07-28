@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+
 use crate::world::board::Board;
 use crate::world::resources::Resources;
 
@@ -11,7 +12,7 @@ pub enum ActionError {
     WrongCardType(Board),
     AttackForceClosed(Board),
     InvalidState(Board),
-    NotEnoughResources(Board, Resources)
+    NotEnoughResources(Board, Resources),
 }
 
 impl Error for ActionError {}
@@ -23,7 +24,9 @@ impl Display for ActionError {
             ActionError::WrongCardType(_) => "Wrong card type".to_string(),
             ActionError::AttackForceClosed(_) => "Attack forced to be over!".to_string(),
             ActionError::InvalidState(_) => "This would lead to an invalid state!".to_string(),
-            ActionError::NotEnoughResources(_, costs) => format!("Not enough resources, fix would have cost {}", costs)
+            ActionError::NotEnoughResources(_, costs) => {
+                format!("Not enough resources, fix would have cost {}", costs)
+            }
         };
         write!(f, "GameError: {:?}: {}", self, message)
     }

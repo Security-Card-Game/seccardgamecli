@@ -81,8 +81,9 @@ pub(crate) mod tests {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeFixCost, rng: &mut R) -> Self {
             FixCost::from_resources(
                 Resources::new(rng.gen_range(1..10)),
-                Resources::new(rng.gen_range(11..20)))
-                .unwrap()
+                Resources::new(rng.gen_range(11..20)),
+            )
+            .unwrap()
         }
     }
 }

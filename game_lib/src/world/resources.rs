@@ -6,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::cards::serialization::helper::Number;
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 
-#[derive(Clone, Debug, PartialOrd, PartialEq)]
+#[derive(Clone, Debug, PartialOrd, PartialEq, Default)]
 pub struct Resources(usize);
 
 impl Resources {
@@ -54,13 +54,6 @@ impl Sub for &Resources {
         } else {
             Resources(self.0 - rhs.0)
         }
-    }
-}
-
-
-impl Default for Resources {
-    fn default() -> Self {
-        Resources(0)
     }
 }
 
