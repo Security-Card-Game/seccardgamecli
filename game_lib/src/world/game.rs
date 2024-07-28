@@ -69,7 +69,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match activate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::Start(calculate_board(new_board, &self.deck)),
+                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -91,7 +91,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match deactivate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::Start(calculate_board(new_board, &self.deck)),
+                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },

@@ -22,8 +22,11 @@ fn close_if_allowed(card_id: &Uuid, lc: &LuckyCard, board: Board) -> ActionResul
     if lc.is_closeable() {
         let open_cards = &mut board.open_cards.clone();
         open_cards.remove(card_id);
+        let cards_to_use = &mut board.cards_to_use.clone();
+        cards_to_use.remove(card_id);
         Ok(Board {
             open_cards: open_cards.clone(),
+            cards_to_use: cards_to_use.clone(),
             ..board
         })
     } else {
