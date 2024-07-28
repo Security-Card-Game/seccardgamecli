@@ -6,3 +6,6 @@ pub(crate) mod close_oopsie;
 pub(crate) mod draw_card;
 pub(crate) mod remove_resources;
 pub(crate) mod use_lucky_card;
+pub(crate) mod close_event;
+pub(crate) mod close_lucky;
+

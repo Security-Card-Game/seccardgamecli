@@ -21,6 +21,18 @@ impl EventCard {
             effect: Effect::NOP,
         })
     }
+
+    pub fn is_closeable(&self) -> bool {
+        match &self.effect {
+            | Effect::OnUsingForFix(_, _)
+            | Effect::Other(_)
+            | Effect::NOP
+            | Effect::Immediate(_)
+            | Effect::AttackSurface(_, _)
+            | Effect::Incident(_, _) => true,
+            | Effect::OnNextFix(_, _) => false
+        }
+    }
 }
 
 #[cfg(test)]

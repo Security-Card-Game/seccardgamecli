@@ -6,7 +6,9 @@ use crate::cards::types::card_model::Card;
 use crate::world::actions::action_error::ActionError;
 use crate::world::actions::add_resources::add_resources;
 use crate::world::actions::calculate_board::calculate_board;
-use crate::world::actions::close_attack::manually_close_attack_card;
+use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
+use crate::world::actions::close_event::close_event_card;
+use crate::world::actions::close_lucky::close_lucky_card;
 use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
 use crate::world::actions::draw_card::draw_card_and_place_on_board;
 use crate::world::actions::remove_resources::remove_resources;
@@ -208,9 +210,8 @@ impl Game {
                             card_id,
                             self.fix_multiplier.clone(),
                         ),
-                        Card::Event(_) | Card::Lucky(_) => {
-                            Err(ActionError::WrongCardType(board.clone()))
-                        }
+                        Card::Event(_) => close_event_card(board.clone(), card_id),
+                        Card::Lucky(_) => close_lucky_card(board.clone(), card_id),
                     }
                 } else {
                     Err(ActionError::InvalidState(board.clone()))
