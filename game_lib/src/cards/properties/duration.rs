@@ -2,17 +2,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub enum Duration {
     Rounds(usize),
+    #[default]
     UntilClosed,
     None,
 }
 
-impl Default for Duration {
-    fn default() -> Self {
-        Duration::UntilClosed
-    }
-}
 
 impl Duration {
     pub fn new(round: Option<usize>) -> Self {

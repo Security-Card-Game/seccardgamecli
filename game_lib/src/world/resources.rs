@@ -62,7 +62,7 @@ impl Serialize for Resources {
     where
         S: Serializer,
     {
-        serializer.serialize_u64(**&self.value() as u64)
+        serializer.serialize_u64(*self.value() as u64)
     }
 }
 impl<'de> Deserialize<'de> for Resources {

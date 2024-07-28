@@ -12,27 +12,26 @@ use uuid::Uuid;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::card_model::Card;
-use crate::world::actions::action_error::ActionResult;
 use crate::world::board::Board;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
 
-pub(crate) fn calculate_board(board: Board, deck: &Deck) -> ActionResult<Board> {
+
+pub(crate) fn calculate_board(board: Board, deck: &Deck) -> Board {
     let remaining_rounds = calculate_remaining_rounds(deck);
     let fix_modifier = calculate_fix_modifier(&board);
-    Ok(Board {
+    Board {
         turns_remaining: remaining_rounds,
         fix_modifier,
         ..board
-    })
+    }
 }
 
 fn calculate_fix_modifier(board: &Board) -> Option<FixModifier> {
     let new_modifier = board
         .open_cards
         .iter()
-        .map(|(id, card)| get_modifier(id, card, &board.cards_to_use))
-        .flatten()
+        .filter_map(|(id, card)| get_modifier(id, card, &board.cards_to_use))
         .fold(FixModifier::Decrease(Resources::new(0)), |acc, e| acc + e);
 
     if new_modifier.value() == 0 {
@@ -255,7 +254,7 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = calculate_board(board, &deck).unwrap();
+        let new_board = calculate_board(board, &deck);
 
         assert_eq!(new_board, expected_board)
     }
@@ -282,7 +281,7 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = calculate_board(board, &deck).unwrap();
+        let new_board = calculate_board(board, &deck);
 
         assert_eq!(new_board, expected_board)
     }

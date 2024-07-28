@@ -1,4 +1,3 @@
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::cards::properties::description::Description;
@@ -47,7 +46,7 @@ impl OopsieCard {
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::{Dummy, Fake};
-
+    use rand::Rng;
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::effect::tests::FakeEffect;
     use crate::cards::properties::fix_cost::tests::FakeFixCost;

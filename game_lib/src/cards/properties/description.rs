@@ -1,4 +1,3 @@
-use rand::Rng;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::cards::serialization::helper::StrVisitor;
@@ -31,7 +30,7 @@ impl Serialize for Description {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.value())
+        serializer.serialize_str(self.value())
     }
 }
 impl<'de> Deserialize<'de> for Description {
@@ -48,7 +47,7 @@ pub(crate) mod tests {
     use fake::Dummy;
     use fake::Fake;
     use fake::faker::lorem::en::*;
-
+    use rand::Rng;
     use super::*;
 
     pub struct FakeDescription;

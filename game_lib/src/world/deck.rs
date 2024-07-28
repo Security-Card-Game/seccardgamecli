@@ -8,7 +8,6 @@ use crate::cards::types::card_model::Card;
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
-use crate::world::deck::EventCards::Event;
 
 #[derive(Debug, Clone)]
 pub struct Deck {

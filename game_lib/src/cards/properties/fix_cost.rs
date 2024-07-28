@@ -8,6 +8,7 @@ use crate::world::resources::Resources;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
+#[derive(Default)]
 pub struct FixCost {
     pub min: Resources,
     pub max: Resources,
@@ -40,22 +41,14 @@ impl FixCost {
     }
 
     pub fn min_value(&self) -> &usize {
-        &self.min.value()
+        self.min.value()
     }
 
     pub fn max_value(&self) -> &usize {
-        &self.max.value()
+        self.max.value()
     }
 }
 
-impl Default for FixCost {
-    fn default() -> Self {
-        FixCost {
-            min: Resources::default(),
-            max: Resources::default(),
-        }
-    }
-}
 
 impl Mul<&ResourceFixMultiplier> for FixCost {
     type Output = Self;

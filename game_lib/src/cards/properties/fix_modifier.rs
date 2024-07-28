@@ -15,8 +15,8 @@ pub enum FixModifier {
 impl FixModifier {
     pub fn value(&self) -> isize {
         match self {
-            FixModifier::Increase(r) => r.value().clone() as isize,
-            FixModifier::Decrease(r) => -1 * r.value().clone() as isize,
+            FixModifier::Increase(r) => *r.value() as isize,
+            FixModifier::Decrease(r) => -(*r.value() as isize),
         }
     }
 }
@@ -49,11 +49,11 @@ impl Add for FixModifier {
     fn add(self, rhs: Self) -> Self::Output {
         let new_value = self.value() + rhs.value();
 
-        return if new_value <= 0 {
+        if new_value <= 0 {
             FixModifier::Decrease(Resources::new(new_value.unsigned_abs()))
         } else {
             FixModifier::Increase(Resources::new(new_value.unsigned_abs()))
-        };
+        }
     }
 }
 

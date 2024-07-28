@@ -30,7 +30,7 @@ impl Serialize for Title {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.value())
+        serializer.serialize_str(self.value())
     }
 }
 

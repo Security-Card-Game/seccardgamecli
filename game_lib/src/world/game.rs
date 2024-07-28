@@ -6,6 +6,7 @@ use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::card_model::Card;
 use crate::world::actions::action_error::ActionError;
 use crate::world::actions::add_resources::add_resources;
+use crate::world::actions::calculate_board::calculate_board;
 use crate::world::actions::close_attack::manually_close_attack_card;
 use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
 use crate::world::actions::draw_card::draw_card_and_place_on_board;
@@ -62,7 +63,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match activate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::Start(new_board),
+                        status: GameStatus::Start(calculate_board(new_board, &self.deck)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -84,7 +85,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match deactivate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::Start(new_board),
+                        status: GameStatus::Start(calculate_board(new_board, &self.deck)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -123,7 +124,7 @@ impl Game {
         fix_multiplier: ResourceFixMultiplier,
     ) -> Self {
         let board = Board::init(&deck, Resources::new(0));
-        let status = GameStatus::Start(board);
+        let status = GameStatus::Start(calculate_board(board, &deck));
 
         Game {
             deck,
@@ -139,11 +140,12 @@ impl Game {
             draw_card_and_place_on_board(self.deck.clone(), self.get_board().clone())
         {
             let board_with_added_resources = add_resources(board, &self.resource_gain);
+            let new_board = calculate_board(board_with_added_resources, &new_deck);
 
-            let status = if board_with_added_resources.turns_remaining == 0 {
-                GameStatus::Finished(board_with_added_resources)
+            let status = if new_board.turns_remaining == 0 {
+                GameStatus::Finished(new_board)
             } else {
-                GameStatus::InProgress(board_with_added_resources)
+                GameStatus::InProgress(new_board)
             };
             Game {
                 action_status: GameActionResult::Success,
@@ -176,10 +178,10 @@ impl Game {
 
                 let (b, res) = match new_board {
                     Ok(b) => (b, GameActionResult::Success),
-                    Err(e) => handle_action_error(board, e),
+                    Err(e) => handle_action_error(board, &self.deck,e),
                 };
                 Game {
-                    status: GameStatus::InProgress(b),
+                    status: GameStatus::InProgress(calculate_board(b, &self.deck)),
                     action_status: res,
                     ..self.clone()
                 }
@@ -211,14 +213,14 @@ impl Game {
                 };
                 match result {
                     Ok(b) => Game {
-                        status: GameStatus::InProgress(b),
+                        status: GameStatus::InProgress(calculate_board(b, &self.deck)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
                     Err(err) => {
-                        let (b, r) = handle_action_error(board, err);
+                        let (b, r) = handle_action_error(board, &self.deck, err);
                         Game {
-                            status: GameStatus::InProgress(b),
+                            status: GameStatus::InProgress(calculate_board(b, &self.deck)),
                             action_status: r,
                             ..self.clone()
                         }
@@ -230,12 +232,12 @@ impl Game {
     }
 }
 
-fn handle_action_error(board: &Board, err: ActionError) -> (Board, GameActionResult) {
+fn handle_action_error(board: &Board, deck: &Deck, err: ActionError) -> (Board, GameActionResult) {
     match err {
         ActionError::NoCardsLeft => (board.clone(), InvalidAction),
         ActionError::WrongCardType(b)
         | ActionError::AttackForceClosed(b)
-        | ActionError::InvalidState(b) => (b, InvalidAction),
+        | ActionError::InvalidState(b) => (calculate_board(b, deck), InvalidAction),
         ActionError::NotEnoughResources(_, _) => (board.clone(), GameActionResult::NothingPayed),
     }
 }

@@ -34,7 +34,7 @@ impl Board {
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
             fix_modifier: None,
-            turns_remaining: deck.total.clone(),
+            turns_remaining: deck.total,
         }
     }
 
@@ -84,7 +84,7 @@ impl CurrentBoard {
             drawn_card: None,
             open_cards: HashMap::new(),
             deck,
-            turns_remaining: total_rounds.clone(),
+            turns_remaining: *total_rounds,
         }
     }
 
@@ -97,7 +97,7 @@ impl CurrentBoard {
         let card_ref = Rc::new(drawn_card[0].clone());
         let card_id = Uuid::new_v4();
 
-        open_cards.insert(card_id.clone(), card_ref.clone());
+        open_cards.insert(card_id, card_ref.clone());
 
         CurrentBoard {
             current_resources: new_resources + current_resources.clone(),
@@ -146,7 +146,7 @@ fn update_open_cards(input: HashMap<Uuid, CardRc>) -> HashMap<Uuid, CardRc> {
         match card_to_insert {
             None => {}
             Some(c) => {
-                result.insert(key.clone(), c);
+                result.insert(*key, c);
             }
         }
     }

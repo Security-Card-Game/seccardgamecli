@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use uuid::Uuid;
 
-use crate::cards::types::card_model::Card;
 use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::board::{Board, CardRcWithId};
 use crate::world::deck::{CardRc, Deck};
@@ -60,7 +59,7 @@ fn add_drawn_card_to_board(board: Board, card: CardRc) -> ActionResult<Board> {
 #[cfg(test)]
 mod tests {
     use fake::Fake;
-
+    use crate::cards::types::card_model::Card;
     use crate::cards::types::event::EventCard;
     use crate::cards::types::event::tests::FakeEventCard;
     use crate::cards::types::oopsie::OopsieCard;
