@@ -39,7 +39,7 @@ pub fn create_deck(config: &Config) -> Deck {
 
 pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliResult<()> {
     let deck = create_deck(config);
-    write_cards_to_deck(deck.board, deck_path)?;
+    write_cards_to_deck(deck.remaining_cards, deck_path)?;
 
     info!("Deck created!");
 

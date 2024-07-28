@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::ops::{Add, Mul, Sub};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -5,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::cards::serialization::helper::Number;
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 
-#[derive(Clone, Debug, PartialOrd, PartialEq)]
+#[derive(Clone, Debug, PartialOrd, PartialEq, Default)]
 pub struct Resources(usize);
 
 impl Resources {
@@ -25,6 +26,14 @@ impl Add for Resources {
     }
 }
 
+impl Add for &Resources {
+    type Output = Resources;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Resources(self.0 + rhs.0)
+    }
+}
+
 impl Sub for Resources {
     type Output = Resources;
 
@@ -37,9 +46,14 @@ impl Sub for Resources {
     }
 }
 
-impl Default for Resources {
-    fn default() -> Self {
-        Resources(0)
+impl Sub for &Resources {
+    type Output = Resources;
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.0 <= rhs.0 {
+            Resources::new(0)
+        } else {
+            Resources(self.0 - rhs.0)
+        }
     }
 }
 
@@ -48,7 +62,7 @@ impl Serialize for Resources {
     where
         S: Serializer,
     {
-        serializer.serialize_u64(**&self.value() as u64)
+        serializer.serialize_u64(*self.value() as u64)
     }
 }
 impl<'de> Deserialize<'de> for Resources {
@@ -85,5 +99,19 @@ impl Mul<&ResourceFixMultiplier> for Resources {
 
     fn mul(self, rhs: &ResourceFixMultiplier) -> Self::Output {
         Resources(self.0 * rhs.value())
+    }
+}
+
+impl Mul<&ResourceFixMultiplier> for &Resources {
+    type Output = Resources;
+
+    fn mul(self, rhs: &ResourceFixMultiplier) -> Self::Output {
+        Resources(self.0 * rhs.value())
+    }
+}
+
+impl Display for Resources {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} resources", self.0)
     }
 }

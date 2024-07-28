@@ -11,27 +11,23 @@ use crate::cards::types::oopsie::OopsieCard;
 
 #[derive(Debug, Clone)]
 pub struct Deck {
-    pub board: Vec<Card>,
+    pub remaining_cards: Vec<Card>,
     pub played_cards: usize,
     pub total: usize,
 }
 
 impl Deck {
-    fn new(cards: Vec<Card>) -> Deck {
+    pub(crate) fn new(cards: Vec<Card>) -> Deck {
         let total = cards.len();
         Deck {
-            board: cards,
+            remaining_cards: cards,
             played_cards: 0,
             total,
         }
     }
 
-    pub(crate) fn with_remaining_cards(&self, cards: &[Card]) -> Self {
-        Deck {
-            board: cards.to_vec(),
-            played_cards: self.played_cards + 1,
-            total: self.total,
-        }
+    pub(crate) fn get_remaining_card_count(&self) -> usize {
+        self.remaining_cards.len()
     }
 }
 
@@ -59,20 +55,21 @@ pub struct DeckComposition {
     pub lucky: usize,
 }
 
-impl Into<Card> for EventCards {
-    fn into(self) -> Card {
-        match self {
-            EventCards::Event(c) => Card::Event(c.clone()),
-            EventCards::Oopsie(c) => Card::Oopsie(c.clone()),
-            EventCards::Lucky(c) => Card::Lucky(c.clone()),
+impl From<EventCards> for Card  {
+    fn from(value: EventCards) -> Self {
+        match value {
+            EventCards::Event(ec) => Card::Event(ec),
+            EventCards::Oopsie(oc) => Card::Oopsie(oc),
+            EventCards::Lucky(lc) => Card::Lucky(lc)
         }
     }
 }
 
-impl Into<Card> for AttackCards {
-    fn into(self) -> Card {
-        match self {
-            AttackCards::Attack(c) => Card::Attack(c.clone()),
+
+impl From<AttackCards> for Card  {
+    fn from(value: AttackCards) -> Self {
+        match value {
+            AttackCards::Attack(ac) => Card::Attack(ac)
         }
     }
 }
@@ -117,7 +114,7 @@ impl DeckPreparation for PreparedDeck {
 
     fn shuffle(&self) -> Deck {
         let mut rng = thread_rng();
-        let total = &self.cards.len() + &self.attacks.len();
+        let total = self.cards.len() + self.attacks.len();
         let event_cards = &self.cards;
         let attack_cards = &self.attacks;
         let mut cards: Vec<Card> = event_cards.iter().map(|c| c.clone().into()).collect();
@@ -164,9 +161,8 @@ fn draw_attack_cards_for_deck(count: usize, cards_available: Vec<CardRc>) -> Vec
 
     while x < count {
         let card_to_include = thread_rng().gen_range(0..cards_available.len());
-        match *cards_available[card_to_include].as_ref() {
-            Card::Attack(ref c) => cards.push(AttackCards::Attack(c.clone())),
-            _ => {}
+        if let Card::Attack(ref c) = *cards_available[card_to_include].as_ref() {
+            cards.push(AttackCards::Attack(c.clone()))
         }
         x += 1;
     }

@@ -2,7 +2,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::cards::serialization::helper::StrVisitor;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Description(String);
 
 impl Description {
@@ -30,7 +30,7 @@ impl Serialize for Description {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.value())
+        serializer.serialize_str(self.value())
     }
 }
 impl<'de> Deserialize<'de> for Description {
@@ -39,5 +39,22 @@ impl<'de> Deserialize<'de> for Description {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_string(StrVisitor(std::marker::PhantomData))
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::Dummy;
+    use fake::Fake;
+    use fake::faker::lorem::en::*;
+    use rand::Rng;
+    use super::*;
+
+    pub struct FakeDescription;
+    impl Dummy<FakeDescription> for Description {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeDescription, _: &mut R) -> Self {
+            let words: Vec<String> = Words(10..20).fake();
+            Description(words.join(" ").to_string())
+        }
     }
 }

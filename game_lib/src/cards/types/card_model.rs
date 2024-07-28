@@ -8,7 +8,7 @@ use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
 pub enum Card {
@@ -85,5 +85,29 @@ impl CardTrait for Card {
             Card::Oopsie(_) => OopsieCard::empty(),
             Card::Lucky(_) => LuckyCard::empty(),
         }
+    }
+}
+
+impl From<EventCard> for Card {
+    fn from(value: EventCard) -> Self {
+        Card::Event(value)
+    }
+}
+
+impl From<LuckyCard> for Card {
+    fn from(value: LuckyCard) -> Self {
+        Card::Lucky(value)
+    }
+}
+
+impl From<OopsieCard> for Card {
+    fn from(value: OopsieCard) -> Self {
+        Card::Oopsie(value)
+    }
+}
+
+impl From<AttackCard> for Card {
+    fn from(value: AttackCard) -> Self {
+        Card::Attack(value)
     }
 }

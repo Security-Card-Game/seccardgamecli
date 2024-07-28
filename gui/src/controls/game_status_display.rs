@@ -1,8 +1,6 @@
 use eframe::epaint::Color32;
 use egui::{RichText, Ui};
 
-use game_lib::world::game::GameStatus;
-
 use crate::{Message, SecCardGameApp};
 
 impl SecCardGameApp {
@@ -10,20 +8,14 @@ impl SecCardGameApp {
         self.display_cards_remaining(ui);
         ui.add_space(20.0);
         self.display_message(ui);
-
     }
 
     fn display_cards_remaining(&mut self, ui: &mut Ui) {
-        match &self.game.status {
-            GameStatus::Start(board)
-            | GameStatus::InProgress(board)
-            | GameStatus::Finished(board) => {
-                ui.label(format!(
-                    "Cards {}/{}",
-                    board.deck.played_cards, board.deck.total
-                ));
-            }
-        }
+        let card_count = &self.game.get_card_count();
+        ui.label(format!(
+            "Cards {}/{}",
+            card_count.played_cards, card_count.total_cards
+        ));
     }
 
     fn display_message(&mut self, ui: &mut Ui) {

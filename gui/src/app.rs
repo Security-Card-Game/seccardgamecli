@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use egui::{Context, Ui};
 use uuid::Uuid;
 
-use game_lib::world::board::CurrentBoard;
+use game_lib::world::board::{Board};
 use game_lib::world::deck::{CardRc, Deck};
-use game_lib::world::game::{ActionResult, Game, GameStatus};
+use game_lib::world::game::{GameActionResult, Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
@@ -41,13 +41,13 @@ impl SecCardGameApp {
         }
     }
 
-    fn display_cards(&mut self, board: &CurrentBoard, ctx: &Context, ui: &mut Ui) {
+    fn display_cards(&mut self, board: &Board, ctx: &Context, ui: &mut Ui) {
         let mut ids_to_remove = vec![];
         for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
             let card_to_display = CardContent::from_card(
                 &card.0,
                 card.1.clone(),
-                self.game.active_cards.contains_key(&card.0),
+                self.game.is_card_activated(&card.0),
                 self.game.fix_multiplier.clone(),
             );
             display_card(
@@ -55,9 +55,9 @@ impl SecCardGameApp {
                 |id| ids_to_remove.push(id),
                 |id, marker| match marker {
                     CardMarker::MarkedForUse => {
-                        self.game = self.game.activate_card(&id);
+                        self.game = self.game.activate_lucky_card(&id);
                     }
-                    CardMarker::None => self.game = self.game.deactivate_card(&id),
+                    CardMarker::None => self.game = self.game.deactivate_lucky_card(&id),
                 },
                 ctx,
                 ui,
@@ -69,25 +69,30 @@ impl SecCardGameApp {
         for id in &ids_to_remove {
             let new_game_state = self.game.close_card(id);
             match &new_game_state.action_status {
-                None => {
-                    self.input.message = Message::None;
-                }
-                Some(res) => match res {
-                    ActionResult::OopsieFixed(res) => {
+                    GameActionResult::OopsieFixed(res) => {
                         self.input.message =
                             Message::Success(format!("Fixed for {} resources.", res.value()));
                     }
-                    ActionResult::FixFailed(res) => {
+                    GameActionResult::FixFailed(res) => {
                         self.input.message = Message::Failure(format!(
                             "Fix failed! It would have needed {} resources.",
                             res.value()
                         ));
                     }
-                    ActionResult::AttackForceClosed => {
+                    GameActionResult::AttackForceClosed => {
                         self.input.message =
                             Message::Warning("Attack forced to be over".to_string());
                     }
-                },
+                GameActionResult::Payed => {}
+                GameActionResult::NotEnoughResources => {}
+                GameActionResult::NothingPayed => {}
+                GameActionResult::InvalidAction => {
+                    self.input.message =
+                        Message::Failure("Invalid Action!".to_string())
+                }
+                GameActionResult::Success => {
+                    self.input.message = Message::None
+                }
             }
 
             new_turn = Some(new_game_state);

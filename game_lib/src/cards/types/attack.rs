@@ -8,7 +8,7 @@ use crate::cards::properties::target::Target;
 use crate::cards::properties::title::Title;
 use crate::cards::types::card_model::Card;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct AttackCard {
     pub title: Title,
@@ -40,5 +40,30 @@ impl AttackCard {
             effect: Effect::Incident(EffectDescription::empty(), vec![]),
             duration: Duration::default(),
         })
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use fake::{Dummy, Fake};
+    use rand::Rng;
+    use crate::cards::properties::description::tests::FakeDescription;
+    use crate::cards::properties::duration::tests::FakeDuration;
+    use crate::cards::properties::effect::tests::FakeEffect;
+    use crate::cards::properties::title::tests::FakeTitle;
+
+    use super::*;
+
+    pub struct FakeAttackCard;
+
+    impl Dummy<FakeAttackCard> for AttackCard {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeAttackCard, _: &mut R) -> Self {
+            AttackCard {
+                title: FakeTitle.fake(),
+                description: FakeDescription.fake(),
+                effect: FakeEffect.fake(),
+                duration: FakeDuration.fake(),
+            }
+        }
     }
 }
