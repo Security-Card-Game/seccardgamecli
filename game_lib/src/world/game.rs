@@ -255,9 +255,9 @@ impl Game {
 
 fn handle_action_error(board: &Board, deck: &Deck, err: ActionError) -> (Board, GameActionResult) {
     match err {
+        ActionError::AttackForceClosed(b) => (b.clone(), GameActionResult::AttackForceClosed),
         ActionError::NoCardsLeft => (board.clone(), InvalidAction),
-        ActionError::WrongCardType(b)
-        | ActionError::AttackForceClosed(b)
+        | ActionError::WrongCardType(b)
         | ActionError::InvalidState(b) => (calculate_board(b, deck), InvalidAction),
         ActionError::NotEnoughResources(_, _) => (board.clone(), GameActionResult::NothingPayed),
     }
