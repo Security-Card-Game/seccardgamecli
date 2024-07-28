@@ -12,15 +12,21 @@ use game_lib::world::deck::{Deck, DeckComposition, DeckPreparation, PreparedDeck
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
 
-fn get_number_of_cards(prompt: &str) -> u8 {
-    Input::new().with_prompt(prompt).interact().unwrap()
+fn get_number_of_cards(prompt: &str, default: u8) -> u8 {
+    Input::new().with_prompt(prompt)
+        .default(default)
+        .interact().unwrap()
 }
 
 pub fn create_deck(config: &Config) -> Deck {
-    let event_card_count = get_number_of_cards("Enter number of event types");
-    let attack_card_count = get_number_of_cards("Enter number of attack types");
-    let oopsie_card_count = get_number_of_cards("Enter number of oopsies");
-    let lucky_card_count = get_number_of_cards("Enter number of lucky types");
+    let event_card_count = get_number_of_cards("Enter number of event types", 10);
+    let attack_card_count = get_number_of_cards("Enter number of attack types", 5);
+    let oopsie_card_count = get_number_of_cards("Enter number of oopsies", 15);
+    let lucky_card_count = get_number_of_cards("Enter number of lucky types",5);
+    let grace_period = get_number_of_cards("Enter number of turns after which attacks should be possible?",
+                                           (event_card_count + attack_card_count + oopsie_card_count + lucky_card_count) / 4
+    );
+
 
     let deck_composition = DeckComposition {
         events: event_card_count as usize,
@@ -34,7 +40,8 @@ pub fn create_deck(config: &Config) -> Deck {
         DeckLoader::create(config.game_path.as_str()),
     );
 
-    prepared_deck.shuffle()
+    prepared_deck.shuffle(grace_period as usize
+    )
 }
 
 pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliResult<()> {

@@ -1,5 +1,5 @@
 use std::rc::Rc;
-
+use log::warn;
 use rand::{Rng, thread_rng};
 use rand::prelude::SliceRandom;
 
@@ -55,21 +55,20 @@ pub struct DeckComposition {
     pub lucky: usize,
 }
 
-impl From<EventCards> for Card  {
+impl From<EventCards> for Card {
     fn from(value: EventCards) -> Self {
         match value {
             EventCards::Event(ec) => Card::Event(ec),
             EventCards::Oopsie(oc) => Card::Oopsie(oc),
-            EventCards::Lucky(lc) => Card::Lucky(lc)
+            EventCards::Lucky(lc) => Card::Lucky(lc),
         }
     }
 }
 
-
-impl From<AttackCards> for Card  {
+impl From<AttackCards> for Card {
     fn from(value: AttackCards) -> Self {
         match value {
-            AttackCards::Attack(ac) => Card::Attack(ac)
+            AttackCards::Attack(ac) => Card::Attack(ac),
         }
     }
 }
@@ -85,7 +84,10 @@ pub trait DeckRepository {
 
 pub trait DeckPreparation {
     fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck;
-    fn shuffle(&self) -> Deck;
+    /**
+    Shuffles the deck and inserts attack cards only after a grace period of cards/turns
+    **/
+    fn shuffle(&self, grace_period: usize) -> Deck;
 }
 
 impl DeckPreparation for PreparedDeck {
@@ -112,16 +114,25 @@ impl DeckPreparation for PreparedDeck {
         }
     }
 
-    fn shuffle(&self) -> Deck {
+    fn shuffle(&self, grace_period: usize) -> Deck {
         let mut rng = thread_rng();
         let total = self.cards.len() + self.attacks.len();
+
+        let attack_graces = if (grace_period >= total) {
+            let fallback = total / 4;
+            warn!("Grace period must be < cards count. Defaulting to {}.", fallback);
+            fallback
+        } else {
+            grace_period
+        };
+
         let event_cards = &self.cards;
         let attack_cards = &self.attacks;
         let mut cards: Vec<Card> = event_cards.iter().map(|c| c.clone().into()).collect();
 
         cards.shuffle(&mut rng);
 
-        let (no_attack_cards, to_have_attack_cards) = cards.split_at(total / 4);
+        let (no_attack_cards, to_have_attack_cards) = cards.split_at(attack_graces);
 
         let mut part_with_attacks: Vec<Card> = to_have_attack_cards.to_vec();
         part_with_attacks.extend(
