@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.4
+
+* [BUG] when using a lucky card and a general multiplier the multiplier was applied twice to the lucky card
+* [GAME] major rewrite of the game_lib to make it more testable and hopefully easier to maintain
+
 ## 0.5.3
 * shows game resources at end of game
 * reorganizes control panel code
