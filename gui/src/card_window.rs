@@ -122,8 +122,10 @@ where
         card_label(header, ui);
         let available = ui.available_rect_before_wrap().width();
         ui.add_space(available + 20.0);
-        if ui.button("X").clicked() {
-            close_callback(card.id);
+        if card.can_be_closed {
+            if ui.button("X").clicked() {
+                close_callback(card.id);
+            }
         }
     });
 }
