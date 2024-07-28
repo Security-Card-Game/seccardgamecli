@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use uuid::Uuid;
 
 use crate::cards::properties::fix_modifier::FixModifier;
@@ -44,6 +43,11 @@ pub struct Game {
     pub action_status: GameActionResult,
     pub resource_gain: Resources,
     pub fix_multiplier: ResourceFixMultiplier,
+}
+
+pub struct CardCount {
+    pub played_cards: usize,
+    pub total_cards: usize,
 }
 
 impl Game {
@@ -228,6 +232,21 @@ impl Game {
                 }
             }
             GameStatus::Start(_) | GameStatus::Finished(_) => self.clone(),
+        }
+    }
+
+    pub fn is_card_activated(&self, card_id: &Uuid) -> bool {
+        match &self.status {
+            GameStatus::Start(b)
+            | GameStatus::InProgress(b)
+            | GameStatus::Finished(b) => b.cards_to_use.contains(card_id)
+        }
+    }
+
+    pub fn get_card_count(&self) -> CardCount {
+        CardCount {
+            played_cards: *&self.deck.played_cards,
+            total_cards: *&self.deck.total,
         }
     }
 }
