@@ -9,7 +9,7 @@ impl SecCardGameApp {
         ui.label("Tweaks");
         ui.add_space(5.0);
 
-        ui.label("Mutliply all fix costs by:");
+        ui.label("Multiply all fix costs by:");
         ui.horizontal(|ui| {
             ui.text_edit_singleline(&mut self.input.multiplier);
             ui.add_space(5.0);
