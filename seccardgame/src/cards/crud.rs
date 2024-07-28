@@ -198,7 +198,7 @@ fn ask_for_targets() -> Vec<String> {
     ];
     loop {
         let selection = Select::new()
-            .with_prompt("Add incident target (use Finished to end)")
+            .with_prompt("Add target (use Finished to end)")
             .items(&available_targets)
             .default(0)
             .interact()
