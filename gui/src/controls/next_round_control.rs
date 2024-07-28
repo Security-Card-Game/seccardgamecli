@@ -10,14 +10,19 @@ impl SecCardGameApp {
         ui.add_space(5.0);
         ui.label("Next round");
         ui.add_space(5.0);
-        ui.label("Gain resources ");
-        let res = ui.add(egui::TextEdit::singleline(&mut self.input.next_res).interactive(true));
-        if res.lost_focus() {
-            let new_gain = self.input.next_res.parse().unwrap_or(0usize);
 
-            self.game = self.game.set_resource_gain(Resources::new(new_gain));
-            self.input.next_res = self.game.resource_gain.value().to_string();
-        }
+        ui.label("Gain resources ");
+        ui.horizontal(|ui| {
+            ui.text_edit_singleline(&mut self.input.next_res);
+            ui.add_space(5.0);
+
+            if ui.button("Set ").clicked() {
+                let new_gain = self.input.next_res.parse().unwrap_or(0usize);
+
+                self.game = self.game.set_resource_gain(Resources::new(new_gain));
+                self.input.next_res = self.game.resource_gain.value().to_string();
+            }
+        });
 
         ui.add_space(5.0);
         match &self.game.status {
