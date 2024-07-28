@@ -1,5 +1,13 @@
 # Changes
 
+## 0.5.5
+
+* [BUG] Cards that were not closeable had a close button
+* [TYPO] misspelled label for multiplier
+* [BUG] resource gain was not always updated correctly
+* [FEATURE] grace period for attacks is now configurable via prompt
+* [FEATURE] adds defaults to deck creation prompts
+
 ## 0.5.4
 
 * [BUG] when using a lucky card and a general multiplier the multiplier was applied twice to the lucky card
