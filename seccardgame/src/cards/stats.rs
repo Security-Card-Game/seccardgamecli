@@ -19,7 +19,7 @@ use crate::cli::config::Config;
 
 pub struct CardStats {
     pub event_cards: u32,
-    pub incident_cards: u32,
+    pub attack_cards: u32,
     pub oopsie_cards: u32,
     pub lucky_cards: u32,
     pub targets: HashMap<String, TargetCounter>,
@@ -27,7 +27,7 @@ pub struct CardStats {
 
 pub struct TargetCounter {
     pub target: String,
-    pub incident: u32,
+    pub attack: u32,
     pub oopsie: u32,
 }
 
@@ -37,7 +37,7 @@ impl CardStats {
             event_cards: Self::count_event_cards(cfg),
             oopsie_cards: Self::count_oopsie_cards(cfg),
             lucky_cards: Self::count_lucky_cards(cfg),
-            incident_cards: Self::count_incident_cards(cfg),
+            attack_cards: Self::count_attack_cards(cfg),
             targets: Self::read_targets(cfg),
         })
     }
@@ -52,7 +52,7 @@ impl CardStats {
         Self::count_files(&cfg, &card)
     }
 
-    fn count_incident_cards(cfg: &Config) -> u32 {
+    fn count_attack_cards(cfg: &Config) -> u32 {
         let card = AttackCard::empty();
         Self::count_files(&cfg, &card)
     }
@@ -74,9 +74,9 @@ impl CardStats {
     }
 
     fn read_targets(cfg: &Config) -> HashMap<String, TargetCounter> {
-        // only incident and oopsie types have targets
+        // only attacks and oopsie types have targets
         let oopsie_targets = Self::read_oopsie_targets(cfg);
-        let incident_targets = Self::read_incident_targets(cfg);
+        let attack_targets = Self::read_attack_targets(cfg);
         let mut result = HashMap::new();
 
         for ot in oopsie_targets {
@@ -88,7 +88,7 @@ impl CardStats {
                     TargetCounter {
                         target: old.target.clone(),
                         oopsie: old.oopsie + 1,
-                        incident: old.incident,
+                        attack: old.attack,
                     },
                 );
             } else {
@@ -97,12 +97,12 @@ impl CardStats {
                     TargetCounter {
                         target: key.clone(),
                         oopsie: 1,
-                        incident: 0,
+                        attack: 0,
                     },
                 );
             }
         }
-        for it in incident_targets {
+        for it in attack_targets {
             let key = it.value().to_string();
             if result.contains_key(&key) {
                 let old = result.get(&key).unwrap();
@@ -111,7 +111,7 @@ impl CardStats {
                     TargetCounter {
                         target: old.target.clone(),
                         oopsie: old.oopsie,
-                        incident: old.incident + 1,
+                        attack: old.attack + 1,
                     },
                 );
             } else {
@@ -120,7 +120,7 @@ impl CardStats {
                     TargetCounter {
                         target: key.clone(),
                         oopsie: 0,
-                        incident: 1,
+                        attack: 1,
                     },
                 );
             }
@@ -149,11 +149,11 @@ impl CardStats {
         oopsie_targets
     }
 
-    fn read_incident_targets(cfg: &Config) -> Vec<Target> {
+    fn read_attack_targets(cfg: &Config) -> Vec<Target> {
         let incident_card = AttackCard::empty();
         let mut path = PathBuf::from(&cfg.game_path.as_str());
         path.push(get_card_directory(&incident_card));
-        let mut incident_targets = Vec::new();
+        let mut attack_targets = Vec::new();
         for entry in fs::read_dir(path).unwrap() {
             let file = entry.unwrap();
             if file.metadata().unwrap().is_file()
@@ -162,12 +162,12 @@ impl CardStats {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
                 let card: AttackCard = serde_json::from_str(content.as_str()).unwrap();
                 match card.effect {
-                    Effect::Incident(_, t) => incident_targets.extend(t),
+                    Effect::Incident(_, t) => attack_targets.extend(t),
                     _ => {}
                 }
             }
         }
-        incident_targets
+        attack_targets
     }
 }
 
@@ -177,7 +177,7 @@ pub(crate) fn print_stats(cfg: &Config) -> CliResult<()> {
     println!("Events:\t\t{}", stats.event_cards);
     println!("Lucky:\t\t{}", stats.lucky_cards);
     println!("Oopsie:\t\t{}", stats.oopsie_cards);
-    println!("Incident:\t{}", stats.incident_cards);
+    println!("Attacks:\t{}", stats.attack_cards);
     println!("=====Targets=====");
     if stats.targets.len() > 0 {
         println!("{:<20}\t\tOopsie\tIncident", "Name");
@@ -185,7 +185,7 @@ pub(crate) fn print_stats(cfg: &Config) -> CliResult<()> {
             let tgt = target.1;
             let target_name = truncate_string(tgt.target, 20);
 
-            println!("{:<20}\t\t{}\t{}", target_name, tgt.oopsie, tgt.incident)
+            println!("{:<20}\t\t{}\t{}", target_name, tgt.oopsie, tgt.attack)
         }
     } else {
         println!("No targets");
