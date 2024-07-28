@@ -1,7 +1,6 @@
 use uuid::Uuid;
 
 use crate::cards::types::card_model::Card;
-use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::world::actions::action_error::ActionError::{InvalidState, WrongCardType};
 use crate::world::actions::action_error::ActionResult;

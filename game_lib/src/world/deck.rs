@@ -26,14 +26,6 @@ impl Deck {
         }
     }
 
-    pub(crate) fn with_remaining_cards(&self, cards: &[Card]) -> Self {
-        Deck {
-            remaining_cards: cards.to_vec(),
-            played_cards: self.played_cards + 1,
-            total: self.total,
-        }
-    }
-
     pub(crate) fn get_remaining_card_count(&self) -> usize {
         self.remaining_cards.len()
     }

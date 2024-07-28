@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use egui::{Context, Ui};
 use uuid::Uuid;
 
-use game_lib::world::board::{Board, CurrentBoard};
+use game_lib::world::board::{Board};
 use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{GameActionResult, Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
