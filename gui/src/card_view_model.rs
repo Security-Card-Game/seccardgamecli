@@ -27,6 +27,7 @@ pub struct CardContent {
     pub costs: Option<FixCost>,
     pub duration: Option<usize>,
     pub can_be_activated: bool,
+    pub can_be_closed: bool,
     pub card_marker: CardMarker,
 }
 
@@ -44,6 +45,7 @@ impl CardContent {
         card: Card,
         costs: Option<FixCost>,
         duration: Option<usize>,
+        can_be_closed: bool,
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
         let actual_costs = match costs {
@@ -62,6 +64,7 @@ impl CardContent {
             costs: actual_costs,
             duration,
             can_be_activated: Self::can_effect_be_activated(&card.effect()),
+            can_be_closed,
             card_marker: CardMarker::None,
         }
     }
@@ -93,6 +96,7 @@ impl CardContent {
         card: EventCard,
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
+        let can_be_closed = card.is_closeable();
         Self::new(
             id.clone(),
             Color32::LIGHT_BLUE,
@@ -100,6 +104,7 @@ impl CardContent {
             Card::Event(card),
             None,
             None,
+            can_be_closed,
             multiplier,
         )
     }
@@ -166,6 +171,7 @@ impl CardContent {
             Card::Attack(card),
             None,
             Some(duration),
+            true,
             multiplier,
         )
     }
@@ -183,6 +189,7 @@ impl CardContent {
             Card::Oopsie(card),
             Some(fix_cost.clone()),
             None,
+            true,
             multiplier,
         )
     }
@@ -192,6 +199,7 @@ impl CardContent {
         card: LuckyCard,
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
+        let can_be_closed = card.is_closeable();
         Self::new(
             id.clone(),
             Color32::GREEN,
@@ -199,6 +207,7 @@ impl CardContent {
             Card::Lucky(card),
             None,
             None,
+            can_be_closed,
             multiplier,
         )
     }
