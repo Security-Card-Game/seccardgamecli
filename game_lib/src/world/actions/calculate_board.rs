@@ -259,6 +259,7 @@ mod tests {
         assert_eq!(new_board, expected_board)
     }
 
+    #[test]
     fn calculate_board_fix_modifiers() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let oopsie_card_rc = Rc::new(oopsie_card.clone());

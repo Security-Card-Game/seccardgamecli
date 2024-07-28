@@ -38,11 +38,9 @@ mod tests {
     use rstest::rstest;
     use uuid::Uuid;
 
-    use crate::cards::properties::duration::Duration;
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
-    use crate::cards::properties::target::tests::FakeTarget;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::card_model::Card;

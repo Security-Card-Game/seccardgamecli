@@ -48,8 +48,9 @@ pub(crate) mod tests {
     use fake::{Dummy, Fake};
     use rand::Rng;
     use crate::cards::properties::description::tests::FakeDescription;
-    use crate::cards::properties::effect::tests::FakeEffect;
+    use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_cost::tests::FakeFixCost;
+    use crate::cards::properties::target::tests::FakeTarget;
     use crate::cards::properties::title::tests::FakeTitle;
 
     use super::*;
@@ -61,7 +62,7 @@ pub(crate) mod tests {
             OopsieCard {
                 title: FakeTitle.fake(),
                 description: FakeDescription.fake(),
-                effect: FakeEffect.fake(),
+                effect: Effect::AttackSurface(FakeEffectDescription.fake(), vec![FakeTarget.fake(), FakeTarget.fake()]),
                 fix_cost: FakeFixCost.fake(),
             }
         }

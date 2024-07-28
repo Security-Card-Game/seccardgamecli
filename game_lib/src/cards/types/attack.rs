@@ -49,7 +49,10 @@ pub(crate) mod tests {
     use rand::Rng;
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::duration::tests::FakeDuration;
+    use crate::cards::properties::effect::Effect::Incident;
     use crate::cards::properties::effect::tests::FakeEffect;
+    use crate::cards::properties::effect_description::tests::FakeEffectDescription;
+    use crate::cards::properties::target::tests::FakeTarget;
     use crate::cards::properties::title::tests::FakeTitle;
 
     use super::*;
@@ -61,7 +64,7 @@ pub(crate) mod tests {
             AttackCard {
                 title: FakeTitle.fake(),
                 description: FakeDescription.fake(),
-                effect: FakeEffect.fake(),
+                effect: Incident(FakeEffectDescription.fake(), vec![FakeTarget.fake()]),
                 duration: FakeDuration.fake(),
             }
         }

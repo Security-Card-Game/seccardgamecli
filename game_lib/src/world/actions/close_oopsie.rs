@@ -276,9 +276,9 @@ mod tests {
         let lucky_rc = Rc::new(Card::from(lucky_card));
 
         let open_cards = vec![
-            (oopsie_id.clone(), oopsie_rc),
+            (oopsie_id, oopsie_rc),
             (event_id, event_rc),
-            (lucky_id.clone(), lucky_rc),
+            (lucky_id, lucky_rc),
         ];
 
         let prepared_board = calculate_board(
@@ -341,9 +341,9 @@ mod tests {
         let lucky_rc = Rc::new(Card::from(lucky_card));
 
         let open_cards = vec![
-            (oopsie_id.clone(), oopsie_rc.clone()),
+            (oopsie_id, oopsie_rc.clone()),
             (event_id, event_rc),
-            (lucky_id.clone(), lucky_rc),
+            (lucky_id, lucky_rc),
         ];
 
         let prepared_board = calculate_board(
@@ -360,8 +360,10 @@ mod tests {
             },
         );
 
+        dbg!("open cards: {}", prepared_board.clone().open_cards);
+
         let open_cards_after = vec!{
-            (oopsie_id.clone(), oopsie_rc.clone())
+            (oopsie_id, oopsie_rc.clone())
         };
 
         let expected_board = Board {
