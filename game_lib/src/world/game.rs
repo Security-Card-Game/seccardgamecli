@@ -146,7 +146,8 @@ impl Game {
             draw_card_and_place_on_board(self.deck.clone(), self.get_board().clone())
         {
             let board_with_added_resources = add_resources(board, &self.resource_gain);
-            let new_board = calculate_board(board_with_added_resources, &new_deck);
+            let updated_attacks_board = update_attack_cards(board_with_added_resources);
+            let new_board = calculate_board(updated_attacks_board, &new_deck);
 
             let status = if new_board.turns_remaining == 0 {
                 GameStatus::Finished(new_board)
