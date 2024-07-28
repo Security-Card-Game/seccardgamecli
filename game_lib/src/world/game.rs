@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::types::card_model::Card;
-use crate::world::actions::action_error::ActionError;
+use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::actions::add_resources::add_resources;
 use crate::world::actions::calculate_board::calculate_board;
 use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
@@ -15,7 +15,7 @@ use crate::world::actions::remove_resources::remove_resources;
 use crate::world::actions::use_lucky_card::{activate_lucky_card, deactivate_lucky_card};
 use crate::world::board::Board;
 use crate::world::deck::{CardRc, Deck};
-use crate::world::game::GameActionResult::InvalidAction;
+use crate::world::game::GameActionResult::{FixFailed, InvalidAction, OopsieFixed};
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
 
@@ -200,39 +200,67 @@ impl Game {
         }
     }
 
+    fn handle_non_oopsie_close(&self, result: ActionResult<Board>) -> Self {
+        match result {
+            Ok(b) => Game {
+                status: GameStatus::InProgress(calculate_board(b, &self.deck)),
+                action_status: GameActionResult::Success,
+                ..self.clone()
+            },
+            Err(err) => {
+                let (b, r) = handle_action_error(self.get_board(), &self.deck, err);
+                Game {
+                    status: GameStatus::InProgress(calculate_board(b, &self.deck)),
+                    action_status: r,
+                    ..self.clone()
+                }
+            }
+        }
+
+    }
+
+
     pub fn close_card(&self, card_id: &Uuid) -> Self {
         match &self.status {
             GameStatus::InProgress(board) => {
-                let result = if let Some(card_to_close) = board.open_cards.get(card_id) {
+                if let Some(card_to_close) = board.open_cards.get(card_id) {
                     match &**card_to_close {
-                        Card::Attack(_) => manually_close_attack_card(board.clone(), card_id),
-                        Card::Oopsie(_) => try_and_pay_for_oopsie_fix(
-                            board.clone(),
-                            card_id,
-                            self.fix_multiplier.clone(),
-                        ),
-                        Card::Event(_) => close_event_card(board.clone(), card_id),
-                        Card::Lucky(_) => close_lucky_card(board.clone(), card_id),
+                        Card::Attack(_) => self.handle_non_oopsie_close(manually_close_attack_card(board.clone(), card_id)),
+                        Card::Event(_) => self.handle_non_oopsie_close(close_event_card(board.clone(), card_id)),
+                        Card::Lucky(_) => self.handle_non_oopsie_close(close_lucky_card(board.clone(), card_id)),
+                        Card::Oopsie(_) => {
+                            let result = try_and_pay_for_oopsie_fix(
+                                board.clone(),
+                                card_id,
+                                self.fix_multiplier.clone(),
+                            );
+                            match result {
+                                Ok((b, r)) => Game {
+                                  status: GameStatus::InProgress(b),
+                                    action_status: OopsieFixed(r),
+                                    ..self.clone()
+                                },
+                                Err(e) => match e {
+                                    ActionError::NotEnoughResources(b, r) => Game {
+                                        status: GameStatus::InProgress(b),
+                                        action_status: FixFailed(r),
+                                        ..self.clone()
+                                    },
+                                    _ => Game {
+                                        action_status: InvalidAction,
+                                        ..self.clone()
+                                    }
+                                }
+                            }
+                        },
                     }
                 } else {
-                    Err(ActionError::InvalidState(board.clone()))
-                };
-                match result {
-                    Ok(b) => Game {
-                        status: GameStatus::InProgress(calculate_board(b, &self.deck)),
-                        action_status: GameActionResult::Success,
+                    Game {
+                        action_status: InvalidAction,
                         ..self.clone()
-                    },
-                    Err(err) => {
-                        let (b, r) = handle_action_error(board, &self.deck, err);
-                        Game {
-                            status: GameStatus::InProgress(calculate_board(b, &self.deck)),
-                            action_status: r,
-                            ..self.clone()
-                        }
                     }
                 }
-            }
+                }
             GameStatus::Start(_) | GameStatus::Finished(_) => self.clone(),
         }
     }
@@ -259,6 +287,6 @@ fn handle_action_error(board: &Board, deck: &Deck, err: ActionError) -> (Board, 
         ActionError::NoCardsLeft => (board.clone(), InvalidAction),
         | ActionError::WrongCardType(b)
         | ActionError::InvalidState(b) => (calculate_board(b, deck), InvalidAction),
-        ActionError::NotEnoughResources(_, _) => (board.clone(), GameActionResult::NothingPayed),
+        ActionError::NotEnoughResources(_, _) => (board.clone(), GameActionResult::NotEnoughResources),
     }
 }

@@ -43,7 +43,7 @@ impl SecCardGameApp {
                         self.input.pay_res = "0".to_string();
                         self.input.message = Message::None;
                     }
-                    GameActionResult::NotEnoughResources => {
+                        GameActionResult::NotEnoughResources => {
                         self.input.message =
                             Message::Warning("Not enough resources!".to_string());
                     }
