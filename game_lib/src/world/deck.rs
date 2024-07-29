@@ -9,7 +9,7 @@ use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Deck {
     pub remaining_cards: Vec<Card>,
     pub played_cards: usize,

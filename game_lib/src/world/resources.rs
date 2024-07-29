@@ -94,6 +94,15 @@ impl Mul<ResourceFixMultiplier> for Resources {
     }
 }
 
+
+impl Mul<usize> for &Resources {
+    type Output = Resources;
+
+    fn mul(self, rhs: usize) -> Self::Output {
+        Resources(self.0 * rhs)
+    }
+}
+
 impl Mul<&ResourceFixMultiplier> for Resources {
     type Output = Self;
 
