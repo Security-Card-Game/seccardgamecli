@@ -22,6 +22,6 @@ pub fn run(deck: Deck) -> eframe::Result<()> {
     eframe::run_native(
         "seccard game",
         native_options,
-        Box::new(|cc| Box::new(SecCardGameApp::new(cc, deck))),
+        Box::new(|cc| Ok(Box::new(SecCardGameApp::new(cc, deck)))),
     )
 }

@@ -12,7 +12,7 @@ use game_lib::world::resources::Resources;
 use crate::card_view_model::{CardContent, CardMarker};
 use crate::card_window::display_card;
 
-use super::{Input, Message, SecCardGameApp};
+use super::{Input, Message, SecCardGameApp, Timer};
 
 impl SecCardGameApp {
     fn init(deck: Deck) -> Self {
@@ -26,7 +26,12 @@ impl SecCardGameApp {
                 pay_res: "0".to_string(),
                 message: Message::None,
                 multiplier: initial_multiplier.to_string(),
+                round_duration: "2".to_string()
             },
+            timer: Timer {
+                enabled: false,
+                duration: 2
+            }
         }
     }
 

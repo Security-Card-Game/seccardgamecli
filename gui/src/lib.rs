@@ -1,3 +1,4 @@
+use game_lib::cards::properties::duration::Duration;
 use game_lib::world::game::Game;
 
 mod app;
@@ -10,6 +11,7 @@ mod controls;
 pub struct SecCardGameApp {
     game: Game,
     input: Input,
+    timer: Timer
 }
 
 enum Message {
@@ -24,4 +26,10 @@ struct Input {
     pay_res: String,
     message: Message,
     multiplier: String,
+    round_duration: String,
+}
+
+struct Timer {
+    enabled: bool,
+    duration: usize
 }

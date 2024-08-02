@@ -16,11 +16,11 @@ uuid = { version = "1.7.0" , features = [
 getrandom = { version = "0.2"}
 
 
-egui = "0.26.2"
-eframe = { version = "0.26.2", default-features = false, features = [
+egui = "0.28.1"
+eframe = { version = "0.28.1", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 ] }
-
+tokio = { version = "1", features = ["full"] }
 log = "0.4.20"
 rand = "0.8.5"
