@@ -131,7 +131,7 @@ where
 }
 
 fn card_label(text: impl Into<WidgetText>, ui: &mut Ui) {
-    ui.add(Label::new(text).wrap(true).selectable(false));
+    ui.add(Label::new(text).wrap().selectable(false));
 }
 
 fn add_explanation(topic: &str, content: &str, ui: &mut Ui) {
