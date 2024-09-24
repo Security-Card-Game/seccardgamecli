@@ -118,7 +118,7 @@ impl DeckPreparation for PreparedDeck {
         let mut rng = thread_rng();
         let total = self.cards.len() + self.attacks.len();
 
-        let attack_graces = if (grace_period >= total) {
+        let attack_graces = if grace_period >= total {
             let fallback = total / 4;
             warn!("Grace period must be < cards count. Defaulting to {}.", fallback);
             fallback
