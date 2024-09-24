@@ -1,12 +1,12 @@
 use egui::{RichText, Ui};
 
 use game_lib::cards::properties::fix_modifier::FixModifier;
-use game_lib::world::board::{Board};
-use game_lib::world::game::{GameActionResult, GameStatus};
+use game_lib::world::board::Board;
+use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
-use game_lib::world::resources::Resources;
 
-use crate::{Message, SecCardGameApp};
+use crate::controls::messageing::UpdateMessage;
+use crate::SecCardGameApp;
 
 impl SecCardGameApp {
 
@@ -32,24 +32,12 @@ impl SecCardGameApp {
         ui.label(modifier);
 
         ui.horizontal(|ui| {
-            ui.text_edit_singleline(&mut self.input.pay_res);
-            ui.add_space(5.0);
-            if ui.button("Pay").clicked() {
-                let to_pay = self.input.pay_res.parse().unwrap_or_else(|_| 0);
-                self.game = self.game.pay_resources(&Resources::new(to_pay));
-                match self.game.action_status {
-                    GameActionResult::Payed => {}
-                    | GameActionResult::NothingPayed => {
-                        self.input.pay_res = "0".to_string();
-                        self.input.message = Message::None;
-                    }
-                        GameActionResult::NotEnoughResources => {
-                        self.input.message =
-                            Message::Warning("Not enough resources!".to_string());
-                    }
-                    _ => {}
-                }
-            };
+            self.numeric_enter_component(
+                ui,
+                |game| &mut game.input.pay_res,
+                "Pay",
+                |value| UpdateMessage::PayResources(value)
+            );
         });
     }
 }
