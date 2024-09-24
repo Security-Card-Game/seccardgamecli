@@ -15,7 +15,7 @@ impl SecCardGameApp {
         F: FnOnce(T) -> UpdateMessage,
     {
         ui.horizontal(|ui| {
-            ui.text_edit_singleline(backing_field(self));
+            ui.add(egui::TextEdit::singleline(backing_field(self)).desired_width(20.0));
             ui.add_space(5.0);
 
             if ui.button(button_label).clicked() {

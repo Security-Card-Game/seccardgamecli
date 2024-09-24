@@ -7,7 +7,7 @@ impl SecCardGameApp {
         egui::SidePanel::left("control_panel")
             .resizable(false)
             .show_separator_line(true)
-//            .max_width(100.0)
+            .max_width(150.0)
             .show(ctx, |ui| {
                 self.next_round_controls(ui);
 
