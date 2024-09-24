@@ -1,8 +1,8 @@
 use egui::Ui;
 
 use game_lib::world::game::GameStatus;
-use game_lib::world::resources::Resources;
 
+use crate::controls::messageing::UpdateMessage;
 use crate::{Message, SecCardGameApp};
 
 impl SecCardGameApp {
@@ -12,17 +12,14 @@ impl SecCardGameApp {
         ui.add_space(5.0);
 
         ui.label("Gain resources ");
-        ui.horizontal(|ui| {
-            ui.text_edit_singleline(&mut self.input.next_res);
-            ui.add_space(5.0);
-
-            if ui.button("Set ").clicked() {
-                let new_gain = self.input.next_res.parse().unwrap_or(0usize);
-
-                self.game = self.game.set_resource_gain(Resources::new(new_gain));
-                self.input.next_res = self.game.resource_gain.value().to_string();
-            }
-        });
+        self.numeric_enter_component(
+            ui,
+            |game| &mut game.input.next_res,
+            "Set",
+            |val| {
+                UpdateMessage::SetResourceGain(val)
+            },
+        );
 
         ui.add_space(5.0);
         match &self.game.status {
@@ -37,5 +34,4 @@ impl SecCardGameApp {
             }
         };
     }
-
 }

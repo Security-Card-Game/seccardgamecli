@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use egui::{Context, Ui};
+use egui::{Context, Id, LayerId, Order, Ui};
 use uuid::Uuid;
 
 use game_lib::world::board::{Board};

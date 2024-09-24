@@ -6,7 +6,8 @@ impl SecCardGameApp {
     pub(crate) fn create_control_panel(&mut self, ctx: &Context) {
         egui::SidePanel::left("control_panel")
             .resizable(false)
-            .max_width(100.0)
+            .show_separator_line(true)
+//            .max_width(100.0)
             .show(ctx, |ui| {
                 self.next_round_controls(ui);
 
