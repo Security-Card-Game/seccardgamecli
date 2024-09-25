@@ -27,15 +27,12 @@ impl MessageHandler for SecCardGameApp {
             UpdateMessage::SetResourceGain(res) => self.handle_set_resource_gain(res),
             UpdateMessage::PayResources(res) => self.handle_pay_resources(res),
             UpdateMessage::SetMultiplier(m) => self.handle_set_multiplier(m),
-            UpdateMessage::CloseCard(id) => self.handle_card_closed(id),
-            UpdateMessage::DeactivateCard(_) => { dbg!{"Deactivate card called"}; }
-            UpdateMessage::ActivateCard(_) => { dbg!{"Activate card called"}; }
-        }
-        {
-            let mut cmd = self.command.borrow_mut();
-            *cmd = None;
+            UpdateMessage::CloseCard(card_id) => self.handle_card_closed(card_id),
+            UpdateMessage::DeactivateCard(card_id) => self.handle_deactivate_card(card_id),
+            UpdateMessage::ActivateCard(card_id) => self.handle_activate_card(card_id)
         }
 
+        self.reset_command();
         self.process_game_action_status();
     }
 
@@ -53,10 +50,26 @@ impl MessageHandler for SecCardGameApp {
 
 impl SecCardGameApp {
 
+    fn reset_command(&mut self) {
+        let mut cmd = self.command.borrow_mut();
+        *cmd = None;
+    }
+
     fn handle_card_closed(&mut self, card_id: Uuid) {
         let new_game_state = self.game.close_card(&card_id);
         self.game = new_game_state;
     }
+
+    fn handle_activate_card(&mut self, card_id: Uuid) {
+        let new_game_state = self.game.activate_lucky_card(&card_id);
+        self.game = new_game_state;
+    }
+
+    fn handle_deactivate_card(&mut self, card_id: Uuid) {
+        let new_game_state = self.game.deactivate_lucky_card(&card_id);
+        self.game = new_game_state;
+    }
+
 
     fn process_game_action_status(&mut self) {
         match &self.game.action_status {
