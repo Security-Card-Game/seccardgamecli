@@ -1,16 +1,22 @@
+use uuid::Uuid;
 use crate::{Message, SecCardGameApp};
 use game_lib::world::game::GameActionResult;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
+#[derive(Debug, Clone)]
 pub(crate) enum UpdateMessage {
     SetResourceGain(usize),
     PayResources(usize),
     SetMultiplier(isize),
+    CloseCard(Uuid),
+    DeactivateCard(Uuid),
+    ActivateCard(Uuid),
 }
 
 pub(crate) trait MessageHandler {
     fn handle_message(&mut self, msg: UpdateMessage);
+    fn process_command(&mut self);
 }
 
 impl MessageHandler for SecCardGameApp {
@@ -21,6 +27,22 @@ impl MessageHandler for SecCardGameApp {
             UpdateMessage::SetResourceGain(res) => self.handle_set_resource_gain(res),
             UpdateMessage::PayResources(res) => self.handle_pay_resources(res),
             UpdateMessage::SetMultiplier(m) => self.handle_set_multiplier(m),
+            UpdateMessage::CloseCard(id) => { dbg!("Close card called"); }
+            UpdateMessage::DeactivateCard(_) => { dbg!{"Deactivate card called"}; }
+            UpdateMessage::ActivateCard(_) => { dbg!{"Activate card called"}; }
+        }
+        let mut cmd = self.command.borrow_mut();
+        *cmd = None
+    }
+
+    fn process_command(&mut self) {
+        let cmd = {
+            let cmd_borrow = self.command.borrow();
+            cmd_borrow.clone()
+        };
+
+        if let Some(cmd) = cmd {
+            self.handle_message(cmd);
         }
     }
 }

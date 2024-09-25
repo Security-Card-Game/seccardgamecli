@@ -1,18 +1,19 @@
-use std::collections::HashMap;
-
 use egui::{Context, Id, LayerId, Order, Ui};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 use uuid::Uuid;
 
-use game_lib::world::board::{Board};
+use game_lib::world::board::Board;
 use game_lib::world::deck::{CardRc, Deck};
-use game_lib::world::game::{GameActionResult, Game, GameStatus};
+use game_lib::world::game::{Game, GameActionResult, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
+use super::{Input, Message, SecCardGameApp};
 use crate::card_view_model::{CardContent, CardMarker};
 use crate::card_window::display_card;
-
-use super::{Input, Message, SecCardGameApp};
+use crate::messaging::{MessageHandler, UpdateMessage};
 
 impl SecCardGameApp {
     fn init(deck: Deck) -> Self {
@@ -27,6 +28,7 @@ impl SecCardGameApp {
                 message: Message::None,
                 multiplier: initial_multiplier.to_string(),
             },
+            command: Rc::new(RefCell::new(None))
         }
     }
 
@@ -41,8 +43,12 @@ impl SecCardGameApp {
         }
     }
 
-    fn display_cards(&mut self, board: &Board, ctx: &Context, ui: &mut Ui) {
-        let mut ids_to_remove = vec![];
+    fn display_cards(&mut self,
+                     board: &Board,
+                     ctx: &Context,
+                     ui: &mut Ui
+    ) {
+//        let mut ids_to_remove = vec![];
         for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
             let card_to_display = CardContent::from_card(
                 &card.0,
@@ -52,19 +58,13 @@ impl SecCardGameApp {
             );
             display_card(
                 &card_to_display,
-                |id| ids_to_remove.push(id),
-                |id, marker| match marker {
-                    CardMarker::MarkedForUse => {
-                        self.game = self.game.activate_lucky_card(&id);
-                    }
-                    CardMarker::None => self.game = self.game.deactivate_lucky_card(&id),
-                },
+                self.command.clone(),
                 ctx,
                 ui,
             );
         }
 
-        // this handles the callback of the card to the board when the card is closed
+/*        // this handles the callback of the card to the board when the card is closed
         let mut new_turn: Option<Game> = None;
         for id in &ids_to_remove {
             let new_game_state = self.game.close_card(id);
@@ -103,7 +103,7 @@ impl SecCardGameApp {
             Some(g) => {
                 self.game = g;
             }
-        }
+        }*/
     }
 
     fn create_menu_bar(ctx: &Context) {
@@ -139,6 +139,8 @@ impl SecCardGameApp {
 impl eframe::App for SecCardGameApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        self.process_command();
+
         Self::create_menu_bar(ctx);
 
         self.create_control_panel(ctx);
