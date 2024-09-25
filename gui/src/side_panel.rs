@@ -1,9 +1,14 @@
 use egui::Context;
 
-use super::SecCardGameApp;
+use crate::SecCardGameApp;
+
+mod tweak_control;
+mod next_round_control;
+mod game_status_display;
+mod resource_control;
 
 impl SecCardGameApp {
-    pub(crate) fn create_control_panel(&mut self, ctx: &Context) {
+    pub(crate) fn create_side_panel(&mut self, ctx: &Context) {
         egui::SidePanel::left("control_panel")
             .resizable(false)
             .show_separator_line(true)

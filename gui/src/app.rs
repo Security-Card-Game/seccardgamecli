@@ -101,7 +101,7 @@ impl eframe::App for SecCardGameApp {
 
         Self::create_menu_bar(ctx);
 
-        self.create_control_panel(ctx);
+        self.create_side_panel(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's

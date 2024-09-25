@@ -7,9 +7,9 @@ mod app;
 mod card_view_model;
 mod card_window;
 pub mod start;
-mod control_panel;
-mod controls;
 mod actions;
+mod components;
+mod side_panel;
 
 pub(crate) type CommandToExecute = Rc<RefCell<Option<Command>>>;
 
