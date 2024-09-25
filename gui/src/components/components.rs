@@ -20,9 +20,8 @@ impl SecCardGameApp {
 
             if ui.button(button_label).clicked() {
                 let value: T = backing_field(self).parse().unwrap_or(T::default());
-                let msg = on_click_message(value);
-                let mut cmd = self.command.borrow_mut();
-                *cmd = Some(msg);
+                let cmd = on_click_message(value);
+                self.command = Some(cmd);
             };
             ui.add_space(2.0)
         });

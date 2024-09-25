@@ -1,6 +1,4 @@
 use game_lib::world::game::Game;
-use std::cell::RefCell;
-use std::rc::Rc;
 use crate::actions::command::Command;
 
 mod app;
@@ -10,7 +8,7 @@ mod actions;
 mod components;
 mod side_panel;
 
-pub(crate) type CommandToExecute = Rc<RefCell<Option<Command>>>;
+pub(crate) type CommandToExecute = Option<Command>;
 
 pub struct SecCardGameApp {
     game: Game,

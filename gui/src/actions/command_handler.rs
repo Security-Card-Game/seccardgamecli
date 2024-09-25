@@ -16,13 +16,9 @@ pub(crate) trait CommandHandler {
 
 
 impl CommandHandler for SecCardGameApp {
-    fn process_command(&mut self) {
-        let cmd = {
-            let cmd_borrow = self.command.borrow();
-            cmd_borrow.clone()
-        };
 
-        if let Some(cmd) = cmd {
+    fn process_command(&mut self) {
+        if let Some(cmd) = &self.command.clone() {
             self.handle_command(cmd);
         }
     }
@@ -32,16 +28,16 @@ pub mod control_panel;
 pub mod action_result_handling;
 
 impl SecCardGameApp {
-    fn handle_command(&mut self, msg: Command) {
+    fn handle_command(&mut self, msg: &Command) {
         self.input.message = Message::None;
 
         match msg {
-            Command::SetResourceGain(res) => self.handle_set_resource_gain(res),
-            Command::PayResources(res) => self.handle_pay_resources(res),
-            Command::SetMultiplier(m) => self.handle_set_multiplier(m),
-            Command::CloseCard(card_id) => self.handle_card_closed(card_id),
-            Command::DeactivateCard(card_id) => self.handle_deactivate_card(card_id),
-            Command::ActivateCard(card_id) => self.handle_activate_card(card_id)
+            Command::SetResourceGain(res) => self.handle_set_resource_gain(res.clone()),
+            Command::PayResources(res) => self.handle_pay_resources(res.clone()),
+            Command::SetMultiplier(m) => self.handle_set_multiplier(m.clone()),
+            Command::CloseCard(card_id) => self.handle_card_closed(card_id.clone()),
+            Command::DeactivateCard(card_id) => self.handle_deactivate_card(card_id.clone()),
+            Command::ActivateCard(card_id) => self.handle_activate_card(card_id.clone())
         }
 
         self.reset_command(); // removes the command from the state after it is executed
@@ -49,7 +45,6 @@ impl SecCardGameApp {
     }
 
     fn reset_command(&mut self) {
-        let mut cmd = self.command.borrow_mut();
-        *cmd = None;
+        self.command = None
     }
 }

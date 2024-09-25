@@ -1,41 +1,38 @@
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
-use std::cell::RefCell;
-use std::rc::Rc;
 use crate::actions::command::Command;
 use crate::card_window::card_view_model::{CardContent, CardMarker};
 
-type CmdCallback = Rc<RefCell<Option<Command>>>;
 
 pub struct CardWindow<'a> {
     max_size: Vec2,
     min_size: Vec2,
     content: &'a CardContent,
-    cmd_callback: CmdCallback
 }
 
-pub fn display_card(
+pub fn display_card<F>(
     card: &CardContent,
-    command_callback: CmdCallback,
+    command_callback: &mut F,
     ctx: &Context,
     ui: &mut Ui,
-) {
+)  where F: FnMut(Command)
+{
     let window = CardWindow {
         max_size: Vec2::new(200.0, 400.0),
         min_size: Vec2::new(150.0, 300.0),
         content: card,
-        cmd_callback: command_callback.clone(),
     };
 
-    create_window(window, ctx, ui)
+    create_window(window, command_callback, ctx, ui)
 }
 
-fn create_window(
+fn create_window<F>(
     data: CardWindow,
+    command_callback: &mut F,
     ctx: &Context,
     ui: &mut Ui,
-) {
+) where F: FnMut(Command) {
     let card = data.content;
     let area = ui.available_size();
     let mut rng = rand::thread_rng();
@@ -50,13 +47,14 @@ fn create_window(
         .max_size(data.max_size)
         .min_size(data.min_size)
         .show(ctx, |ui| {
-            create_card_window(data.cmd_callback.clone(), card, ui)
+            create_card_window(command_callback, card, ui)
         });
 }
 
-fn create_card_window(cmd_callback: CmdCallback, card: &CardContent, ui: &mut Ui) {
+fn create_card_window<F>(cmd_callback: &mut F, card: &CardContent, ui: &mut Ui)
+where F: FnMut(Command)   {
     ui.vertical(|ui| {
-        add_header(cmd_callback.clone(), &card, ui);
+        add_header(cmd_callback, &card, ui);
         ui.add_space(5.0);
         card_label(&card.description, ui);
         ui.add_space(5.0);
@@ -91,20 +89,17 @@ fn create_card_window(cmd_callback: CmdCallback, card: &CardContent, ui: &mut Ui
             };
             if ui.button(label).clicked() {
                 match card.card_marker {
-                    CardMarker::MarkedForUse => emit_command(cmd_callback.clone(), Command::DeactivateCard(card.id)),
-                    CardMarker::None =>  emit_command(cmd_callback.clone(), Command::ActivateCard(card.id)),
+                    CardMarker::MarkedForUse => cmd_callback(Command::DeactivateCard(card.id)),
+                    CardMarker::None => cmd_callback(Command::ActivateCard(card.id)),
                 }
             }
         }
     });
 }
 
-fn emit_command(cmd_callback: CmdCallback, command: Command) {
-    let mut cmd = cmd_callback.borrow_mut();
-    *cmd = Some(command);
-}
 
-fn add_header(callback: CmdCallback, card: &&CardContent, ui: &mut Ui)  {
+fn add_header<F>(cmd_callback: &mut F, card: &&CardContent, ui: &mut Ui)
+where F: FnMut(Command) {
     ui.horizontal(|ui| {
         let header_color = if ui.visuals().dark_mode {
             card.dark_color
@@ -118,7 +113,7 @@ fn add_header(callback: CmdCallback, card: &&CardContent, ui: &mut Ui)  {
         ui.add_space(available + 20.0);
         if card.can_be_closed {
             if ui.button("X").clicked() {
-                emit_command(callback, Command::CloseCard(card.id))
+                cmd_callback(Command::CloseCard(card.id));
             }
         }
     });

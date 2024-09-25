@@ -30,17 +30,21 @@ first calls the `self.process_command()` method, before drawing the UI.
 Inside the `self.process_command()` function the command is read from `self.command`, `self` is updated and the `self.command`
 is set to `None`. Also, the game action result is evaluated and the correct message to display is set.
 
-But how does the user action write the command into `self`? In rust, we cannot put simply a reference to `self` into the card and mutate the
-`command` field in the `SecCardGameApp` struct. But, if we put the `Option<Command>` into a `Rc<RefCell<Option<Command>>>`. Rc allows
-us to copy a pointer to a card window and RefCell in turn designates it as a mutable memory location with dynamically checked borrow rules.
-Every time we now need to set the command field we can do this with 
+To create a callback which sets the command in `self` there are at least two ways. We could work with a `Rc<RefCell<Option<Command>>>` which let us
+clone the pointer and safely borrow the underlying value via RefCell. This works (as the commits in this repo can show you). However, there is an
+easier way to do this, without the magics of Rc and RefCell. We also can create a closure as mutable and send it borrowed as mutable to the card window
+we want to create:
 
 ```rust
-let mut cmd = self.command.borrow_mut();
-*cmd = ...
+// stuff
+let mut set_command = | cmd: Command | self.command = Some(cmd);
+create_window(
+    &mut set_command,
+    ... // other paremters
+);
+// stuff
 ```
 
-and also rust stops complaining about multiple borrows and lifetimes.
 
 
 ## Why not ICED

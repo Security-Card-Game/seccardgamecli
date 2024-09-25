@@ -1,7 +1,5 @@
 use egui::{Context, Ui};
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 use uuid::Uuid;
 
 use game_lib::world::board::Board;
@@ -9,7 +7,6 @@ use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
-
 use super::{Input, Message, SecCardGameApp};
 use crate::actions::command_handler::CommandHandler;
 use crate::card_window::card_view_model::CardContent;
@@ -28,7 +25,7 @@ impl SecCardGameApp {
                 message: Message::None,
                 multiplier: initial_multiplier.to_string(),
             },
-            command: Rc::new(RefCell::new(None))
+            command: None
         }
     }
 
@@ -55,9 +52,10 @@ impl SecCardGameApp {
                 self.game.is_card_activated(&card.0),
                 self.game.fix_multiplier.clone(),
             );
+            let mut set_command = |cmd| self.command = Some(cmd);
             display_card(
                 &card_to_display,
-                self.command.clone(),
+                &mut set_command,
                 ctx,
                 ui,
             );
