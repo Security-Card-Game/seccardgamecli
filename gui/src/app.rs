@@ -48,7 +48,6 @@ impl SecCardGameApp {
                      ctx: &Context,
                      ui: &mut Ui
     ) {
-//        let mut ids_to_remove = vec![];
         for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
             let card_to_display = CardContent::from_card(
                 &card.0,
@@ -63,47 +62,6 @@ impl SecCardGameApp {
                 ui,
             );
         }
-
-/*        // this handles the callback of the card to the board when the card is closed
-        let mut new_turn: Option<Game> = None;
-        for id in &ids_to_remove {
-            let new_game_state = self.game.close_card(id);
-            match &new_game_state.action_status {
-                    GameActionResult::OopsieFixed(res) => {
-                        self.input.message =
-                            Message::Success(format!("Fixed for {} resources.", res.value()));
-                    }
-                    GameActionResult::FixFailed(res) => {
-                        self.input.message = Message::Failure(format!(
-                            "Fix failed! It would have needed {} resources.",
-                            res.value()
-                        ));
-                    }
-                    GameActionResult::AttackForceClosed => {
-                        self.input.message =
-                            Message::Warning("Attack forced to be over".to_string());
-                    }
-                GameActionResult::Payed => {}
-                GameActionResult::NotEnoughResources => {}
-                GameActionResult::NothingPayed => {}
-                GameActionResult::InvalidAction => {
-                    self.input.message =
-                        Message::Failure("Invalid Action!".to_string())
-                }
-                GameActionResult::Success => {
-                    self.input.message = Message::None
-                }
-            }
-
-            new_turn = Some(new_game_state);
-        }
-
-        match new_turn {
-            None => {}
-            Some(g) => {
-                self.game = g;
-            }
-        }*/
     }
 
     fn create_menu_bar(ctx: &Context) {

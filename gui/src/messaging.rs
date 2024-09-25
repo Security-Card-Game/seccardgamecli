@@ -27,12 +27,16 @@ impl MessageHandler for SecCardGameApp {
             UpdateMessage::SetResourceGain(res) => self.handle_set_resource_gain(res),
             UpdateMessage::PayResources(res) => self.handle_pay_resources(res),
             UpdateMessage::SetMultiplier(m) => self.handle_set_multiplier(m),
-            UpdateMessage::CloseCard(id) => { dbg!("Close card called"); }
+            UpdateMessage::CloseCard(id) => self.handle_card_closed(id),
             UpdateMessage::DeactivateCard(_) => { dbg!{"Deactivate card called"}; }
             UpdateMessage::ActivateCard(_) => { dbg!{"Activate card called"}; }
         }
-        let mut cmd = self.command.borrow_mut();
-        *cmd = None
+        {
+            let mut cmd = self.command.borrow_mut();
+            *cmd = None;
+        }
+
+        self.process_game_action_status();
     }
 
     fn process_command(&mut self) {
@@ -48,6 +52,41 @@ impl MessageHandler for SecCardGameApp {
 }
 
 impl SecCardGameApp {
+
+    fn handle_card_closed(&mut self, card_id: Uuid) {
+        let new_game_state = self.game.close_card(&card_id);
+        self.game = new_game_state;
+    }
+
+    fn process_game_action_status(&mut self) {
+        match &self.game.action_status {
+            GameActionResult::OopsieFixed(res) => {
+                self.input.message =
+                    Message::Success(format!("Fixed for {} resources.", res.value()));
+            }
+            GameActionResult::FixFailed(res) => {
+                self.input.message = Message::Failure(format!(
+                    "Fix failed! It would have needed {} resources.",
+                    res.value()
+                ));
+            }
+            GameActionResult::AttackForceClosed => {
+                self.input.message =
+                    Message::Warning("Attack forced to be over".to_string());
+            }
+            GameActionResult::Payed => {}
+            GameActionResult::NotEnoughResources => {}
+            GameActionResult::NothingPayed => {}
+            GameActionResult::InvalidAction => {
+                self.input.message =
+                    Message::Failure("Invalid Action!".to_string())
+            }
+            GameActionResult::Success => {
+                self.input.message = Message::None
+            }
+        }
+    }
+
     fn handle_pay_resources(&mut self, res: usize) {
         self.game = self.game.pay_resources(&Resources::new(res));
         match self.game.action_status {
