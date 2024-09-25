@@ -2,8 +2,8 @@ use egui::Ui;
 
 use game_lib::world::game::GameStatus;
 
-use crate::command_handler::Command;
 use crate::{Message, SecCardGameApp};
+use crate::actions::command::Command;
 
 impl SecCardGameApp {
     pub(crate) fn next_round_controls(&mut self, ui: &mut Ui) {

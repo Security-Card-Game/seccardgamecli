@@ -1,6 +1,5 @@
 use egui::Ui;
-
-use crate::command_handler::Command;
+use crate::actions::command::Command;
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {

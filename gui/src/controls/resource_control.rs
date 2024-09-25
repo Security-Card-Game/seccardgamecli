@@ -4,8 +4,7 @@ use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
-
-use crate::command_handler::Command;
+use crate::actions::command::Command;
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {

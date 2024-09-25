@@ -3,9 +3,8 @@ use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
 use std::cell::RefCell;
 use std::rc::Rc;
-
+use crate::actions::command::Command;
 use crate::card_view_model::{CardContent, CardMarker};
-use crate::command_handler::Command;
 
 type CmdCallback = Rc<RefCell<Option<Command>>>;
 

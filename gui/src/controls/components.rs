@@ -1,6 +1,6 @@
-use crate::command_handler::Command;
 use crate::SecCardGameApp;
 use egui::Ui;
+use crate::actions::command::Command;
 
 impl SecCardGameApp {
     pub(crate) fn numeric_enter_component<T, B, F>(&mut self,
