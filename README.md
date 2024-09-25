@@ -39,9 +39,7 @@ please create pull request to this [repo](https://github.com/Security-Card-Game/
 
 ## What to expect next?
 
-* rework of the UI
-* some more help in playing the game
-* who knows :)
+* see issues
 
 ## Known issues
 

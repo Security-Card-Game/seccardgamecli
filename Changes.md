@@ -1,5 +1,11 @@
 # Changes
 
+## 0.5.6
+
+* [UPDATE] Updates dependencies, most notably egui
+* [REFACTOR] Implements a command pattern for game action commands in the UI, see Readme.md
+* [REFACTOR] Moves around some code to give it more structure and also in parts for encapsulation reasons
+
 ## 0.5.5
 
 * [BUG] Cards that were not closeable had a close button
