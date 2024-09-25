@@ -44,8 +44,8 @@ impl SecCardGameApp {
             Command::ActivateCard(card_id) => self.handle_activate_card(card_id)
         }
 
-        self.reset_command();
-        self.process_game_action_status();
+        self.reset_command(); // removes the command from the state after it is executed
+        self.process_game_action_status(); // takes care of displaying results of actions in the UI
     }
 
     fn reset_command(&mut self) {
