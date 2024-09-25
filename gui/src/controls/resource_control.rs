@@ -5,7 +5,7 @@ use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 
-use crate::controls::messageing::UpdateMessage;
+use crate::messaging::UpdateMessage;
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {

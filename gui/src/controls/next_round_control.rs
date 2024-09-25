@@ -2,7 +2,7 @@ use egui::Ui;
 
 use game_lib::world::game::GameStatus;
 
-use crate::controls::messageing::UpdateMessage;
+use crate::messaging::UpdateMessage;
 use crate::{Message, SecCardGameApp};
 
 impl SecCardGameApp {

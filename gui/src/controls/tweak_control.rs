@@ -1,6 +1,6 @@
 use egui::Ui;
 
-use crate::controls::messageing::UpdateMessage;
+use crate::messaging::UpdateMessage;
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {

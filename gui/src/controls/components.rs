@@ -1,5 +1,5 @@
 use egui::Ui;
-use crate::controls::messageing::{MessageHandler, UpdateMessage};
+use crate::messaging::{MessageHandler, UpdateMessage};
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {

@@ -6,6 +6,7 @@ mod card_window;
 pub mod start;
 mod control_panel;
 mod controls;
+mod messaging;
 
 pub struct SecCardGameApp {
     game: Game,
