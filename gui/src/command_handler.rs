@@ -86,8 +86,13 @@ impl SecCardGameApp {
                     Message::Warning("Attack forced to be over".to_string());
             }
             GameActionResult::Payed => {}
-            GameActionResult::NotEnoughResources => {}
-            GameActionResult::NothingPayed => {}
+            GameActionResult::NotEnoughResources => {
+                self.input.message = Message::Warning("Not enough resources!".to_string());
+            }
+            GameActionResult::NothingPayed => {
+                self.input.pay_res = "0".to_string();
+                self.input.message = Message::None;
+            }
             GameActionResult::InvalidAction => {
                 self.input.message =
                     Message::Failure("Invalid Action!".to_string())
@@ -100,17 +105,6 @@ impl SecCardGameApp {
 
     fn handle_pay_resources(&mut self, res: usize) {
         self.game = self.game.pay_resources(&Resources::new(res));
-        match self.game.action_status {
-            GameActionResult::Payed => {}
-            GameActionResult::NothingPayed => {
-                self.input.pay_res = "0".to_string();
-                self.input.message = Message::None;
-            }
-            GameActionResult::NotEnoughResources => {
-                self.input.message = Message::Warning("Not enough resources!".to_string());
-            }
-            _ => {}
-        }
     }
 
     fn handle_set_multiplier(&mut self, m: isize) {
