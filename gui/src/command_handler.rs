@@ -1,11 +1,11 @@
-use uuid::Uuid;
 use crate::{Message, SecCardGameApp};
 use game_lib::world::game::GameActionResult;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
-pub(crate) enum UpdateMessage {
+pub(crate) enum Command {
     SetResourceGain(usize),
     PayResources(usize),
     SetMultiplier(isize),
@@ -14,28 +14,11 @@ pub(crate) enum UpdateMessage {
     ActivateCard(Uuid),
 }
 
-pub(crate) trait MessageHandler {
-    fn handle_message(&mut self, msg: UpdateMessage);
+pub(crate) trait CommandHandler {
     fn process_command(&mut self);
 }
 
-impl MessageHandler for SecCardGameApp {
-    fn handle_message(&mut self, msg: UpdateMessage) {
-        self.input.message = Message::None;
-
-        match msg {
-            UpdateMessage::SetResourceGain(res) => self.handle_set_resource_gain(res),
-            UpdateMessage::PayResources(res) => self.handle_pay_resources(res),
-            UpdateMessage::SetMultiplier(m) => self.handle_set_multiplier(m),
-            UpdateMessage::CloseCard(card_id) => self.handle_card_closed(card_id),
-            UpdateMessage::DeactivateCard(card_id) => self.handle_deactivate_card(card_id),
-            UpdateMessage::ActivateCard(card_id) => self.handle_activate_card(card_id)
-        }
-
-        self.reset_command();
-        self.process_game_action_status();
-    }
-
+impl CommandHandler for SecCardGameApp {
     fn process_command(&mut self) {
         let cmd = {
             let cmd_borrow = self.command.borrow();
@@ -43,12 +26,27 @@ impl MessageHandler for SecCardGameApp {
         };
 
         if let Some(cmd) = cmd {
-            self.handle_message(cmd);
+            self.handle_command(cmd);
         }
     }
 }
 
 impl SecCardGameApp {
+    fn handle_command(&mut self, msg: Command) {
+        self.input.message = Message::None;
+
+        match msg {
+            Command::SetResourceGain(res) => self.handle_set_resource_gain(res),
+            Command::PayResources(res) => self.handle_pay_resources(res),
+            Command::SetMultiplier(m) => self.handle_set_multiplier(m),
+            Command::CloseCard(card_id) => self.handle_card_closed(card_id),
+            Command::DeactivateCard(card_id) => self.handle_deactivate_card(card_id),
+            Command::ActivateCard(card_id) => self.handle_activate_card(card_id)
+        }
+
+        self.reset_command();
+        self.process_game_action_status();
+    }
 
     fn reset_command(&mut self) {
         let mut cmd = self.command.borrow_mut();

@@ -5,7 +5,7 @@ use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 
-use crate::messaging::UpdateMessage;
+use crate::command_handler::Command;
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {
@@ -37,7 +37,7 @@ impl SecCardGameApp {
             ui,
             |game| &mut game.input.pay_res,
             "Pay",
-            |value| UpdateMessage::PayResources(value),
+            |value| Command::PayResources(value),
         );
     }
 }

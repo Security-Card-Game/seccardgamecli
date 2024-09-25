@@ -1,7 +1,7 @@
+use crate::command_handler::Command;
+use game_lib::world::game::Game;
 use std::cell::RefCell;
 use std::rc::Rc;
-use game_lib::world::game::Game;
-use crate::messaging::UpdateMessage;
 
 mod app;
 mod card_view_model;
@@ -9,9 +9,9 @@ mod card_window;
 pub mod start;
 mod control_panel;
 mod controls;
-mod messaging;
+mod command_handler;
 
-pub(crate) type CommandToExecute = Rc<RefCell<Option<UpdateMessage>>>;
+pub(crate) type CommandToExecute = Rc<RefCell<Option<Command>>>;
 
 pub struct SecCardGameApp {
     game: Game,

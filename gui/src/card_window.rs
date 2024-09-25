@@ -1,13 +1,13 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use rand::Rng;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::card_view_model::{CardContent, CardMarker};
-use crate::messaging::UpdateMessage;
+use crate::command_handler::Command;
 
-type CmdCallback = Rc<RefCell<Option<UpdateMessage>>>;
+type CmdCallback = Rc<RefCell<Option<Command>>>;
 
 pub struct CardWindow<'a> {
     max_size: Vec2,
@@ -92,15 +92,15 @@ fn create_card_window(cmd_callback: CmdCallback, card: &CardContent, ui: &mut Ui
             };
             if ui.button(label).clicked() {
                 match card.card_marker {
-                    CardMarker::MarkedForUse => emit_command(cmd_callback.clone(), UpdateMessage::DeactivateCard(card.id)),
-                    CardMarker::None =>  emit_command(cmd_callback.clone(), UpdateMessage::ActivateCard(card.id)),
+                    CardMarker::MarkedForUse => emit_command(cmd_callback.clone(), Command::DeactivateCard(card.id)),
+                    CardMarker::None =>  emit_command(cmd_callback.clone(), Command::ActivateCard(card.id)),
                 }
             }
         }
     });
 }
 
-fn emit_command(cmd_callback: CmdCallback, command: UpdateMessage) {
+fn emit_command(cmd_callback: CmdCallback, command: Command) {
     let mut cmd = cmd_callback.borrow_mut();
     *cmd = Some(command);
 }
@@ -119,7 +119,7 @@ fn add_header(callback: CmdCallback, card: &&CardContent, ui: &mut Ui)  {
         ui.add_space(available + 20.0);
         if card.can_be_closed {
             if ui.button("X").clicked() {
-                emit_command(callback, UpdateMessage::CloseCard(card.id))
+                emit_command(callback, Command::CloseCard(card.id))
             }
         }
     });

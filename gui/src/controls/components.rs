@@ -1,6 +1,6 @@
-use egui::Ui;
-use crate::messaging::{MessageHandler, UpdateMessage};
+use crate::command_handler::Command;
 use crate::SecCardGameApp;
+use egui::Ui;
 
 impl SecCardGameApp {
     pub(crate) fn numeric_enter_component<T, B, F>(&mut self,
@@ -12,7 +12,7 @@ impl SecCardGameApp {
     where
         T: Default + std::str::FromStr,
         B: FnMut(&mut SecCardGameApp) -> &mut String,
-        F: FnOnce(T) -> UpdateMessage,
+        F: FnOnce(T) -> Command,
     {
         ui.horizontal(|ui| {
             ui.add(egui::TextEdit::singleline(backing_field(self)).desired_width(20.0));
@@ -21,7 +21,8 @@ impl SecCardGameApp {
             if ui.button(button_label).clicked() {
                 let value: T = backing_field(self).parse().unwrap_or(T::default());
                 let msg = on_click_message(value);
-                self.handle_message(msg);
+                let mut cmd = self.command.borrow_mut();
+                *cmd = Some(msg);
             };
             ui.add_space(2.0)
         });

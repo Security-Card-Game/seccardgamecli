@@ -2,7 +2,7 @@ use egui::Ui;
 
 use game_lib::world::game::GameStatus;
 
-use crate::messaging::UpdateMessage;
+use crate::command_handler::Command;
 use crate::{Message, SecCardGameApp};
 
 impl SecCardGameApp {
@@ -17,7 +17,7 @@ impl SecCardGameApp {
             |game| &mut game.input.next_res,
             "Set",
             |val| {
-                UpdateMessage::SetResourceGain(val)
+                Command::SetResourceGain(val)
             },
         );
 

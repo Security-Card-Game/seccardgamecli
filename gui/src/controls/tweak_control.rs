@@ -1,6 +1,6 @@
 use egui::Ui;
 
-use crate::messaging::UpdateMessage;
+use crate::command_handler::Command;
 use crate::SecCardGameApp;
 
 impl SecCardGameApp {
@@ -14,7 +14,7 @@ impl SecCardGameApp {
             ui,
             |game| &mut game.input.multiplier,
             "Set",
-            |value| UpdateMessage::SetMultiplier(value),
+            |value| Command::SetMultiplier(value),
         );
     }
 }
