@@ -4,7 +4,7 @@ use rand::Rng;
 use std::cell::RefCell;
 use std::rc::Rc;
 use crate::actions::command::Command;
-use crate::card_view_model::{CardContent, CardMarker};
+use crate::card_window::card_view_model::{CardContent, CardMarker};
 
 type CmdCallback = Rc<RefCell<Option<Command>>>;
 

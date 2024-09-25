@@ -11,9 +11,9 @@ use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
 use super::{Input, Message, SecCardGameApp};
-use crate::card_view_model::CardContent;
-use crate::card_window::display_card;
 use crate::actions::command_handler::CommandHandler;
+use crate::card_window::card_view_model::CardContent;
+use crate::card_window::card_window::display_card;
 
 impl SecCardGameApp {
     fn init(deck: Deck) -> Self {

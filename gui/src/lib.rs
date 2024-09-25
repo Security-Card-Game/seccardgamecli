@@ -4,7 +4,6 @@ use std::rc::Rc;
 use crate::actions::command::Command;
 
 mod app;
-mod card_view_model;
 mod card_window;
 pub mod start;
 mod actions;
