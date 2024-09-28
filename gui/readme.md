@@ -45,6 +45,8 @@ create_window(
 // stuff
 ```
 
+For a more detailed explanation look at this [article](https://blog.maschmi.net/EguiComamnds/) - written after implementing
+these changes.
 
 
 ## Why not ICED
