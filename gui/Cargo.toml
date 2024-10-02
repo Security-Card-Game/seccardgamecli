@@ -1,6 +1,6 @@
 [package]
 name = "game_ui"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,19 +8,19 @@ edition = "2021"
 [dependencies]
 game_lib = { path = "../game_lib" }
 
-uuid = { version = "1.7.0" , features = [
+uuid = { version = "1.10.0" , features = [
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
-getrandom = { version = "0.2"}
+getrandom = { version = "0.2.15"}
 
 
-egui = "0.26.2"
-eframe = { version = "0.26.2", default-features = false, features = [
+egui = "0.28.1"
+eframe = { version = "0.28.1", default-features = false, features = [
     "default_fonts", # Embed the default egui fonts.
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 ] }
 
-log = "0.4.20"
+log = "0.4.22"
 rand = "0.8.5"
