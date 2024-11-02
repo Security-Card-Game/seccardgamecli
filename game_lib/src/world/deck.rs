@@ -53,6 +53,7 @@ pub struct DeckComposition {
     pub attacks: usize,
     pub oopsies: usize,
     pub lucky: usize,
+    pub evaluation: usize
 }
 
 impl From<EventCards> for Card {
