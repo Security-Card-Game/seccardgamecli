@@ -50,7 +50,6 @@ pub(crate) mod tests {
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::duration::tests::FakeDuration;
     use crate::cards::properties::effect::Effect::Incident;
-    use crate::cards::properties::effect::tests::FakeEffect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::target::tests::FakeTarget;
     use crate::cards::properties::title::tests::FakeTitle;

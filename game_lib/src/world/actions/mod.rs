@@ -8,4 +8,5 @@ pub(crate) mod remove_resources;
 pub(crate) mod use_lucky_card;
 pub(crate) mod close_event;
 pub(crate) mod close_lucky;
+pub(crate) mod close_evaluation;
 
