@@ -9,6 +9,7 @@ use game_lib::cards::properties::fix_modifier::FixModifier;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::evaluation::EvaluationCard;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
@@ -80,6 +81,7 @@ impl CardContent {
             Card::Attack(c) => Self::incident_card_content(id, c.clone(), multiplier),
             Card::Oopsie(c) => Self::oopsie_card_content(id, c.clone(), multiplier),
             Card::Lucky(c) => Self::lucky_card_content(id, c.clone(), multiplier),
+            Card::Evaluation(c) => Self::evaluation_card_content(id, c.clone(), multiplier),
         };
 
         card_view_model.card_marker = if is_active {
@@ -205,6 +207,24 @@ impl CardContent {
             Color32::GREEN,
             Color32::DARK_GREEN,
             Card::Lucky(card),
+            None,
+            None,
+            can_be_closed,
+            multiplier,
+        )
+    }
+
+    fn evaluation_card_content(
+        id: &Uuid,
+        card: EvaluationCard,
+        multiplier: ResourceFixMultiplier,
+    ) -> CardContent {
+        let can_be_closed = card.is_closeable();
+        Self::new(
+            id.clone(),
+            Color32::GREEN,
+            Color32::DARK_GREEN,
+            Card::Evaluation(card),
             None,
             None,
             can_be_closed,

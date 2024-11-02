@@ -6,6 +6,7 @@ use serde_json::{json, Number, Value};
 
 use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::evaluation::EvaluationCard;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
@@ -120,6 +121,7 @@ where
             Card::Attack(_) => Card::Attack(serde_json::from_value::<AttackCard>(v).unwrap()),
             Card::Oopsie(_) => Card::Oopsie(serde_json::from_value::<OopsieCard>(v).unwrap()),
             Card::Lucky(_) => Card::Lucky(serde_json::from_value::<LuckyCard>(v).unwrap()),
+            Card::Evaluation(_) => Card::Evaluation(EvaluationCard::default()),            
         };
         fs::remove_file(card).unwrap();
 

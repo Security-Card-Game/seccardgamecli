@@ -224,6 +224,10 @@ impl Game {
             GameStatus::InProgress(board) => {
                 if let Some(card_to_close) = board.open_cards.get(card_id) {
                     match &**card_to_close {
+                        Card::Evaluation(_) => {
+                            // TODO: Implement close
+                            self.clone()
+                        }
                         Card::Attack(_) => self.handle_non_oopsie_close(
                             manually_close_attack_card(board.clone(), card_id),
                         ),

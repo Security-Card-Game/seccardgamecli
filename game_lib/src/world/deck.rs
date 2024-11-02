@@ -8,6 +8,9 @@ use crate::cards::types::card_model::Card;
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
+use crate::cards::types::evaluation::EvaluationCard;
+
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Deck {
@@ -46,6 +49,7 @@ pub enum AttackCards {
 pub struct PreparedDeck {
     cards: Vec<EventCards>,
     attacks: Vec<AttackCards>,
+    evaluation: Vec<EvaluationCard>,
 }
 
 pub struct DeckComposition {
@@ -107,11 +111,15 @@ impl DeckPreparation for PreparedDeck {
         let total_lucky_cards = access.get_lucky_cards().to_vec();
         let lucky_cards = draw_event_cards_for_deck(composition.lucky, total_lucky_cards);
         cards.append(&mut lucky_cards.clone());
-
+        
         let total_attack_cards = access.get_attack_cards().to_vec();
+        
+        let evaluation_cards = (0..composition.evaluation).map(|_| EvaluationCard::default()).collect();
+
         PreparedDeck {
             cards,
             attacks: draw_attack_cards_for_deck(composition.attacks, total_attack_cards),
+            evaluation: evaluation_cards,
         }
     }
 
@@ -161,6 +169,7 @@ fn draw_event_cards_for_deck(count: usize, cards_available: Vec<CardRc>) -> Vec<
             Card::Attack(_) => {}
             Card::Oopsie(ref c) => cards.push(EventCards::Oopsie(c.clone())),
             Card::Lucky(ref c) => cards.push(EventCards::Lucky(c.clone())),
+            Card::Evaluation(_) => {},
         }
         x += 1;
     }

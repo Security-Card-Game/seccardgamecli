@@ -4,6 +4,7 @@ use crate::cards::properties::description::Description;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::title::Title;
 use crate::cards::types::attack::AttackCard;
+use crate::cards::types::evaluation::EvaluationCard;
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
@@ -16,6 +17,7 @@ pub enum Card {
     Attack(AttackCard),
     Oopsie(OopsieCard),
     Lucky(LuckyCard),
+    Evaluation(EvaluationCard),
 }
 
 impl Card {
@@ -24,11 +26,14 @@ impl Card {
     pub const OOPSIE_CARD: &'static str = "Oopsie";
     pub const LUCKY_CARD: &'static str = "Lucky";
 
-    pub const CARD_TYPES: [&'static str; 4] = [
+    pub const EVALUATION: &'static str = "Evaluation";
+
+    pub const CARD_TYPES: [&'static str; 5] = [
         Self::ATTACK_CARD,
         Self::EVENT_CARD,
         Self::LUCKY_CARD,
         Self::OOPSIE_CARD,
+        Self::EVALUATION,
     ];
 }
 
@@ -48,6 +53,7 @@ impl CardTrait for Card {
             Card::Attack(card) => &card.title,
             Card::Oopsie(card) => &card.title,
             Card::Lucky(card) => &card.title,
+            Card::Evaluation(card) => &card.title,
         }
     }
 
@@ -57,6 +63,7 @@ impl CardTrait for Card {
             Card::Attack(card) => &card.description,
             Card::Oopsie(card) => &card.description,
             Card::Lucky(card) => &card.description,
+            Card::Evaluation(card) => &card.description,
         }
     }
 
@@ -66,6 +73,7 @@ impl CardTrait for Card {
             Card::Attack(card) => &card.effect,
             Card::Oopsie(card) => &card.effect,
             Card::Lucky(card) => &card.effect,
+            Card::Evaluation(card) => &card.effect,
         }
     }
 
@@ -75,6 +83,7 @@ impl CardTrait for Card {
             Card::Attack(_) => Card::ATTACK_CARD,
             Card::Oopsie(_) => Card::OOPSIE_CARD,
             Card::Lucky(_) => Card::LUCKY_CARD,
+            Card::Evaluation(_) => Card::EVALUATION,
         }
     }
 
@@ -84,6 +93,7 @@ impl CardTrait for Card {
             Card::Attack(_) => AttackCard::empty(),
             Card::Oopsie(_) => OopsieCard::empty(),
             Card::Lucky(_) => LuckyCard::empty(),
+            Card::Evaluation(_) => EvaluationCard::empty(),
         }
     }
 }
@@ -109,5 +119,11 @@ impl From<OopsieCard> for Card {
 impl From<AttackCard> for Card {
     fn from(value: AttackCard) -> Self {
         Card::Attack(value)
+    }
+}
+
+impl From<EvaluationCard> for Card {
+    fn from(value: EvaluationCard) -> Self {
+        Card::Evaluation(value)
     }
 }

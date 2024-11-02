@@ -76,6 +76,7 @@ fn deserialize_editor_content(content: String, original_card: &Card) -> serde_js
         Card::Attack(_) => serde_json::from_str(content.as_str()).map(|c| Card::Attack(c)),
         Card::Oopsie(_) => serde_json::from_str(content.as_str()).map(|c| Card::Oopsie(c)),
         Card::Lucky(_) => serde_json::from_str(content.as_str()).map(|c| Card::Lucky(c)),
+        Card::Evaluation(_) => panic!("Cannot deserialize evaluation card"),
     }
 }
 

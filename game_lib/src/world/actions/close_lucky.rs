@@ -10,7 +10,7 @@ pub fn close_lucky_card(board: Board, card_id: &Uuid) -> ActionResult<Board> {
     if let Some(card) = board.open_cards.clone().get(card_id) {
         match &**card {
             Card::Lucky(lc) => close_if_allowed(card_id, lc, board),
-            Card::Attack(_) | Card::Oopsie(_) | Card::Event(_) => Err(WrongCardType(board)),
+            Card::Attack(_) | Card::Oopsie(_) | Card::Event(_) | Card::Evaluation(_) => Err(WrongCardType(board)),
         }
     } else {
         Err(InvalidState(board))
@@ -41,11 +41,9 @@ mod tests {
     use rstest::rstest;
     use uuid::Uuid;
 
-    use crate::cards::properties::duration::Duration;
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
-    use crate::cards::properties::target::tests::FakeTarget;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::card_model::Card;
@@ -55,6 +53,8 @@ mod tests {
     use crate::cards::types::lucky::tests::FakeLuckyCard;
     use crate::cards::types::oopsie::OopsieCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::evaluation::EvaluationCard;
+    use crate::cards::types::evaluation::tests::FakeEvaluationCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::close_lucky::close_lucky_card;
     use crate::world::board::Board;
@@ -76,6 +76,7 @@ mod tests {
     #[case::EventCard(Card::from(FakeEventCard.fake::< EventCard > ()))]
     #[case::AttackCard(Card::from(FakeAttackCard.fake::< AttackCard > ()))]
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::< OopsieCard > ()))]
+    #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn try_close_wrong_card_type(#[case] card: Card) {
         let (card_id, board, _) = generate_board_with_open_card(card);
 

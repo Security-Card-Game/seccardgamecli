@@ -20,7 +20,7 @@ pub fn update_attack_cards(board: Board) -> Board {
     for (key, card) in board.open_cards.iter() {
         let card_to_insert = match &**card {
             Card::Attack(ac) => update_attack_card(card, ac),
-            Card::Event(_) | Card::Oopsie(_) | Card::Lucky(_) => Some(card.clone()),
+            Card::Event(_) | Card::Oopsie(_) | Card::Lucky(_) | Card::Evaluation(_) => Some(card.clone()),
         };
 
         match card_to_insert {
@@ -68,7 +68,7 @@ fn update_attack_card(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
 pub fn manually_close_attack_card(board: Board, card_id: &Uuid) -> ActionResult<Board> {
     if let Some(card) = board.open_cards.get(card_id) {
         match &**card {
-            Card::Oopsie(_) | Card::Lucky(_) | Card::Event(_) => Err(WrongCardType(board.clone())),
+            Card::Oopsie(_) | Card::Lucky(_) | Card::Event(_) | Card::Evaluation(_)=> Err(WrongCardType(board.clone())),
             Card::Attack(ac) => close_attack_card(&ac.duration.clone(), board, card_id),
         }
     } else {
@@ -116,6 +116,8 @@ mod tests {
     use crate::cards::types::lucky::tests::FakeLuckyCard;
     use crate::cards::types::oopsie::OopsieCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::evaluation::EvaluationCard;
+    use crate::cards::types::evaluation::tests::FakeEvaluationCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
     use crate::world::board::Board;
@@ -189,6 +191,7 @@ mod tests {
     #[case::LuckyCard(Card::from(FakeLuckyCard.fake::<LuckyCard>()))]
     #[case::EventCard(Card::from(FakeEventCard.fake::<EventCard>()))]
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::<OopsieCard>()))]
+    #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn update_attack_cards_does_not_affect_other_cards(#[case] card: Card) {
         let (_, board, _) = generate_board_with_open_card(card);
 
@@ -266,6 +269,7 @@ mod tests {
     #[case::LuckyCard(Card::from(FakeLuckyCard.fake::<LuckyCard>()))]
     #[case::EventCard(Card::from(FakeEventCard.fake::<EventCard>()))]
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::<OopsieCard>()))]
+    #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn manually_close_attack_card_closes_card_returns_error_for_wrong_type(#[case] card: Card) {
         let (card_id, board, card_rc) = generate_board_with_open_card(card);
 

@@ -19,7 +19,7 @@ where
 {
     if let Some(card) = board.open_cards.get(id) {
         match &**card {
-            Card::Event(_) | Card::Attack(_) | Card::Oopsie(_) => Err(WrongCardType(board)),
+            Card::Event(_) | Card::Attack(_) | Card::Oopsie(_) | Card::Evaluation(_) => Err(WrongCardType(board)),
             Card::Lucky(_) => Ok(func(board, id)),
         }
     } else {
@@ -63,6 +63,8 @@ mod tests {
     use crate::cards::types::lucky::tests::FakeLuckyCard;
     use crate::cards::types::oopsie::OopsieCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::evaluation::EvaluationCard;
+    use crate::cards::types::evaluation::tests::FakeEvaluationCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::use_lucky_card::{activate_lucky_card, deactivate_lucky_card};
     use crate::world::board::Board;
@@ -142,6 +144,7 @@ mod tests {
     #[case::AttackCard(Card::from(FakeAttackCard.fake::<AttackCard>()))]
     #[case::EventCard(Card::from(FakeEventCard.fake::<EventCard>()))]
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::<OopsieCard>()))]
+    #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn activate_wrong_card_type(#[case] card: Card) {
         let card_rc = Rc::new(card.clone());
         let card_id = Uuid::new_v4();
@@ -243,6 +246,7 @@ mod tests {
     #[case::AttackCard(Card::from(FakeAttackCard.fake::<AttackCard>()))]
     #[case::EventCard(Card::from(FakeEventCard.fake::<EventCard>()))]
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::<OopsieCard>()))]
+    #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn deactivate_wrong_card_type(#[case] card: Card) {
         let card_rc = Rc::new(card.clone());
         let card_id = Uuid::new_v4();
