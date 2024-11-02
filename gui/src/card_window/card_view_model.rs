@@ -222,8 +222,8 @@ impl CardContent {
         let can_be_closed = card.is_closeable();
         Self::new(
             id.clone(),
-            Color32::GREEN,
-            Color32::DARK_GREEN,
+            Color32::LIGHT_GRAY,
+            Color32::DARK_GRAY,
             Card::Evaluation(card),
             None,
             None,
