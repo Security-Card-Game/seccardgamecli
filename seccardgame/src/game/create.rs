@@ -29,7 +29,10 @@ pub fn create_deck(config: &Config) -> Deck {
         "Enter number of turns after which attacks should be possible?",
         (event_card_count + attack_card_count + oopsie_card_count + lucky_card_count) / 4,
     );
-    let evaluation_cards = get_number_of_cards("Enter number of evaluation cards. The deck will be split into n + 1 parts and all parts except the first will contain an evaluation card. 0 disables them.", 0);
+    
+    let curent_card_count = event_card_count + attack_card_count + oopsie_card_count + lucky_card_count;
+    let eval_prompt = format!("Enter number of evaluation cards (max {}). The deck will be split into n + 1 parts and all parts except the first will contain an evaluation card. 0 disables them.", curent_card_count - 1);
+    let evaluation_cards = get_number_of_cards(eval_prompt.as_str(), 0);
 
     let deck_composition = DeckComposition {
         events: event_card_count as usize,
