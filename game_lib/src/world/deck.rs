@@ -181,7 +181,9 @@ impl PreparedDeck {
                 continue
             }
             let mut chunk_with_eval = chunk.to_vec();
-            chunk_with_eval.push(evaluation_cards[i - 1].clone().into());
+            if i - 1 < eval_count {
+                chunk_with_eval.push(evaluation_cards[i - 1].clone().into());
+            }
             chunk_with_eval.shuffle(&mut rng);
             cards.extend(chunk_with_eval)
         }
