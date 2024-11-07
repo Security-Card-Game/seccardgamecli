@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
+use game_lib::cards::types::evaluation::EvaluationCard;
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
@@ -48,6 +49,9 @@ where
             }
             Card::Lucky(_) => {
                 Card::Lucky(serde_json::from_str::<LuckyCard>(content.as_str()).unwrap())
+            }
+            Card::Evaluation(_) => {
+                Card::Evaluation(EvaluationCard::default())
             }
         };
         fs::remove_file(card).unwrap();

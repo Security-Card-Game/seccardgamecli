@@ -51,6 +51,7 @@ fn get_modifier(
         Card::Attack(_) => None,
         Card::Oopsie(_) => None,
         Card::Lucky(l) => get_modifier_from_effect(&l.effect, cards_to_use.contains(card_id)),
+        Card::Evaluation(_) => None,
     }
 }
 

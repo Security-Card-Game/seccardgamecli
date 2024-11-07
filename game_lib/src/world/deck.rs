@@ -1,13 +1,16 @@
 use std::rc::Rc;
 use log::warn;
 use rand::{Rng, thread_rng};
-use rand::prelude::SliceRandom;
+use rand::prelude::{SliceRandom, ThreadRng};
 
 use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;
 use crate::cards::types::event::EventCard;
 use crate::cards::types::lucky::LuckyCard;
 use crate::cards::types::oopsie::OopsieCard;
+use crate::cards::types::evaluation::EvaluationCard;
+
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Deck {
@@ -46,6 +49,7 @@ pub enum AttackCards {
 pub struct PreparedDeck {
     cards: Vec<EventCards>,
     attacks: Vec<AttackCards>,
+    evaluation: Vec<EvaluationCard>,
 }
 
 pub struct DeckComposition {
@@ -53,6 +57,7 @@ pub struct DeckComposition {
     pub attacks: usize,
     pub oopsies: usize,
     pub lucky: usize,
+    pub evaluation: usize
 }
 
 impl From<EventCards> for Card {
@@ -108,9 +113,13 @@ impl DeckPreparation for PreparedDeck {
         cards.append(&mut lucky_cards.clone());
 
         let total_attack_cards = access.get_attack_cards().to_vec();
+
+        let evaluation_cards = (0..composition.evaluation).map(|_| EvaluationCard::default()).collect();
+
         PreparedDeck {
             cards,
             attacks: draw_attack_cards_for_deck(composition.attacks, total_attack_cards),
+            evaluation: evaluation_cards,
         }
     }
 
@@ -129,9 +138,17 @@ impl DeckPreparation for PreparedDeck {
         let event_cards = &self.cards;
         let attack_cards = &self.attacks;
         let mut cards: Vec<Card> = event_cards.iter().map(|c| c.clone().into()).collect();
-
         cards.shuffle(&mut rng);
 
+        let cards = Self::add_attack_cards(&mut rng, attack_graces, attack_cards, cards);
+        let cards = Self::add_evaluation_cards(&mut rng, &self.evaluation, cards);
+        
+        Deck::new(cards)
+    }
+}
+
+impl PreparedDeck {
+    fn add_attack_cards(mut rng: &mut ThreadRng, attack_graces: usize, attack_cards: &Vec<AttackCards>, cards: Vec<Card>) -> Vec<Card> {
         let (no_attack_cards, to_have_attack_cards) = cards.split_at(attack_graces);
 
         let mut part_with_attacks: Vec<Card> = to_have_attack_cards.to_vec();
@@ -143,10 +160,35 @@ impl DeckPreparation for PreparedDeck {
         );
         part_with_attacks.shuffle(&mut rng);
 
-        cards = no_attack_cards.to_vec().clone();
-        cards.extend(part_with_attacks);
-        Deck::new(cards)
+        let mut cards_without_attacks = no_attack_cards.to_vec().clone();
+        cards_without_attacks.extend(part_with_attacks);
+        cards_without_attacks
     }
+
+    /// This function inserts evaluation cards at regular intervals into a given vector of cards.
+    /// It divides the cards into chunks, adds an evaluation card to all chunks except the first,
+    /// shuffles the chunks with the new cards, and then consolidates them back into a single vector.
+    // TODO: Add a test for this method
+    fn add_evaluation_cards(mut rng: &mut ThreadRng, evaluation_cards: &Vec<EvaluationCard>, cards: Vec<Card>) -> Vec<Card> {
+        let eval_count = evaluation_cards.len();
+        let chunk_size = cards.len() / (eval_count + 1);
+        let chunks = cards.chunks(chunk_size);
+        
+        let mut cards = Vec::new();
+        for (i, chunk) in chunks.enumerate() {
+            if i == 0 {
+                cards.extend(chunk.to_vec());
+                continue
+            }
+            let mut chunk_with_eval = chunk.to_vec();
+            chunk_with_eval.push(evaluation_cards[i - 1].clone().into());
+            chunk_with_eval.shuffle(&mut rng);
+            cards.extend(chunk_with_eval)
+        }
+        
+        cards
+    }
+
 }
 
 fn draw_event_cards_for_deck(count: usize, cards_available: Vec<CardRc>) -> Vec<EventCards> {
@@ -160,6 +202,7 @@ fn draw_event_cards_for_deck(count: usize, cards_available: Vec<CardRc>) -> Vec<
             Card::Attack(_) => {}
             Card::Oopsie(ref c) => cards.push(EventCards::Oopsie(c.clone())),
             Card::Lucky(ref c) => cards.push(EventCards::Lucky(c.clone())),
+            Card::Evaluation(_) => {},
         }
         x += 1;
     }

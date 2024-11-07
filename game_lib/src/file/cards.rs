@@ -73,6 +73,7 @@ pub fn get_card_directory(card: &Card) -> &'static str {
         Card::Attack(_) => "attacks",
         Card::Oopsie(_) => "oopsies",
         Card::Lucky(_) => "lucky",
+        Card::Evaluation(_) => panic!("Evaluation cards should not be written to file"),
     }
 }
 

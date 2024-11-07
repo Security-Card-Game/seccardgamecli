@@ -8,6 +8,7 @@ use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::actions::add_resources::add_resources;
 use crate::world::actions::calculate_board::calculate_board;
 use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
+use crate::world::actions::close_evaluation::close_evaluation_card;
 use crate::world::actions::close_event::close_event_card;
 use crate::world::actions::close_lucky::close_lucky_card;
 use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
@@ -224,6 +225,9 @@ impl Game {
             GameStatus::InProgress(board) => {
                 if let Some(card_to_close) = board.open_cards.get(card_id) {
                     match &**card_to_close {
+                        Card::Evaluation(_) => {
+                            self.handle_non_oopsie_close(close_evaluation_card(board.clone(), card_id))
+                        }
                         Card::Attack(_) => self.handle_non_oopsie_close(
                             manually_close_attack_card(board.clone(), card_id),
                         ),
@@ -311,7 +315,7 @@ mod tests {
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
-    use crate::cards::types::card_model::{Card, CardTrait};
+    use crate::cards::types::card_model::{Card};
     use crate::cards::types::event::EventCard;
     use crate::cards::types::event::tests::FakeEventCard;
     use crate::cards::types::lucky::LuckyCard;

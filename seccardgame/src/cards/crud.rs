@@ -76,20 +76,23 @@ fn deserialize_editor_content(content: String, original_card: &Card) -> serde_js
         Card::Attack(_) => serde_json::from_str(content.as_str()).map(|c| Card::Attack(c)),
         Card::Oopsie(_) => serde_json::from_str(content.as_str()).map(|c| Card::Oopsie(c)),
         Card::Lucky(_) => serde_json::from_str(content.as_str()).map(|c| Card::Lucky(c)),
+        Card::Evaluation(_) => panic!("Cannot deserialize evaluation card"),
     }
 }
 
 pub fn create(cfg: &Config) -> CliResult<()> {
     print_stats(cfg)?;
     println!();
+    let creatable_card_types: Vec<&&str> = Card::CARD_TYPES.iter().filter(|i| i.ne(&&Card::EVALUATION)).collect();
+    
     let card_type_index = Select::new()
         .with_prompt("Select a card type to create")
-        .items(&Card::CARD_TYPES)
+        .items(&creatable_card_types)
         .default(0)
         .interact()
         .unwrap();
 
-    let card = match Card::CARD_TYPES[card_type_index] {
+    let card = match *creatable_card_types[card_type_index] {
         Card::EVENT_CARD => create_event_card(),
         Card::ATTACK_CARD => create_attack_card(),
         Card::LUCKY_CARD => create_lucky_card(),

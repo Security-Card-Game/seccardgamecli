@@ -28,7 +28,7 @@ pub fn try_and_pay_for_oopsie_fix(
 ) -> ActionResult<(Board, Resources)> {
     if let Some(card) = board.open_cards.get(card_id) {
         match &**card {
-            Card::Attack(_) | Card::Lucky(_) | Card::Event(_) => Err(WrongCardType(board.clone())),
+            Card::Attack(_) | Card::Lucky(_) | Card::Event(_) | Card::Evaluation(_) => Err(WrongCardType(board.clone())),
             Card::Oopsie(oc) => try_and_close(&board, card_id, oc, resource_fix_multiplier),
         }
     } else {
@@ -121,6 +121,8 @@ mod tests {
     use crate::cards::types::lucky::tests::FakeLuckyCard;
     use crate::cards::types::oopsie::OopsieCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::evaluation::EvaluationCard;
+    use crate::cards::types::evaluation::tests::FakeEvaluationCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::calculate_board::calculate_board;
     use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
@@ -147,6 +149,7 @@ mod tests {
     #[case::LuckyCard(Card::from(FakeAttackCard.fake::<AttackCard>()))]
     #[case::EventCard(Card::from(FakeEventCard.fake::<EventCard>()))]
     #[case::OopsieCard(Card::from(FakeLuckyCard.fake::<LuckyCard>()))]
+    #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn close_oopsie_card_returns_wrong_card_type_if_card_id_is_not_for_oopsie(#[case] card: Card) {
         let (card_id, board, _) = generate_board_with_open_card(card);
         let expected_board = board.clone();

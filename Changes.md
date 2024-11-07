@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.7
+
+* [FEATURE] adds blank evaluation cards
+
 ## 0.5.6
 
 * [UPDATE] Updates dependencies, most notably egui
