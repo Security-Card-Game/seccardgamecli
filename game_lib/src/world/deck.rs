@@ -11,6 +11,11 @@ use crate::cards::types::oopsie::OopsieCard;
 use crate::cards::types::evaluation::EvaluationCard;
 
 
+/// This represents the current deck of cards. It also keeps count of the already played cards and the
+/// remaining cards. This file also contains all the methods needed to create a new Deck. E.g shuffling the cards
+/// and a helper struct `PreparedDeck`.
+///
+/// The Deck is not mutated in place. When a card is drawn a new Deck object is created.
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Deck {
@@ -87,11 +92,13 @@ pub trait DeckRepository {
     fn get_attack_cards(&self) -> Vec<CardRc>;
 }
 
+/// Defines a trait for deck preparation.
 pub trait DeckPreparation {
+    /// Assembles a `PreparedDeck` by pulling the specified number of cards from a `DeckRepository`
+    /// based on the given `DeckComposition`.
     fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck;
-    /**
-    Shuffles the deck and inserts attack cards only after a grace period of cards/turns
-    **/
+
+    /// Shuffles the deck and inserts attack cards only after a grace period of cards/turns
     fn shuffle(&self, grace_period: usize) -> Deck;
 }
 

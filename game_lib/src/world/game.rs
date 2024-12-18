@@ -21,6 +21,8 @@ use crate::world::game::GameActionResult::{FixFailed, InvalidAction, OopsieFixed
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
 
+/// The central file to interact with the game rules. All external consumers should only use content
+/// from in here to play a game.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameStatus {
     Start(Board),
@@ -40,10 +42,14 @@ pub enum GameActionResult {
     Success,
 }
 
+/// Game parameters as well as current state and the deck. Every change to the game will return a new game object.
+/// Use the action_status property to find out what the outcome of the last action was.
+/// The deck is private as it should not be visible to the consumer when a game is played.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Game {
     deck: Deck,
     pub status: GameStatus,
+    /// this property contains the result of the last action performed by the player. Use this to know what happened.
     pub action_status: GameActionResult,
     pub resource_gain: Resources,
     pub fix_multiplier: ResourceFixMultiplier,
@@ -54,11 +60,17 @@ pub struct CardCount {
     pub total_cards: usize,
 }
 
+/// This defines the API on how to interact with the Game. It will in turn use corresponding
+/// actions from the actions module, combines them when needed. Every interaction return a new Game
+/// object.
 impl Game {
+    /// Gets the currently open cards for the board.
     pub fn get_open_cards(&self) -> HashMap<Uuid, CardRc> {
         self.get_board().open_cards.clone()
     }
 
+    /// Sets a fix multiplier. All effects affection fix costs will be affected by this.
+    /// This can be used to modify the cost add hoc in a game.
     pub fn set_fix_multiplier(&self, resource_fix_multiplier: ResourceFixMultiplier) -> Game {
         Game {
             fix_multiplier: resource_fix_multiplier,
@@ -66,6 +78,7 @@ impl Game {
         }
     }
 
+    /// Marks a lucky card as activated and re calculates the board to take effects of this card into account.
     pub fn activate_lucky_card(&self, card_id: &Uuid) -> Game {
         match &self.status {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
@@ -88,6 +101,7 @@ impl Game {
         }
     }
 
+    /// Deactivates a lucky card and removes its effect from the board.
     pub fn deactivate_lucky_card(&self, card_id: &Uuid) -> Game {
         match &self.status {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
@@ -126,6 +140,8 @@ impl Game {
         }
     }
 
+    /// Creates a new game with the given Deck, initial resource gain and fix multiplier.
+    /// Use this to start.
     pub fn create(
         deck: Deck,
         initial_resource_gain: Resources,
@@ -143,6 +159,8 @@ impl Game {
         }
     }
 
+    /// Starts the next round. This also draws a new card and places it on the board and adds
+    /// the freshly gained resources.
     pub fn next_round(&self) -> Self {
         if let Ok((new_deck, board)) =
             draw_card_and_place_on_board(self.deck.clone(), self.get_board().clone())
@@ -170,6 +188,7 @@ impl Game {
         }
     }
 
+    /// Manually set the resource gain for the next round.
     pub fn set_resource_gain(&self, new_gain: Resources) -> Self {
         match &self.status {
             GameStatus::Start(_) | GameStatus::InProgress(_) => Game {
@@ -180,6 +199,7 @@ impl Game {
         }
     }
 
+    /// Manually pay resources
     pub fn pay_resources(&self, to_pay: &Resources) -> Self {
         match &self.status {
             GameStatus::InProgress(board) => {
@@ -202,6 +222,7 @@ impl Game {
         }
     }
 
+    /// Try anc closes an Oopsie card. Will roll a dice to calculate the costs.
     fn handle_non_oopsie_close(&self, result: ActionResult<Board>) -> Self {
         match result {
             Ok(b) => Game {
@@ -220,6 +241,7 @@ impl Game {
         }
     }
 
+    /// Close a card if allowed.
     pub fn close_card(&self, card_id: &Uuid) -> Self {
         match &self.status {
             GameStatus::InProgress(board) => {
@@ -274,6 +296,8 @@ impl Game {
         }
     }
 
+    /// Method to check if a card is activated. The card itself is not modified, therefore there is no
+    /// way to get this information directly form the card. We need to ask the board.
     pub fn is_card_activated(&self, card_id: &Uuid) -> bool {
         match &self.status {
             GameStatus::Start(b) | GameStatus::InProgress(b) | GameStatus::Finished(b) => {
@@ -282,6 +306,7 @@ impl Game {
         }
     }
 
+    /// Method to get the cards played and cards total.
     pub fn get_card_count(&self) -> CardCount {
         CardCount {
             played_cards: *&self.deck.played_cards,

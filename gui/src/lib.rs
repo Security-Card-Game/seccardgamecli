@@ -10,7 +10,7 @@ mod side_panel;
 
 pub(crate) type CommandToExecute = Option<Command>;
 
-pub struct SecCardGameApp {
+pub(crate) struct SecCardGameApp {
     game: Game,
     input: Input,
     command: CommandToExecute,

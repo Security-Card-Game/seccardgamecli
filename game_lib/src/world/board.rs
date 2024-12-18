@@ -5,7 +5,13 @@ use uuid::Uuid;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
+/*
+The Board is the current state of the game. It holds all the data present on the board. And also if
+a card will be used by the players. It does not contain information which actions are possible. It merly
+is a container for the current state.
 
+All properties of the board should be not mutable. After every round or action a new board is generated.
+ */
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct CardRcWithId {
     pub id: Uuid,

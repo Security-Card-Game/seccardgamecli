@@ -9,6 +9,8 @@ This Tool supports:
 * create a deck while specifying how many cards to use in total and how many cards from which type
 * a simple GUI to show the drawn cards - you will still need a dice and keep track of resources ;)
 
+See [Project](PROJECT.md) form some details on structure and history.
+
 ## How to play
 
 Important, this game runs locally on your computer. If you want to play

@@ -3,6 +3,14 @@
 The gui is implemented using [egui](https://github.com/emilk/egui). In September 2024 a switch to [ICED](https://iced.rs)
 was evaluated and not performed. 
 
+## Modules
+
+* [main](./src/readme.md)
+* [actions](./src/actions/readme.md)
+* [card_window](./src/card_window/readme.md)
+* [components](./src/components/readme.md)
+* [side_panel](./src/side_panel/readme.md)
+
 ## The Command concept
 
 ### Why
