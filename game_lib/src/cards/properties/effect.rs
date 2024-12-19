@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::cards::properties::attack_costs::AttackCost;
+use crate::cards::properties::attack_costs::IncidentImpact;
 use crate::cards::properties::effect_description::EffectDescription;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::properties::target::Target;
@@ -10,7 +10,7 @@ use crate::cards::properties::target::Target;
 pub enum Effect {
     Immediate(EffectDescription),
     AttackSurface(EffectDescription, Vec<Target>),
-    Incident(EffectDescription, Vec<Target>, AttackCost),
+    Incident(EffectDescription, Vec<Target>, IncidentImpact),
     OnNextFix(EffectDescription, FixModifier),
     OnUsingForFix(EffectDescription, FixModifier),
     Other(EffectDescription),

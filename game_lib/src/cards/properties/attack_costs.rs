@@ -1,17 +1,17 @@
 use std::fmt::Display;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use crate::cards::properties::attack_costs::AttackCost::Fixed;
+use crate::cards::properties::attack_costs::IncidentImpact::Fixed;
 use crate::cards::serialization::helper::{Number, NumberVisitor};
 use crate::world::resources::Resources;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub enum AttackCost {
+pub enum IncidentImpact {
     PartOfRevenue(PartOfHundred),
     Fixed(Resources)
 }
 
-impl AttackCost {
+impl IncidentImpact {
     pub fn none() -> Self {
         Fixed(Resources::new(0))
     }

@@ -1,5 +1,5 @@
 use dialoguer::{Confirm, Editor, Select};
-use game_lib::cards::properties::attack_costs::{AttackCost, PartOfHundred};
+use game_lib::cards::properties::attack_costs::{IncidentImpact, PartOfHundred};
 use game_lib::cards::properties::description::Description;
 use game_lib::cards::properties::duration::Duration;
 use game_lib::cards::properties::effect::Effect;
@@ -188,7 +188,7 @@ fn create_attack_card() -> Card {
     Card::Attack(card)
 }
 
-fn ask_for_cost() -> AttackCost {
+fn ask_for_cost() -> IncidentImpact {
     let available_costs = ["Percentage of Revenue", "Fixed amount of resources"];
 
     let selection = Select::new()
@@ -201,11 +201,11 @@ fn ask_for_cost() -> AttackCost {
     match selection {
         0 => {
             let percentage = prompt("Percentage of revenue (0-100, int)", None);
-            AttackCost::PartOfRevenue(PartOfHundred::new(percentage))
+            IncidentImpact::PartOfRevenue(PartOfHundred::new(percentage))
         },
         1 => {
             let resources = prompt("Amount of resources", None);
-            AttackCost::Fixed(Resources::new(resources))
+            IncidentImpact::Fixed(Resources::new(resources))
         },
         _ => panic!("Unknown cost type")
     }

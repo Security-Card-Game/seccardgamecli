@@ -2,7 +2,7 @@ use crate::actions::command::Command;
 use crate::card_window::card_view_model::{CardContent, CardMarker, Costs};
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
-use game_lib::cards::properties::attack_costs::AttackCost;
+use game_lib::cards::properties::attack_costs::IncidentImpact;
 use rand::Rng;
 
 pub struct CardWindow<'a> {
@@ -74,11 +74,11 @@ where
             None => {}
             Some(cost) => match cost {
                 Costs::Attack(a) => match a {
-                    AttackCost::PartOfRevenue(poh) => {
+                    IncidentImpact::PartOfRevenue(poh) => {
                         let content = format!("Pay {} of your revenue during this incident", poh);
                         add_explanation("Impact:   ", content.as_str(), ui);
                     }
-                    AttackCost::Fixed(f) => {
+                    IncidentImpact::Fixed(f) => {
                         let content = format!("Pay {} resources immediately", f.value());
                         add_explanation("Impact:   ", content.as_str(), ui);
                     }

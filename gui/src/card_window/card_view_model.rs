@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use eframe::epaint::Color32;
 use uuid::Uuid;
-use game_lib::cards::properties::attack_costs::AttackCost;
+use game_lib::cards::properties::attack_costs::IncidentImpact;
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::fix_cost::FixCost;
 use game_lib::cards::properties::fix_modifier::FixModifier;
@@ -18,7 +18,7 @@ use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 
 #[derive(Debug)]
 pub enum Costs {
-    Attack(AttackCost),
+    Attack(IncidentImpact),
     Oopsie(FixCost)
 }
 
@@ -60,8 +60,8 @@ impl CardContent {
             None => None,
             Some(c) => match c {
                 Costs::Attack(a) => match a {
-                    AttackCost::PartOfRevenue(_) => Some(Costs::Attack(a)),
-                    AttackCost::Fixed(c) => Some(Costs::Attack(AttackCost::Fixed(c * &multiplier))),
+                    IncidentImpact::PartOfRevenue(_) => Some(Costs::Attack(a)),
+                    IncidentImpact::Fixed(c) => Some(Costs::Attack(IncidentImpact::Fixed(c * &multiplier))),
                 },
                 Costs::Oopsie(f) => Some(Costs::Oopsie(f * &multiplier))
             }
