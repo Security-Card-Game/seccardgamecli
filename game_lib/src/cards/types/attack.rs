@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-
+use crate::cards::properties::attack_costs::AttackCost;
 use crate::cards::properties::description::Description;
 use crate::cards::properties::duration::Duration;
 use crate::cards::properties::effect::Effect;
@@ -23,12 +23,13 @@ impl AttackCard {
         description: Description,
         targets: Vec<Target>,
         effect: EffectDescription,
+        cost: AttackCost,
         duration: Duration,
     ) -> Self {
         AttackCard {
             title,
             description,
-            effect: Effect::Incident(effect, targets),
+            effect: Effect::Incident(effect, targets, cost),
             duration,
         }
     }
@@ -37,7 +38,7 @@ impl AttackCard {
         Card::Attack(AttackCard {
             title: Title::empty(),
             description: Description::empty(),
-            effect: Effect::Incident(EffectDescription::empty(), vec![]),
+            effect: Effect::Incident(EffectDescription::empty(), vec![], AttackCost::none()),
             duration: Duration::default(),
         })
     }

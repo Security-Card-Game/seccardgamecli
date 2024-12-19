@@ -59,7 +59,7 @@ fn get_modifier_from_effect(effect: &Effect, card_is_active: bool) -> Option<Fix
     match effect {
         Effect::Immediate(_) => None,
         Effect::AttackSurface(_, _) => None,
-        Effect::Incident(_, _) => None,
+        Effect::Incident(_, _, _) => None,
         Effect::OnNextFix(_, m) => Some(m.clone()),
         Effect::OnUsingForFix(_, m) => {
             if card_is_active {

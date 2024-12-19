@@ -162,7 +162,7 @@ impl CardStats {
                 let content = fs::read_to_string(file.path().to_str().unwrap()).unwrap();
                 let card: AttackCard = serde_json::from_str(content.as_str()).unwrap();
                 match card.effect {
-                    Effect::Incident(_, t) => attack_targets.extend(t),
+                    Effect::Incident(_, t, _) => attack_targets.extend(t),
                     _ => {}
                 }
             }

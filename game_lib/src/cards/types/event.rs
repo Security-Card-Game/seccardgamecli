@@ -29,7 +29,7 @@ impl EventCard {
             | Effect::NOP
             | Effect::Immediate(_)
             | Effect::AttackSurface(_, _)
-            | Effect::Incident(_, _) => true,
+            | Effect::Incident(_, _, _) => true,
             | Effect::OnNextFix(_, _) => false
         }
     }

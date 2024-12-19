@@ -115,7 +115,7 @@ impl CardContent {
         match effect {
             Effect::Immediate(_)
             | Effect::AttackSurface(_, _)
-            | Effect::Incident(_, _)
+            | Effect::Incident(_, _, _)
             | Effect::OnNextFix(_, _)
             | Effect::Other(_)
             | Effect::NOP => false,
@@ -125,7 +125,7 @@ impl CardContent {
 
     fn effect_to_targets(action: &Effect) -> Option<Vec<String>> {
         match action {
-            Effect::Incident(_, t) => Some(Self::targets_to_strings(t)),
+            Effect::Incident(_, t, _) => Some(Self::targets_to_strings(t)),
             Effect::AttackSurface(_, t) => Some(Self::targets_to_strings(t)),
             _ => None,
         }
@@ -138,7 +138,7 @@ impl CardContent {
             Effect::OnUsingForFix(_d, m) => {
                 Self::modifier_to_text(m, multiplier).add(" on use for a fix.")
             }
-            Effect::Incident(d, _) | Effect::AttackSurface(d, _) => d.value().to_string(),
+            Effect::Incident(d, _, _) | Effect::AttackSurface(d, _) => d.value().to_string(),
             Effect::NOP => "".to_string(),
         }
     }
