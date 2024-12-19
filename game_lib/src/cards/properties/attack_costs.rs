@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::cards::properties::attack_costs::AttackCost::Fixed;
 use crate::cards::serialization::helper::{Number, NumberVisitor};
@@ -19,6 +20,12 @@ impl AttackCost {
 #[derive(Clone, Debug, PartialEq)]
 pub struct PartOfHundred {
     value: u8,
+}
+
+impl Display for PartOfHundred {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}%", self.value)
+    }
 }
 
 impl PartOfHundred {

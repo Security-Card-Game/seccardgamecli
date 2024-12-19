@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use eframe::epaint::Color32;
 use uuid::Uuid;
-
+use game_lib::cards::properties::attack_costs::AttackCost;
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::fix_cost::FixCost;
 use game_lib::cards::properties::fix_modifier::FixModifier;
@@ -17,6 +17,12 @@ use game_lib::world::deck::CardRc;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 
 #[derive(Debug)]
+pub enum Costs {
+    Attack(AttackCost),
+    Oopsie(FixCost)
+}
+
+#[derive(Debug)]
 pub struct CardContent {
     pub id: Uuid,
     pub dark_color: Color32,
@@ -25,12 +31,13 @@ pub struct CardContent {
     pub description: String,
     pub action: String,
     pub targets: Option<Vec<String>>,
-    pub costs: Option<FixCost>,
+    pub costs: Option<Costs>,
     pub duration: Option<usize>,
     pub can_be_activated: bool,
     pub can_be_closed: bool,
     pub card_marker: CardMarker,
 }
+
 
 #[derive(Clone, Debug)]
 pub enum CardMarker {
@@ -44,15 +51,22 @@ impl CardContent {
         dark_color: Color32,
         light_color: Color32,
         card: Card,
-        costs: Option<FixCost>,
+        costs: Option<Costs>,
         duration: Option<usize>,
         can_be_closed: bool,
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
         let actual_costs = match costs {
             None => None,
-            Some(c) => Some(c * &multiplier),
+            Some(c) => match c {
+                Costs::Attack(a) => match a {
+                    AttackCost::PartOfRevenue(_) => Some(Costs::Attack(a)),
+                    AttackCost::Fixed(c) => Some(Costs::Attack(AttackCost::Fixed(c * &multiplier))),
+                },
+                Costs::Oopsie(f) => Some(Costs::Oopsie(f * &multiplier))
+            }
         };
+
 
         CardContent {
             id,
@@ -131,6 +145,13 @@ impl CardContent {
         }
     }
 
+    fn effect_to_costs(action: &Effect) -> Option<Costs> {
+        match action {
+            Effect::Incident(_, _, cost) => Option::Some(Costs::Attack(cost.clone())),
+            _ => None
+        }
+    }
+
     fn effect_to_text(action: &Effect, multiplier: &ResourceFixMultiplier) -> String {
         match action {
             Effect::Immediate(d) | Effect::Other(d) => d.value().to_string(),
@@ -166,12 +187,13 @@ impl CardContent {
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
         let duration = card.duration.value().unwrap_or(&0).clone();
+        let effect = card.effect.clone();
         Self::new(
             id.clone(),
             Color32::LIGHT_RED,
             Color32::DARK_RED,
             Card::Attack(card),
-            None,
+            Self::effect_to_costs(&effect),
             Some(duration),
             true,
             multiplier,
@@ -189,7 +211,7 @@ impl CardContent {
             Color32::YELLOW,
             Color32::DARK_GRAY,
             Card::Oopsie(card),
-            Some(fix_cost.clone()),
+            Some(Costs::Oopsie(fix_cost.clone())),
             None,
             true,
             multiplier,

@@ -1,9 +1,9 @@
+use crate::actions::command::Command;
+use crate::card_window::card_view_model::{CardContent, CardMarker, Costs};
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
+use game_lib::cards::properties::attack_costs::AttackCost;
 use rand::Rng;
-use crate::actions::command::Command;
-use crate::card_window::card_view_model::{CardContent, CardMarker};
-
 
 pub struct CardWindow<'a> {
     max_size: Vec2,
@@ -11,12 +11,9 @@ pub struct CardWindow<'a> {
     content: &'a CardContent,
 }
 
-pub fn display_card<F>(
-    card: &CardContent,
-    command_callback: &mut F,
-    ctx: &Context,
-    ui: &mut Ui,
-)  where F: FnMut(Command)
+pub fn display_card<F>(card: &CardContent, command_callback: &mut F, ctx: &Context, ui: &mut Ui)
+where
+    F: FnMut(Command),
 {
     let window = CardWindow {
         max_size: Vec2::new(200.0, 400.0),
@@ -27,12 +24,10 @@ pub fn display_card<F>(
     create_window(window, command_callback, ctx, ui)
 }
 
-fn create_window<F>(
-    data: CardWindow,
-    command_callback: &mut F,
-    ctx: &Context,
-    ui: &mut Ui,
-) where F: FnMut(Command) {
+fn create_window<F>(data: CardWindow, command_callback: &mut F, ctx: &Context, ui: &mut Ui)
+where
+    F: FnMut(Command),
+{
     let card = data.content;
     let area = ui.available_size();
     let mut rng = rand::thread_rng();
@@ -46,13 +41,13 @@ fn create_window<F>(
         .default_pos(new_pos)
         .max_size(data.max_size)
         .min_size(data.min_size)
-        .show(ctx, |ui| {
-            create_card_window(command_callback, card, ui)
-        });
+        .show(ctx, |ui| create_card_window(command_callback, card, ui));
 }
 
 fn create_card_window<F>(cmd_callback: &mut F, card: &CardContent, ui: &mut Ui)
-where F: FnMut(Command)   {
+where
+    F: FnMut(Command),
+{
     ui.vertical(|ui| {
         add_header(cmd_callback, &card, ui);
         ui.add_space(5.0);
@@ -77,10 +72,22 @@ where F: FnMut(Command)   {
         ui.add_space(2.0);
         match &card.costs {
             None => {}
-            Some(cost) => {
-                let content = format!("{} to {} resources", cost.min.value(), cost.max.value());
-                add_explanation("Fix:      ", content.as_str(), ui);
-            }
+            Some(cost) => match cost {
+                Costs::Attack(a) => match a {
+                    AttackCost::PartOfRevenue(poh) => {
+                        let content = format!("Pay {} of your revenue during this incident", poh);
+                        add_explanation("Impact:   ", content.as_str(), ui);
+                    }
+                    AttackCost::Fixed(f) => {
+                        let content = format!("Pay {} resources immediately", f.value());
+                        add_explanation("Impact:   ", content.as_str(), ui);
+                    }
+                },
+                Costs::Oopsie(o) => {
+                    let content = format!("{} to {} resources", o.min.value(), o.max.value());
+                    add_explanation("Fix:      ", content.as_str(), ui);
+                }
+            },
         };
         if card.can_be_activated {
             let label = match card.card_marker {
@@ -97,9 +104,10 @@ where F: FnMut(Command)   {
     });
 }
 
-
 fn add_header<F>(cmd_callback: &mut F, card: &&CardContent, ui: &mut Ui)
-where F: FnMut(Command) {
+where
+    F: FnMut(Command),
+{
     ui.horizontal(|ui| {
         let header_color = if ui.visuals().dark_mode {
             card.dark_color
