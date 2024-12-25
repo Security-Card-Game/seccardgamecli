@@ -85,7 +85,7 @@ mod tests {
     use fake::Fake;
     use rstest::rstest;
     use uuid::Uuid;
-
+    use crate::cards::properties::attack_costs::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
     use crate::cards::types::attack::AttackCard;
@@ -151,7 +151,7 @@ mod tests {
     #[case::NOP(Effect::NOP, None)]
     #[case::Immediate(Effect::Immediate(FakeEffectDescription.fake()), None)]
     #[case::AttackSurface(Effect::AttackSurface(FakeEffectDescription.fake(), vec![]), None)]
-    #[case::Incident(Effect::Incident(FakeEffectDescription.fake(), vec![]), None)]
+    #[case::Incident(Effect::Incident(FakeEffectDescription.fake(), vec![], FakeFixedIncidentImpact.fake()), None)]
     #[case::Other(Effect::Other(FakeEffectDescription.fake()), None)]
     fn calculate_fix_modifier_of_non_modifying_effect(
         #[case] effect: Effect,

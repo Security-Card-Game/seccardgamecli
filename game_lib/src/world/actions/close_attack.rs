@@ -164,7 +164,7 @@ mod tests {
             ..FakeAttackCard.fake()
         };
 
-        let (_, board, card_rc) = generate_board_with_open_card(Card::from(attack));
+        let (_, board, _card_rc) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
@@ -271,7 +271,7 @@ mod tests {
     #[case::OopsieCard(Card::from(FakeOopsieCard.fake::<OopsieCard>()))]
     #[case::OopsieCard(Card::from(FakeEvaluationCard.fake::<EvaluationCard>()))]
     fn manually_close_attack_card_closes_card_returns_error_for_wrong_type(#[case] card: Card) {
-        let (card_id, board, card_rc) = generate_board_with_open_card(card);
+        let (card_id, board, _card_rc) = generate_board_with_open_card(card);
 
         let expected_board = Board { ..board.clone() };
 
@@ -287,7 +287,7 @@ mod tests {
             ..FakeAttackCard.fake()
         };
 
-        let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
+        let (_card_id, board, _) = generate_board_with_open_card(Card::from(attack));
         let expected_board = Board { ..board.clone() };
 
         let result = manually_close_attack_card(board, &Uuid::new_v4()).unwrap_err();

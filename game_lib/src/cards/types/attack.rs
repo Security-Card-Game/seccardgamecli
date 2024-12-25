@@ -48,6 +48,7 @@ impl AttackCard {
 pub(crate) mod tests {
     use fake::{Dummy, Fake};
     use rand::Rng;
+    use crate::cards::properties::attack_costs::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::duration::tests::FakeDuration;
     use crate::cards::properties::effect::Effect::Incident;
@@ -64,7 +65,7 @@ pub(crate) mod tests {
             AttackCard {
                 title: FakeTitle.fake(),
                 description: FakeDescription.fake(),
-                effect: Incident(FakeEffectDescription.fake(), vec![FakeTarget.fake()]),
+                effect: Incident(FakeEffectDescription.fake(), vec![FakeTarget.fake()], FakeFixedIncidentImpact.fake()),
                 duration: FakeDuration.fake(),
             }
         }

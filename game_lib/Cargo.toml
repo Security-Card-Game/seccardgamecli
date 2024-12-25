@@ -15,3 +15,5 @@ uuid = { version = "1.10.0", features = ["v4"] }
 [dev-dependencies]
 fake = { version = "2.9.2", features = ["derive", "dummy", "uuid"] }
 rstest = "0.22.0"
+quickcheck = "1.0.3"
+quickcheck_macros = "1.0.0"

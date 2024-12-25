@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use crate::cards::properties::attack_costs::IncidentImpact;
 use crate::cards::properties::effect_description::EffectDescription;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::properties::target::Target;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -21,12 +21,13 @@ pub enum Effect {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use fake::{Dummy, Fake};
-    use rand::Rng;
-    use crate::cards::properties::effect::Effect::{AttackSurface, Immediate, Incident, NOP, OnNextFix, OnUsingForFix, Other};
+    use crate::cards::properties::attack_costs::tests::FakeFixedIncidentImpact;
+    use crate::cards::properties::effect::Effect::{AttackSurface, Immediate, Incident, OnNextFix, OnUsingForFix, Other, NOP};
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
     use crate::cards::properties::target::tests::FakeTarget;
+    use fake::{Dummy, Fake};
+    use rand::Rng;
 
     use super::*;
 
@@ -41,7 +42,7 @@ pub(crate) mod tests {
             match rng.gen_range(0..7) {
                 0 => Immediate(description),
                 1 => AttackSurface(description, vec![target]),
-                2 => Incident(description, vec![target]),
+                2 => Incident(description, vec![target], FakeFixedIncidentImpact.fake()),
                 3 => OnNextFix(description, modifier),
                 4 => OnUsingForFix(description, modifier),
                 5 => Other(description),

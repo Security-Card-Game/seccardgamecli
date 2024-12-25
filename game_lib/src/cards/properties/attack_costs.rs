@@ -1,8 +1,9 @@
-use std::fmt::Display;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::cards::properties::attack_costs::IncidentImpact::Fixed;
-use crate::cards::serialization::helper::{Number, NumberVisitor};
+use crate::cards::serialization::helper::Number;
+use crate::world::part_of_hundred::PartOfHundred;
 use crate::world::resources::Resources;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt::Display;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -17,58 +18,77 @@ impl IncidentImpact {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct PartOfHundred {
-    value: u8,
-}
+#[cfg(test)]
+pub(crate) mod tests {
+    use crate::cards::properties::attack_costs::IncidentImpact::{Fixed, PartOfRevenue};
+    use crate::cards::properties::attack_costs::{IncidentImpact, PartOfHundred};
+    use crate::world::resources::Resources;
+    use fake::Dummy;
+    use rand::Rng;
 
-impl Display for PartOfHundred {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}%", self.value)
-    }
-}
 
-impl PartOfHundred {
-    pub fn new(value: u8) -> Self {
-        if (value > 100) || (value < 0) {
-            panic!("Value must be between 0 and 100");
-        }
-        PartOfHundred { value }
-    }
+    pub struct FakePartOfRevenueIncidentImpact;
+    pub struct FakeFixedIncidentImpact;
 
-    fn guard(value: i64) {
-        if (value > 100) || (value < 0) {
-            panic!("Value must be between 0 and 100");
+    impl Dummy<FakePartOfRevenueIncidentImpact> for IncidentImpact {
+        fn dummy_with_rng<R: Rng + ?Sized>(_config: &FakePartOfRevenueIncidentImpact, rng: &mut R) -> Self {
+            PartOfRevenue(
+                PartOfHundred {
+                    value: rng.gen()
+                }
+            )
         }
     }
-}
 
-impl Number for PartOfHundred {
-    fn from_i64(value: i64) -> Self {
-        Self::guard(value);
-        PartOfHundred { value: value as u8 }
+    impl Dummy<FakeFixedIncidentImpact> for IncidentImpact {
+        fn dummy_with_rng<R: Rng + ?Sized>(_config: &FakeFixedIncidentImpact, rng: &mut R) -> Self {
+            Fixed(
+                Resources::new(rng.gen())
+            )
+        }
     }
 
-    fn from_u64(value: u64) -> Self {
-        Self::guard(value as i64);
-        PartOfHundred { value: value as u8 }
+    #[test]
+    fn create_none_incident_impact_does_not_cost_resources_and_is_fixed() {
+        let sut = IncidentImpact::none();
+        match sut {
+            PartOfRevenue(_) => panic!("Should be a fixed impact"),
+            Fixed(r) =>  assert_eq!(r.value(), &0)
+        }
     }
-}
 
-impl<'de> Deserialize<'de> for PartOfHundred {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>
-    {
-        deserializer.deserialize_u64(NumberVisitor(std::marker::PhantomData))
+    #[test]
+    fn create_fix_incident_with_10_resources() {
+        let fixed = Fixed(Resources::new(10));
+        assert_eq!(fixed, Fixed(Resources::new(10)));
     }
-}
 
-impl Serialize for PartOfHundred {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer
-    {
-        serializer.serialize_u64(self.value as u64)
+    #[test]
+    fn create_relative_incident_impact_of_0_works() {
+        let sut = PartOfRevenue(PartOfHundred::new(0));
+        match sut {
+            PartOfRevenue(ph) => {
+                assert_eq!(ph.value, 0);
+            }
+            Fixed(_) => panic!("Should be a relative impact")
+        }
     }
+
+    #[test]
+    fn create_relative_incident_impact_of_100_works() {
+        let sut = PartOfRevenue(PartOfHundred::new(100));
+        match sut {
+            PartOfRevenue(ph) => {
+                assert_eq!(ph.value, 100);
+            }
+            Fixed(_) => panic!("Should be a relative impact")
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn create_relative_incident_impact_of_101_panics() {
+        PartOfRevenue(PartOfHundred::new(101));
+    }
+
 }

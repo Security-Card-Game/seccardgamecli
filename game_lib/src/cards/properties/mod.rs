@@ -1,5 +1,3 @@
-use log::warn;
-
 pub mod description;
 pub mod duration;
 pub mod effect;
