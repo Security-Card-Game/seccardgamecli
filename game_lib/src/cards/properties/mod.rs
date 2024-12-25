@@ -6,4 +6,4 @@ pub mod fix_cost;
 pub mod fix_modifier;
 pub mod target;
 pub mod title;
-pub mod attack_costs;
+pub mod incident_impact;

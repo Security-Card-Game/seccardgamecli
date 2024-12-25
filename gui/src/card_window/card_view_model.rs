@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use eframe::epaint::Color32;
 use uuid::Uuid;
-use game_lib::cards::properties::attack_costs::IncidentImpact;
+use game_lib::cards::properties::incident_impact::IncidentImpact;
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::fix_cost::FixCost;
 use game_lib::cards::properties::fix_modifier::FixModifier;

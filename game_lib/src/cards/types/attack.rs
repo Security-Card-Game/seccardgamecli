@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::cards::properties::attack_costs::IncidentImpact;
+use crate::cards::properties::incident_impact::IncidentImpact;
 use crate::cards::properties::description::Description;
 use crate::cards::properties::duration::Duration;
 use crate::cards::properties::effect::Effect;
@@ -48,7 +48,7 @@ impl AttackCard {
 pub(crate) mod tests {
     use fake::{Dummy, Fake};
     use rand::Rng;
-    use crate::cards::properties::attack_costs::tests::FakeFixedIncidentImpact;
+    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::duration::tests::FakeDuration;
     use crate::cards::properties::effect::Effect::Incident;

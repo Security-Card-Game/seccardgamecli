@@ -1,5 +1,5 @@
 use dialoguer::{Confirm, Editor, Select};
-use game_lib::cards::properties::attack_costs::{IncidentImpact, PartOfHundred};
+use game_lib::cards::properties::incident_impact::{IncidentImpact, PartOfHundred};
 use game_lib::cards::properties::description::Description;
 use game_lib::cards::properties::duration::Duration;
 use game_lib::cards::properties::effect::Effect;

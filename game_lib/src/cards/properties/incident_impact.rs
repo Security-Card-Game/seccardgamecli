@@ -1,4 +1,4 @@
-use crate::cards::properties::attack_costs::IncidentImpact::Fixed;
+use crate::cards::properties::incident_impact::IncidentImpact::Fixed;
 use crate::cards::serialization::helper::Number;
 use crate::world::part_of_hundred::PartOfHundred;
 use crate::world::resources::Resources;
@@ -20,8 +20,8 @@ impl IncidentImpact {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use crate::cards::properties::attack_costs::IncidentImpact::{Fixed, PartOfRevenue};
-    use crate::cards::properties::attack_costs::{IncidentImpact, PartOfHundred};
+    use crate::cards::properties::incident_impact::IncidentImpact::{Fixed, PartOfRevenue};
+    use crate::cards::properties::incident_impact::{IncidentImpact, PartOfHundred};
     use crate::world::resources::Resources;
     use fake::Dummy;
     use rand::Rng;

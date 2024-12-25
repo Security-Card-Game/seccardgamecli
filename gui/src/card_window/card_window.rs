@@ -2,7 +2,7 @@ use crate::actions::command::Command;
 use crate::card_window::card_view_model::{CardContent, CardMarker, Costs};
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
-use game_lib::cards::properties::attack_costs::IncidentImpact;
+use game_lib::cards::properties::incident_impact::IncidentImpact;
 use rand::Rng;
 
 pub struct CardWindow<'a> {

@@ -1,4 +1,4 @@
-use crate::cards::properties::attack_costs::IncidentImpact;
+use crate::cards::properties::incident_impact::IncidentImpact;
 use crate::cards::properties::effect_description::EffectDescription;
 use crate::cards::properties::fix_modifier::FixModifier;
 use crate::cards::properties::target::Target;
@@ -21,7 +21,7 @@ pub enum Effect {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use crate::cards::properties::attack_costs::tests::FakeFixedIncidentImpact;
+    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::effect::Effect::{AttackSurface, Immediate, Incident, OnNextFix, OnUsingForFix, Other, NOP};
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;

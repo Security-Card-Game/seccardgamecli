@@ -85,7 +85,7 @@ mod tests {
     use fake::Fake;
     use rstest::rstest;
     use uuid::Uuid;
-    use crate::cards::properties::attack_costs::tests::FakeFixedIncidentImpact;
+    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
     use crate::cards::types::attack::AttackCard;
