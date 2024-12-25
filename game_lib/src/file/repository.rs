@@ -51,7 +51,7 @@ impl DeckLoader {
             Ok(cards) => cards,
             Err(err) => {
                 error!(
-                    "Could not read cars of type: {} (caused by {})",
+                    "Could not read cards of type: {} (caused by {})",
                     card_type.category(),
                     err.to_string()
                 );

@@ -1,11 +1,10 @@
 use std::ops::Add;
 
 use eframe::epaint::Color32;
-use uuid::Uuid;
-
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::fix_cost::FixCost;
-use game_lib::cards::properties::fix_modifier::FixModifier;
+use game_lib::cards::properties::cost_modifier::CostModifier;
+use game_lib::cards::properties::incident_impact::IncidentImpact;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::types::attack::AttackCard;
 use game_lib::cards::types::card_model::{Card, CardTrait};
@@ -15,6 +14,7 @@ use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::world::deck::CardRc;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct CardContent {
@@ -26,6 +26,7 @@ pub struct CardContent {
     pub action: String,
     pub targets: Option<Vec<String>>,
     pub costs: Option<FixCost>,
+    pub incident_impact: Option<IncidentImpact>,
     pub duration: Option<usize>,
     pub can_be_activated: bool,
     pub can_be_closed: bool,
@@ -44,14 +45,24 @@ impl CardContent {
         dark_color: Color32,
         light_color: Color32,
         card: Card,
-        costs: Option<FixCost>,
+        fix_cost: Option<FixCost>,
+        incident_impact: Option<IncidentImpact>,
         duration: Option<usize>,
         can_be_closed: bool,
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
-        let actual_costs = match costs {
+        let actual_costs = match fix_cost {
             None => None,
             Some(c) => Some(c * &multiplier),
+        };
+
+        let actual_impact = if let Some(impact) = incident_impact {
+            Some(match &impact {
+                IncidentImpact::PartOfRevenue(_) => impact,
+                IncidentImpact::Fixed(c) => IncidentImpact::Fixed(c * &multiplier),
+            })
+        } else {
+            None
         };
 
         CardContent {
@@ -63,6 +74,7 @@ impl CardContent {
             action: Self::effect_to_text(&card.effect(), &multiplier),
             targets: Self::effect_to_targets(&card.effect()),
             costs: actual_costs,
+            incident_impact: actual_impact,
             duration,
             can_be_activated: Self::can_effect_be_activated(&card.effect()),
             can_be_closed,
@@ -106,6 +118,7 @@ impl CardContent {
             Card::Event(card),
             None,
             None,
+            None,
             can_be_closed,
             multiplier,
         )
@@ -115,7 +128,7 @@ impl CardContent {
         match effect {
             Effect::Immediate(_)
             | Effect::AttackSurface(_, _)
-            | Effect::Incident(_, _)
+            | Effect::Incident(_, _, _)
             | Effect::OnNextFix(_, _)
             | Effect::Other(_)
             | Effect::NOP => false,
@@ -125,7 +138,7 @@ impl CardContent {
 
     fn effect_to_targets(action: &Effect) -> Option<Vec<String>> {
         match action {
-            Effect::Incident(_, t) => Some(Self::targets_to_strings(t)),
+            Effect::Incident(_, t, _) => Some(Self::targets_to_strings(t)),
             Effect::AttackSurface(_, t) => Some(Self::targets_to_strings(t)),
             _ => None,
         }
@@ -138,18 +151,18 @@ impl CardContent {
             Effect::OnUsingForFix(_d, m) => {
                 Self::modifier_to_text(m, multiplier).add(" on use for a fix.")
             }
-            Effect::Incident(d, _) | Effect::AttackSurface(d, _) => d.value().to_string(),
+            Effect::Incident(d, _, _) | Effect::AttackSurface(d, _) => d.value().to_string(),
             Effect::NOP => "".to_string(),
         }
     }
 
-    fn modifier_to_text(fix_modifier: &FixModifier, multiplier: &ResourceFixMultiplier) -> String {
+    fn modifier_to_text(fix_modifier: &CostModifier, multiplier: &ResourceFixMultiplier) -> String {
         match fix_modifier {
-            FixModifier::Increase(r) => format!(
+            CostModifier::Increase(r) => format!(
                 "Increase fix cost by {} resources",
                 (r.clone() * multiplier).value()
             ),
-            FixModifier::Decrease(r) => format!(
+            CostModifier::Decrease(r) => format!(
                 "Decrease fix cost by {} resources",
                 (r.clone() * multiplier).value()
             ),
@@ -166,12 +179,22 @@ impl CardContent {
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
         let duration = card.duration.value().unwrap_or(&0).clone();
+        let effect = match &card.effect {
+            Effect::Incident(_, _, impact) => Some(impact.clone()),
+            Effect::Immediate(_)
+            | Effect::AttackSurface(_, _)
+            | Effect::OnNextFix(_, _)
+            | Effect::OnUsingForFix(_, _)
+            | Effect::Other(_)
+            | Effect::NOP => None
+        };
         Self::new(
             id.clone(),
             Color32::LIGHT_RED,
             Color32::DARK_RED,
             Card::Attack(card),
             None,
+            effect,
             Some(duration),
             true,
             multiplier,
@@ -191,6 +214,7 @@ impl CardContent {
             Card::Oopsie(card),
             Some(fix_cost.clone()),
             None,
+            None,
             true,
             multiplier,
         )
@@ -209,6 +233,7 @@ impl CardContent {
             Card::Lucky(card),
             None,
             None,
+            None,
             can_be_closed,
             multiplier,
         )
@@ -225,6 +250,7 @@ impl CardContent {
             Color32::LIGHT_GRAY,
             Color32::DARK_GRAY,
             Card::Evaluation(card),
+            None,
             None,
             None,
             can_be_closed,

@@ -1,12 +1,11 @@
 use dialoguer::{Confirm, Editor, Select};
-use log::error;
-
+use game_lib::cards::properties::incident_impact::{IncidentImpact};
 use game_lib::cards::properties::description::Description;
 use game_lib::cards::properties::duration::Duration;
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::effect_description::EffectDescription;
 use game_lib::cards::properties::fix_cost::FixCost;
-use game_lib::cards::properties::fix_modifier::FixModifier;
+use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::properties::title::Title;
 use game_lib::cards::types::attack::AttackCard;
@@ -15,10 +14,11 @@ use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::world::resources::Resources;
-
+use log::error;
+use game_lib::world::part_of_hundred::PartOfHundred;
 use crate::cards::stats::print_stats;
-use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::cli_result::ErrorKind::FileSystemError;
+use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
 use crate::cli::prompts::prompt;
 
@@ -83,8 +83,11 @@ fn deserialize_editor_content(content: String, original_card: &Card) -> serde_js
 pub fn create(cfg: &Config) -> CliResult<()> {
     print_stats(cfg)?;
     println!();
-    let creatable_card_types: Vec<&&str> = Card::CARD_TYPES.iter().filter(|i| i.ne(&&Card::EVALUATION)).collect();
-    
+    let creatable_card_types: Vec<&&str> = Card::CARD_TYPES
+        .iter()
+        .filter(|i| i.ne(&&Card::EVALUATION))
+        .collect();
+
     let card_type_index = Select::new()
         .with_prompt("Select a card type to create")
         .items(&creatable_card_types)
@@ -146,9 +149,9 @@ fn ask_for_modifying_effect() -> Effect {
 
         let amount: isize = prompt("How much does it affect it?", None);
         let fix_modifier = if amount >= 0 {
-            FixModifier::Increase(Resources::new(amount.abs() as usize))
+            CostModifier::Increase(Resources::new(amount.abs() as usize))
         } else {
-            FixModifier::Decrease(Resources::new(amount.abs() as usize))
+            CostModifier::Decrease(Resources::new(amount.abs() as usize))
         };
 
         match selection {
@@ -166,6 +169,7 @@ fn create_attack_card() -> Card {
     let title: String = prompt("Card title", None);
     let description: String = prompt("Card description", None);
     let effect: String = prompt("Card Effect", None);
+    let cost = ask_for_cost();
     let duration: usize = prompt("Duration (rounds)", None);
 
     let targets = ask_for_targets();
@@ -175,12 +179,36 @@ fn create_attack_card() -> Card {
         Description::from(description),
         targets.iter().map(|t| Target::from(t.clone())).collect(),
         EffectDescription::from(effect),
+        cost,
         Duration::Rounds(duration),
     );
 
     println!("{}", serde_json::to_string_pretty(&card).unwrap());
 
     Card::Attack(card)
+}
+
+fn ask_for_cost() -> IncidentImpact {
+    let available_costs = ["Percentage of Revenue", "Fixed amount of resources"];
+
+    let selection = Select::new()
+        .with_prompt("Select cost type")
+        .items(&available_costs)
+        .default(0)
+        .interact()
+        .unwrap();
+
+    match selection {
+        0 => {
+            let percentage = prompt("Percentage of revenue (0-100, int)", None);
+            IncidentImpact::PartOfRevenue(PartOfHundred::new(percentage))
+        },
+        1 => {
+            let resources = prompt("Amount of resources", None);
+            IncidentImpact::Fixed(Resources::new(resources))
+        },
+        _ => panic!("Unknown cost type")
+    }
 }
 
 fn ask_for_targets() -> Vec<String> {

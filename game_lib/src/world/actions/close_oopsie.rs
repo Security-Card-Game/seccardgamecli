@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::fix_cost::FixCost;
-use crate::cards::properties::fix_modifier::FixModifier;
+use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::types::card_model::{Card, CardTrait};
 use crate::cards::types::oopsie::OopsieCard;
 use crate::world::actions::action_error::{ActionError, ActionResult};
@@ -59,7 +59,7 @@ fn try_and_close(
                 current_resources: &board.current_resources - &real_fix_costs,
                 open_cards: new_open_cards.clone(),
                 cards_to_use: HashSet::new(),
-                fix_modifier: None,
+                cost_modifier: None,
                 ..board.clone()
             },
             real_fix_costs.clone(),
@@ -70,7 +70,7 @@ fn try_and_close(
                 current_resources: Resources::new(0),
                 open_cards: new_open_cards.clone(),
                 cards_to_use: HashSet::new(),
-                fix_modifier: None,
+                cost_modifier: None,
                 ..board.clone()
             },
             real_fix_costs,
@@ -79,10 +79,10 @@ fn try_and_close(
 }
 
 fn apply_fix_modifier(board: &&Board, base_fix_cost: &Resources) -> Resources {
-    if let Some(modifier) = &board.fix_modifier {
+    if let Some(modifier) = &board.cost_modifier {
         match modifier {
-            FixModifier::Increase(r) => base_fix_cost + r,
-            FixModifier::Decrease(r) => base_fix_cost - r,
+            CostModifier::Increase(r) => base_fix_cost + r,
+            CostModifier::Decrease(r) => base_fix_cost - r,
         }
     } else {
         base_fix_cost.clone()
@@ -111,7 +111,7 @@ mod tests {
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_cost::FixCost;
-    use crate::cards::properties::fix_modifier::FixModifier;
+    use crate::cards::properties::cost_modifier::CostModifier;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::card_model::Card;
@@ -176,7 +176,7 @@ mod tests {
         let expected_board = Board {
             current_resources: Resources::new(5),
             open_cards: HashMap::new(),
-            fix_modifier: None,
+            cost_modifier: None,
             ..board_with_resourecs.clone()
         };
 
@@ -188,7 +188,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(result, (expected_board, Resources::new(5)));
-        assert!(result.0.fix_modifier.is_none());
+        assert!(result.0.cost_modifier.is_none());
     }
 
     #[test]
@@ -208,7 +208,7 @@ mod tests {
         let expected_board = Board {
             current_resources: Resources::new(0),
             open_cards: HashMap::new(),
-            fix_modifier: None,
+            cost_modifier: None,
             ..board_with_resourecs.clone()
         };
 
@@ -233,7 +233,7 @@ mod tests {
         let (card_id, board, _) = generate_board_with_open_card(Card::from(oopsie_card));
         let board_with_resourecs = Board {
             current_resources: Resources::new(24),
-            fix_modifier: Some(FixModifier::Increase(Resources::new(2))),
+            cost_modifier: Some(CostModifier::Increase(Resources::new(2))),
             ..board
         };
 
@@ -246,7 +246,7 @@ mod tests {
 
         assert!(result.0.open_cards.is_empty());
         assert!(result.0.current_resources.value().clone() <= 10);
-        assert!(result.0.fix_modifier.is_none());
+        assert!(result.0.cost_modifier.is_none());
     }
 
     #[test]
@@ -261,7 +261,7 @@ mod tests {
         let event_card = EventCard {
             effect: Effect::OnNextFix(
                 FakeEffectDescription.fake(),
-                FixModifier::Increase(Resources::new(5)),
+                CostModifier::Increase(Resources::new(5)),
             ),
             ..FakeEventCard.fake()
         };
@@ -271,7 +271,7 @@ mod tests {
         let lucky_card = LuckyCard {
             effect: Effect::OnUsingForFix(
                 FakeEffectDescription.fake(),
-                FixModifier::Decrease(Resources::new(4)),
+                CostModifier::Decrease(Resources::new(4)),
             ),
             ..FakeLuckyCard.fake()
         };
@@ -301,7 +301,7 @@ mod tests {
         let expected_board = Board {
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
-            fix_modifier: None,
+            cost_modifier: None,
             current_resources: Resources::new(0),
             ..prepared_board.clone()
         };
@@ -326,7 +326,7 @@ mod tests {
         let event_card = EventCard {
             effect: Effect::OnNextFix(
                 FakeEffectDescription.fake(),
-                FixModifier::Increase(Resources::new(5)),
+                CostModifier::Increase(Resources::new(5)),
             ),
             ..FakeEventCard.fake()
         };
@@ -336,7 +336,7 @@ mod tests {
         let lucky_card = LuckyCard {
             effect: Effect::OnUsingForFix(
                 FakeEffectDescription.fake(),
-                FixModifier::Decrease(Resources::new(4)),
+                CostModifier::Decrease(Resources::new(4)),
             ),
             ..FakeLuckyCard.fake()
         };
@@ -372,7 +372,7 @@ mod tests {
         let expected_board = Board {
             open_cards: open_cards_after.into_iter().collect(),
             cards_to_use: HashSet::new(),
-            fix_modifier: None,
+            cost_modifier: None,
             current_resources: Resources::new(0),
             ..prepared_board.clone()
         };
@@ -396,7 +396,7 @@ mod tests {
         let (card_id, board, _) = generate_board_with_open_card(Card::from(oopsie_card));
         let board_with_resourecs = Board {
             current_resources: Resources::new(23),
-            fix_modifier: Some(FixModifier::Increase(Resources::new(2))),
+            cost_modifier: Some(CostModifier::Increase(Resources::new(2))),
             ..board
         };
 
@@ -404,7 +404,7 @@ mod tests {
 
         let expected_board = Board {
             current_resources: Resources::new(0),
-            fix_modifier: None,
+            cost_modifier: None,
             ..board_with_resourecs.clone()
         };
 

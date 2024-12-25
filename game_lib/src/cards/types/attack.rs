@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-
+use crate::cards::properties::incident_impact::IncidentImpact;
 use crate::cards::properties::description::Description;
 use crate::cards::properties::duration::Duration;
 use crate::cards::properties::effect::Effect;
@@ -23,12 +23,13 @@ impl AttackCard {
         description: Description,
         targets: Vec<Target>,
         effect: EffectDescription,
+        cost: IncidentImpact,
         duration: Duration,
     ) -> Self {
         AttackCard {
             title,
             description,
-            effect: Effect::Incident(effect, targets),
+            effect: Effect::Incident(effect, targets, cost),
             duration,
         }
     }
@@ -37,7 +38,7 @@ impl AttackCard {
         Card::Attack(AttackCard {
             title: Title::empty(),
             description: Description::empty(),
-            effect: Effect::Incident(EffectDescription::empty(), vec![]),
+            effect: Effect::Incident(EffectDescription::empty(), vec![], IncidentImpact::none()),
             duration: Duration::default(),
         })
     }
@@ -47,6 +48,7 @@ impl AttackCard {
 pub(crate) mod tests {
     use fake::{Dummy, Fake};
     use rand::Rng;
+    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::description::tests::FakeDescription;
     use crate::cards::properties::duration::tests::FakeDuration;
     use crate::cards::properties::effect::Effect::Incident;
@@ -63,7 +65,7 @@ pub(crate) mod tests {
             AttackCard {
                 title: FakeTitle.fake(),
                 description: FakeDescription.fake(),
-                effect: Incident(FakeEffectDescription.fake(), vec![FakeTarget.fake()]),
+                effect: Incident(FakeEffectDescription.fake(), vec![FakeTarget.fake()], FakeFixedIncidentImpact.fake()),
                 duration: FakeDuration.fake(),
             }
         }

@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
-
+use crate::cards::properties::incident_impact::IncidentImpact;
 use crate::cards::properties::effect_description::EffectDescription;
-use crate::cards::properties::fix_modifier::FixModifier;
+use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::properties::target::Target;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -10,9 +10,9 @@ use crate::cards::properties::target::Target;
 pub enum Effect {
     Immediate(EffectDescription),
     AttackSurface(EffectDescription, Vec<Target>),
-    Incident(EffectDescription, Vec<Target>),
-    OnNextFix(EffectDescription, FixModifier),
-    OnUsingForFix(EffectDescription, FixModifier),
+    Incident(EffectDescription, Vec<Target>, IncidentImpact),
+    OnNextFix(EffectDescription, CostModifier),
+    OnUsingForFix(EffectDescription, CostModifier),
     Other(EffectDescription),
     #[default]
     NOP,
@@ -21,12 +21,13 @@ pub enum Effect {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
+    use crate::cards::properties::effect::Effect::{AttackSurface, Immediate, Incident, OnNextFix, OnUsingForFix, Other, NOP};
+    use crate::cards::properties::effect_description::tests::FakeEffectDescription;
+    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
+    use crate::cards::properties::target::tests::FakeTarget;
     use fake::{Dummy, Fake};
     use rand::Rng;
-    use crate::cards::properties::effect::Effect::{AttackSurface, Immediate, Incident, NOP, OnNextFix, OnUsingForFix, Other};
-    use crate::cards::properties::effect_description::tests::FakeEffectDescription;
-    use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
-    use crate::cards::properties::target::tests::FakeTarget;
 
     use super::*;
 
@@ -36,12 +37,12 @@ pub(crate) mod tests {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeEffect, rng: &mut R) -> Self {
             let description = FakeEffectDescription.fake();
             let target = FakeTarget.fake();
-            let modifier = FakeFixModifier.fake();
+            let modifier = FakeCostModifier.fake();
             // this might not be optimal but it is quick
             match rng.gen_range(0..7) {
                 0 => Immediate(description),
                 1 => AttackSurface(description, vec![target]),
-                2 => Incident(description, vec![target]),
+                2 => Incident(description, vec![target], FakeFixedIncidentImpact.fake()),
                 3 => OnNextFix(description, modifier),
                 4 => OnUsingForFix(description, modifier),
                 5 => Other(description),

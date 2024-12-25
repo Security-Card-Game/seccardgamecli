@@ -43,7 +43,7 @@ mod tests {
 
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
-    use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
+    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::card_model::Card;
@@ -89,7 +89,7 @@ mod tests {
 
     #[test]
     fn try_effect_for_next_fix() {
-        let effect = Effect::OnNextFix(FakeEffectDescription.fake(), FakeFixModifier.fake());
+        let effect = Effect::OnNextFix(FakeEffectDescription.fake(), FakeCostModifier.fake());
         let effect_card = LuckyCard {
             effect,
             ..FakeLuckyCard.fake()
