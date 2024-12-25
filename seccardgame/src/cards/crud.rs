@@ -1,5 +1,5 @@
 use dialoguer::{Confirm, Editor, Select};
-use game_lib::cards::properties::incident_impact::{IncidentImpact, PartOfHundred};
+use game_lib::cards::properties::incident_impact::{IncidentImpact};
 use game_lib::cards::properties::description::Description;
 use game_lib::cards::properties::duration::Duration;
 use game_lib::cards::properties::effect::Effect;
@@ -15,7 +15,7 @@ use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::world::resources::Resources;
 use log::error;
-
+use game_lib::world::part_of_hundred::PartOfHundred;
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};

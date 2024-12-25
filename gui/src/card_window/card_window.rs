@@ -1,5 +1,5 @@
 use crate::actions::command::Command;
-use crate::card_window::card_view_model::{CardContent, CardMarker, Costs};
+use crate::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;
@@ -50,58 +50,95 @@ where
 {
     ui.vertical(|ui| {
         add_header(cmd_callback, &card, ui);
-        ui.add_space(5.0);
-        card_label(&card.description, ui);
-        ui.add_space(5.0);
-        add_explanation("Action:   ", &card.action.as_str(), ui);
-        match &card.duration {
-            None => {}
-            Some(duration) => {
-                let content = format!("{} rounds", duration);
-                add_explanation("Duration: ", content.as_str(), ui);
-            }
-        }
-        match &card.targets {
-            None => {}
 
-            Some(targets) => {
-                let content = targets.join(", ");
-                add_explanation("Targets:  ", content.as_str(), ui);
-            }
-        }
+        ui.add_space(5.0);
+
+        card_label(&card.description, ui);
+
+        ui.add_space(5.0);
+
+        add_action(&card, ui);
+        add_duration(&card, ui);
+        add_targets(&card, ui);
+
         ui.add_space(2.0);
-        match &card.costs {
-            None => {}
-            Some(cost) => match cost {
-                Costs::Attack(a) => match a {
-                    IncidentImpact::PartOfRevenue(poh) => {
-                        let content = format!("Pay {} of your revenue during this incident", poh);
-                        add_explanation("Impact:   ", content.as_str(), ui);
-                    }
-                    IncidentImpact::Fixed(f) => {
-                        let content = format!("Pay {} resources immediately", f.value());
-                        add_explanation("Impact:   ", content.as_str(), ui);
-                    }
-                },
-                Costs::Oopsie(o) => {
-                    let content = format!("{} to {} resources", o.min.value(), o.max.value());
-                    add_explanation("Fix:      ", content.as_str(), ui);
-                }
-            },
+
+        add_fix_costs(&card, ui);
+        // this is either fix costs or incident impact
+        add_incident_impact(&card, ui);
+
+        ui.add_space(1.0);
+
+        add_activation_button(cmd_callback, card, ui);
+    });
+}
+
+fn add_activation_button<F>(cmd_callback: &mut F, card: &CardContent, ui: &mut Ui)
+where
+    F: FnMut(Command),
+{
+    if card.can_be_activated {
+        let label = match card.card_marker {
+            CardMarker::MarkedForUse => "Do not use",
+            CardMarker::None => "Use",
         };
-        if card.can_be_activated {
-            let label = match card.card_marker {
-                CardMarker::MarkedForUse => "Do not use",
-                CardMarker::None => "Use",
-            };
-            if ui.button(label).clicked() {
-                match card.card_marker {
-                    CardMarker::MarkedForUse => cmd_callback(Command::DeactivateCard(card.id)),
-                    CardMarker::None => cmd_callback(Command::ActivateCard(card.id)),
-                }
+        if ui.button(label).clicked() {
+            match card.card_marker {
+                CardMarker::MarkedForUse => cmd_callback(Command::DeactivateCard(card.id)),
+                CardMarker::None => cmd_callback(Command::ActivateCard(card.id)),
             }
         }
-    });
+    }
+}
+
+fn add_incident_impact(card: &&CardContent, ui: &mut Ui) {
+    match &card.incident_impact {
+        None => {}
+        Some(impact) => {
+            let content = match impact {
+                IncidentImpact::PartOfRevenue(poh) => {
+                    format!("Pay {} of your revenue during this incident", poh)
+                }
+                IncidentImpact::Fixed(f) => format!("Pay {} resources immediately", f.value()),
+            };
+            add_explanation("Impact:   ", content.as_str(), ui);
+        }
+    }
+}
+
+fn add_fix_costs(card: &&CardContent, ui: &mut Ui) {
+    match &card.costs {
+        None => {}
+        Some(cost) => {
+            let content = format!("{} to {} resources", cost.min.value(), cost.max.value());
+            add_explanation("Fix:      ", content.as_str(), ui);
+        }
+    };
+}
+
+fn add_action(card: &&CardContent, ui: &mut Ui) {
+    add_explanation("Action:   ", &card.action.as_str(), ui);
+}
+
+fn add_duration(card: &&CardContent, ui: &mut Ui) {
+    match &card.duration {
+        None => {}
+        Some(duration) => {
+            let content = format!("{} rounds", duration);
+            add_explanation("Duration: ", content.as_str(), ui);
+        }
+    }
+}
+
+fn add_targets(card: &&CardContent, ui: &mut Ui) {
+    match &card.targets {
+        None => {}
+
+        Some(targets) => {
+            let content = targets.join(", ");
+            add_explanation("Targets:  ", content.as_str(), ui);
+        }
+    }
 }
 
 fn add_header<F>(cmd_callback: &mut F, card: &&CardContent, ui: &mut Ui)

@@ -1,9 +1,7 @@
 use crate::cards::properties::incident_impact::IncidentImpact::Fixed;
-use crate::cards::serialization::helper::Number;
 use crate::world::part_of_hundred::PartOfHundred;
 use crate::world::resources::Resources;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt::Display;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
