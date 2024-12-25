@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use uuid::Uuid;
 
-use crate::cards::properties::fix_modifier::FixModifier;
+use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::types::card_model::Card;
 use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::actions::add_resources::add_resources;
@@ -124,10 +124,10 @@ impl Game {
         }
     }
 
-    pub fn get_current_fix_modifier(&self) -> Option<FixModifier> {
+    pub fn get_current_fix_modifier(&self) -> Option<CostModifier> {
         match &self.status {
             GameStatus::Start(b) | GameStatus::InProgress(b) | GameStatus::Finished(b) => {
-                b.fix_modifier.clone()
+                b.cost_modifier.clone()
             }
         }
     }
@@ -336,8 +336,8 @@ mod tests {
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_cost::FixCost;
-    use crate::cards::properties::fix_modifier::FixModifier;
-    use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
+    use crate::cards::properties::cost_modifier::CostModifier;
+    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::card_model::{Card};
@@ -372,14 +372,14 @@ mod tests {
             let first_card = Card::from(LuckyCard {
                 effect: Effect::OnUsingForFix(
                     FakeEffectDescription.fake(),
-                    FixModifier::Decrease(Resources::new(20)),
+                    CostModifier::Decrease(Resources::new(20)),
                 ),
                 ..FakeLuckyCard.fake()
             });
             let second_card = Card::from(EventCard {
                 effect: Effect::OnNextFix(
                     FakeEffectDescription.fake(),
-                    FixModifier::Increase(Resources::new(10)),
+                    CostModifier::Increase(Resources::new(10)),
                 ),
                 ..FakeEventCard.fake()
             });
@@ -394,7 +394,7 @@ mod tests {
             let fifth_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
             let sixth_card = Card::from(FakeAttackCard.fake::<AttackCard>());
             let seventh_card = Card::from(EventCard {
-                effect: Effect::OnNextFix(FakeEffectDescription.fake(), FakeFixModifier.fake()),
+                effect: Effect::OnNextFix(FakeEffectDescription.fake(), FakeCostModifier.fake()),
                 ..FakeEventCard.fake()
             });
             let cards = vec![
@@ -435,7 +435,7 @@ mod tests {
                 drawn_card: None,
                 open_cards: HashMap::new(),
                 cards_to_use: HashSet::new(),
-                fix_modifier: None,
+                cost_modifier: None,
                 turns_remaining: test_deck.start_deck.total,
             }),
             action_status: GameActionResult::Success,
@@ -468,7 +468,7 @@ mod tests {
         let board_after_round_1 = get_board_from_in_progress(&game_after_round_1);
         assert!(board_after_round_1.drawn_card.is_some());
         assert_eq!(board_after_round_1.open_cards.len(), 1);
-        assert_eq!(board_after_round_1.fix_modifier, None);
+        assert_eq!(board_after_round_1.cost_modifier, None);
         assert_eq!(board_after_round_1.turns_remaining, test_deck.cards.len() - 1);
         assert_eq!(board_after_round_1.current_resources, resource_gain.clone());
         assert!(board_after_round_1.cards_to_use.is_empty());
@@ -479,7 +479,7 @@ mod tests {
         let board_after_round_2 = get_board_from_in_progress(&game_after_round_2);
         assert!(board_after_round_2.drawn_card.is_some());
         assert_eq!(board_after_round_2.open_cards.len(), 2);
-        assert_eq!(board_after_round_2.fix_modifier, Some(FixModifier::Increase(Resources::new(10))));
+        assert_eq!(board_after_round_2.cost_modifier, Some(CostModifier::Increase(Resources::new(10))));
         assert_eq!(board_after_round_2.turns_remaining, test_deck.cards.len() - 2);
         assert_eq!(board_after_round_2.current_resources, &resource_gain * 2 );
         assert!(board_after_round_2.cards_to_use.is_empty());
@@ -500,7 +500,7 @@ mod tests {
         let board_after_round_1 = get_board_from_in_progress(&game_after_round_1);
         assert!(board_after_round_1.drawn_card.is_some());
         assert_eq!(board_after_round_1.open_cards.len(), 1);
-        assert_eq!(board_after_round_1.fix_modifier, None);
+        assert_eq!(board_after_round_1.cost_modifier, None);
         assert_eq!(board_after_round_1.turns_remaining, test_deck.cards.len() - 1);
         assert_eq!(board_after_round_1.current_resources, resource_gain.clone());
         assert!(board_after_round_1.cards_to_use.is_empty());
@@ -513,7 +513,7 @@ mod tests {
         let board_after_activate = get_board_from_in_progress(&game_after_activate);
         assert_eq!(board_after_activate.drawn_card, board_after_round_1.drawn_card);
         assert_eq!(board_after_activate.open_cards, board_after_round_1.open_cards);
-        assert_eq!(board_after_activate.fix_modifier, Some(FixModifier::Decrease(Resources::new(20))));
+        assert_eq!(board_after_activate.cost_modifier, Some(CostModifier::Decrease(Resources::new(20))));
         assert_eq!(board_after_activate.turns_remaining, board_after_round_1.turns_remaining);
         assert_eq!(board_after_activate.current_resources, board_after_round_1.current_resources);
         assert!(board_after_activate.cards_to_use.contains(card_id));
@@ -535,7 +535,7 @@ mod tests {
         let board_after_round_1 = get_board_from_in_progress(&game_after_round_1);
         assert!(board_after_round_1.drawn_card.is_some());
         assert_eq!(board_after_round_1.open_cards.len(), 1);
-        assert_eq!(board_after_round_1.fix_modifier, None);
+        assert_eq!(board_after_round_1.cost_modifier, None);
         assert_eq!(board_after_round_1.turns_remaining, test_deck.cards.len() - 1);
         assert_eq!(board_after_round_1.current_resources, resource_gain.clone());
         assert!(board_after_round_1.cards_to_use.is_empty());
@@ -550,7 +550,7 @@ mod tests {
         let board_after_deactivate = get_board_from_in_progress(&game_after_deactivate);
         assert_eq!(board_after_deactivate.drawn_card, board_after_round_1.drawn_card);
         assert_eq!(board_after_deactivate.open_cards, board_after_round_1.open_cards);
-        assert_eq!(board_after_deactivate.fix_modifier, None);
+        assert_eq!(board_after_deactivate.cost_modifier, None);
         assert_eq!(board_after_deactivate.turns_remaining, board_after_round_1.turns_remaining);
         assert_eq!(board_after_deactivate.current_resources, board_after_round_1.current_resources);
         assert!(board_after_deactivate.cards_to_use.is_empty());

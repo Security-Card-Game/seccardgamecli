@@ -3,7 +3,7 @@ use std::ops::Add;
 use eframe::epaint::Color32;
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::fix_cost::FixCost;
-use game_lib::cards::properties::fix_modifier::FixModifier;
+use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::cards::properties::incident_impact::IncidentImpact;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::types::attack::AttackCard;
@@ -156,13 +156,13 @@ impl CardContent {
         }
     }
 
-    fn modifier_to_text(fix_modifier: &FixModifier, multiplier: &ResourceFixMultiplier) -> String {
+    fn modifier_to_text(fix_modifier: &CostModifier, multiplier: &ResourceFixMultiplier) -> String {
         match fix_modifier {
-            FixModifier::Increase(r) => format!(
+            CostModifier::Increase(r) => format!(
                 "Increase fix cost by {} resources",
                 (r.clone() * multiplier).value()
             ),
-            FixModifier::Decrease(r) => format!(
+            CostModifier::Decrease(r) => format!(
                 "Decrease fix cost by {} resources",
                 (r.clone() * multiplier).value()
             ),

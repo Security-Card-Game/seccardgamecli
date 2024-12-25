@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use uuid::Uuid;
 
-use crate::cards::properties::fix_modifier::FixModifier;
+use crate::cards::properties::cost_modifier::CostModifier;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
 /*
@@ -24,7 +24,7 @@ pub struct Board {
     pub(crate) drawn_card: Option<CardRcWithId>,
     pub open_cards: HashMap<Uuid, CardRc>,
     pub cards_to_use: HashSet<Uuid>,
-    pub fix_modifier: Option<FixModifier>,
+    pub cost_modifier: Option<CostModifier>,
     pub turns_remaining: usize,
 }
 
@@ -35,7 +35,7 @@ impl Board {
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
-            fix_modifier: None,
+            cost_modifier: None,
             turns_remaining: deck.total,
         }
     }
@@ -46,7 +46,7 @@ impl Board {
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
-            fix_modifier: None,
+            cost_modifier: None,
             turns_remaining: 0,
         }
     }

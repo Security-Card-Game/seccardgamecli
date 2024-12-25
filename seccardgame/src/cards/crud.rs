@@ -5,7 +5,7 @@ use game_lib::cards::properties::duration::Duration;
 use game_lib::cards::properties::effect::Effect;
 use game_lib::cards::properties::effect_description::EffectDescription;
 use game_lib::cards::properties::fix_cost::FixCost;
-use game_lib::cards::properties::fix_modifier::FixModifier;
+use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::properties::title::Title;
 use game_lib::cards::types::attack::AttackCard;
@@ -149,9 +149,9 @@ fn ask_for_modifying_effect() -> Effect {
 
         let amount: isize = prompt("How much does it affect it?", None);
         let fix_modifier = if amount >= 0 {
-            FixModifier::Increase(Resources::new(amount.abs() as usize))
+            CostModifier::Increase(Resources::new(amount.abs() as usize))
         } else {
-            FixModifier::Decrease(Resources::new(amount.abs() as usize))
+            CostModifier::Decrease(Resources::new(amount.abs() as usize))
         };
 
         match selection {

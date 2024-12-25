@@ -1,6 +1,6 @@
 use egui::{RichText, Ui};
 
-use game_lib::cards::properties::fix_modifier::FixModifier;
+use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
@@ -55,14 +55,14 @@ fn create_resource_label(board: &Board, postfix: &str) -> RichText {
 
 // function to create fix modifier label
 fn create_fix_modifier_label(
-    fix_modifier: Option<FixModifier>,
+    fix_modifier: Option<CostModifier>,
     multiplier: &ResourceFixMultiplier,
 ) -> String {
     match fix_modifier {
         None => "No cost modifier active!".to_string(),
         Some(m) => match m {
-            FixModifier::Increase(r) => format!("Next fix is increased by: {}", r * multiplier),
-            FixModifier::Decrease(r) => format!("Next fix is decreased by: {}", r * multiplier),
+            CostModifier::Increase(r) => format!("Next fix is increased by: {}", r * multiplier),
+            CostModifier::Decrease(r) => format!("Next fix is decreased by: {}", r * multiplier),
         },
     }
 }

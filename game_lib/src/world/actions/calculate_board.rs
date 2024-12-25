@@ -10,7 +10,7 @@ use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::cards::properties::effect::Effect;
-use crate::cards::properties::fix_modifier::FixModifier;
+use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::types::card_model::Card;
 use crate::world::board::Board;
 use crate::world::deck::{CardRc, Deck};
@@ -19,20 +19,20 @@ use crate::world::resources::Resources;
 
 pub(crate) fn calculate_board(board: Board, deck: &Deck) -> Board {
     let remaining_rounds = calculate_remaining_rounds(deck);
-    let fix_modifier = calculate_fix_modifier(&board);
+    let fix_modifier = calculate_cost_modifier(&board);
     Board {
         turns_remaining: remaining_rounds,
-        fix_modifier,
+        cost_modifier: fix_modifier,
         ..board
     }
 }
 
-fn calculate_fix_modifier(board: &Board) -> Option<FixModifier> {
+fn calculate_cost_modifier(board: &Board) -> Option<CostModifier> {
     let new_modifier = board
         .open_cards
         .iter()
         .filter_map(|(id, card)| get_modifier(id, card, &board.cards_to_use))
-        .fold(FixModifier::Decrease(Resources::new(0)), |acc, e| acc + e);
+        .fold(CostModifier::Decrease(Resources::new(0)), |acc, e| acc + e);
 
     if new_modifier.value() == 0 {
         None
@@ -45,7 +45,7 @@ fn get_modifier(
     card_id: &Uuid,
     card: &CardRc,
     cards_to_use: &HashSet<Uuid>,
-) -> Option<FixModifier> {
+) -> Option<CostModifier> {
     match &**card {
         Card::Event(e) => get_modifier_from_effect(&e.effect, cards_to_use.contains(card_id)),
         Card::Attack(_) => None,
@@ -55,7 +55,7 @@ fn get_modifier(
     }
 }
 
-fn get_modifier_from_effect(effect: &Effect, card_is_active: bool) -> Option<FixModifier> {
+fn get_modifier_from_effect(effect: &Effect, card_is_active: bool) -> Option<CostModifier> {
     match effect {
         Effect::Immediate(_) => None,
         Effect::AttackSurface(_, _) => None,
@@ -87,7 +87,7 @@ mod tests {
     use uuid::Uuid;
     use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
-    use crate::cards::properties::fix_modifier::tests::FakeFixModifier;
+    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::card_model::Card;
@@ -118,8 +118,8 @@ mod tests {
     }
 
     #[test]
-    fn calculate_fix_modifier_from_next_fix_effect() {
-        let modifier: FixModifier = FakeFixModifier.fake();
+    fn calculate_cost_modifier_from_next_fix_effect() {
+        let modifier: CostModifier = FakeCostModifier.fake();
         let effect = Effect::OnNextFix(FakeEffectDescription.fake(), modifier.clone());
 
         let result = get_modifier_from_effect(&effect, false).unwrap();
@@ -128,8 +128,8 @@ mod tests {
     }
 
     #[test]
-    fn calculate_fix_modifier_from_one_user_for_fix_effect_not_active() {
-        let modifier: FixModifier = FakeFixModifier.fake();
+    fn calculate_cost_modifier_from_one_user_for_fix_effect_not_active() {
+        let modifier: CostModifier = FakeCostModifier.fake();
         let effect = Effect::OnUsingForFix(FakeEffectDescription.fake(), modifier.clone());
 
         let result = get_modifier_from_effect(&effect, false);
@@ -138,8 +138,8 @@ mod tests {
     }
 
     #[test]
-    fn calculate_fix_modifier_from_one_use_for_fix_effect_is_active() {
-        let modifier: FixModifier = FakeFixModifier.fake();
+    fn calculate_cost_modifier_from_one_use_for_fix_effect_is_active() {
+        let modifier: CostModifier = FakeCostModifier.fake();
         let effect = Effect::OnUsingForFix(FakeEffectDescription.fake(), modifier.clone());
 
         let result = get_modifier_from_effect(&effect, true).unwrap();
@@ -155,7 +155,7 @@ mod tests {
     #[case::Other(Effect::Other(FakeEffectDescription.fake()), None)]
     fn calculate_fix_modifier_of_non_modifying_effect(
         #[case] effect: Effect,
-        #[case] expectation: Option<FixModifier>,
+        #[case] expectation: Option<CostModifier>,
     ) {
         let result = get_modifier_from_effect(&effect, true);
 
@@ -163,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn calculate_fix_modifier_for_board() {
+    fn calculate_cost_modifier_for_board() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let oopsie_card_rc = Rc::new(oopsie_card.clone());
 
@@ -171,14 +171,14 @@ mod tests {
         let attack_card_rc = Rc::new(attack_card.clone());
 
         let event_card_base: EventCard = FakeEventCard.fake();
-        let event_modifier: FixModifier = FakeFixModifier.fake();
+        let event_modifier: CostModifier = FakeCostModifier.fake();
         let event_card = Card::from(EventCard {
             effect: Effect::OnNextFix(FakeEffectDescription.fake(), event_modifier.clone()),
             ..event_card_base
         });
         let event_card_rc = Rc::new(event_card.clone());
 
-        let used_card_modifier: FixModifier = FakeFixModifier.fake();
+        let used_card_modifier: CostModifier = FakeCostModifier.fake();
         let used_card_id = Uuid::new_v4();
         let used_lucky_card_base: LuckyCard = FakeLuckyCard.fake();
         let used_lucky_card = Card::from(LuckyCard {
@@ -189,7 +189,7 @@ mod tests {
 
         let unused_lucky_card_base: LuckyCard = FakeLuckyCard.fake();
         let unused_lucky_card = Card::from(LuckyCard {
-            effect: Effect::OnUsingForFix(FakeEffectDescription.fake(), FakeFixModifier.fake()),
+            effect: Effect::OnUsingForFix(FakeEffectDescription.fake(), FakeCostModifier.fake()),
             ..unused_lucky_card_base
         });
         let unused_lucky_card_rc = Rc::new(unused_lucky_card);
@@ -219,7 +219,7 @@ mod tests {
             Some(test_result)
         };
 
-        let result = calculate_fix_modifier(&board);
+        let result = calculate_cost_modifier(&board);
 
         assert_eq!(result, expected_result);
     }
@@ -228,7 +228,7 @@ mod tests {
     fn calculate_board_no_fix_modifiers() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let event_card_base: EventCard = FakeEventCard.fake();
-        let event_modifier: FixModifier = FakeFixModifier.fake();
+        let event_modifier: CostModifier = FakeCostModifier.fake();
         let event_card = Card::from(EventCard {
             effect: Effect::OnNextFix(FakeEffectDescription.fake(), event_modifier.clone()),
             ..event_card_base
@@ -251,7 +251,7 @@ mod tests {
 
         let expected_board = Board {
             turns_remaining: 1,
-            fix_modifier: Some(event_modifier),
+            cost_modifier: Some(event_modifier),
             ..board.clone()
         };
 
