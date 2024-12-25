@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.0
+
+* [FEATURE] adds incident impact a coded field for incident cards. This breaks the old card format. Please re-init.
+
 ## 0.5.7
 
 * [FEATURE] adds blank evaluation cards
