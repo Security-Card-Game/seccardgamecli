@@ -8,4 +8,6 @@ pub(crate) enum Command {
     CloseCard(Uuid),
     DeactivateCard(Uuid),
     ActivateCard(Uuid),
+    IncreaseReputation(u8),
+    DecreaseReputation(u8),
 }

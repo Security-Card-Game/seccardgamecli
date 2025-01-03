@@ -1,3 +1,4 @@
+use game_lib::world::reputation::Reputation;
 /// # Control Panel handling
 /// Commands which can be triggered by a the control panel should be handled here.
 use crate::{Message, SecCardGameApp};
@@ -22,4 +23,13 @@ impl SecCardGameApp {
         self.game = self.game.set_resource_gain(Resources::new(res));
         self.input.next_res = res.to_string();
     }
+
+    pub(super) fn handle_increase_reputation(&mut self, rep: u8) {
+        self.game = self.game.increase_reputation(&Reputation::new(rep));
+    }
+
+    pub(super) fn handle_decrease_reputation(&mut self, rep: u8) {
+        self.game = self.game.decrease_reputation(&Reputation::new(rep));
+    }
+
 }

@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::io::ErrorKind::ReadOnlyFilesystem;
 use std::ops::{Add, Sub};
 
 const MAX_VALUE: u8 = 100;
@@ -10,9 +11,10 @@ pub struct Reputation(u8);
 impl Reputation {
     pub fn new(rep: u8) -> Self {
         if rep > MAX_VALUE {
-            panic!("Reputation can't be higher than {}", MAX_VALUE);
+            Reputation(MAX_VALUE)
+        } else {
+            Reputation(rep)
         }
-        Reputation(rep)
     }
 
     pub fn start_value() -> Self {
@@ -60,9 +62,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    pub fn cannot_create_reputation_above_100() {
-        Reputation::new(101);
+    pub fn create_reputation_max_value_plus_1_returns_max_value() {
+        let rep = Reputation::new(101);
+        assert_eq!(rep.value(), &100);
     }
 
     #[test]

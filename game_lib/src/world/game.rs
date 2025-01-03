@@ -226,7 +226,7 @@ impl Game {
     }
 
     /// Increases Reputation by given value, maxes out at MAX_VALUE (see Reputation implementation)
-    fn increase_reputation(&self, value: &Reputation) -> Self {
+    pub fn increase_reputation(&self, value: &Reputation) -> Self {
         match &self.status {
             GameStatus::InProgress(b) => {
                 let new_board = add_reputation(b.clone(), value);
@@ -252,7 +252,7 @@ impl Game {
     }
 
     /// Decreases Reputation by given value, bottoms out at 0
-    fn decrease_reputation(&self, value: &Reputation) -> Self {
+    pub fn decrease_reputation(&self, value: &Reputation) -> Self {
         match &self.status {
             GameStatus::InProgress(b) => {
                 let new_board = subtract_reputation(b.clone(), value);
