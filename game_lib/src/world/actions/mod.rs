@@ -10,4 +10,5 @@ pub(crate) mod close_event;
 pub(crate) mod close_lucky;
 pub(crate) mod close_evaluation;
 pub(crate) mod add_reputation;
+pub(crate) mod subtract_reputation;
 
