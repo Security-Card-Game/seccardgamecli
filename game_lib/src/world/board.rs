@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
 use crate::world::deck::{CardRc, Deck};
+use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
 /*
 The Board is the current state of the game. It holds all the data present on the board. And also if
@@ -21,6 +22,7 @@ pub(crate) struct CardRcWithId {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Board {
     pub current_resources: Resources,
+    pub current_reputation: Reputation,
     pub(crate) drawn_card: Option<CardRcWithId>,
     pub open_cards: HashMap<Uuid, CardRc>,
     pub cards_to_use: HashSet<Uuid>,
@@ -29,9 +31,10 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn init(deck: &Deck, start_resources: Resources) -> Self {
+    pub fn init(deck: &Deck, start_resources: Resources, start_reputation: Reputation) -> Self {
         Board {
             current_resources: start_resources,
+            current_reputation: start_reputation,
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
@@ -43,6 +46,7 @@ impl Board {
     pub fn empty() -> Self {
         Board {
             current_resources: Resources::new(0),
+            current_reputation: Reputation::start_value(),
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),

@@ -18,6 +18,7 @@ use crate::world::actions::use_lucky_card::{activate_lucky_card, deactivate_luck
 use crate::world::board::Board;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::game::GameActionResult::{FixFailed, InvalidAction, OopsieFixed};
+use crate::world::reputation::Reputation;
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
 
@@ -147,7 +148,7 @@ impl Game {
         initial_resource_gain: Resources,
         fix_multiplier: ResourceFixMultiplier,
     ) -> Self {
-        let board = Board::init(&deck, Resources::new(0));
+        let board = Board::init(&deck, Resources::new(0), Reputation::start_value());
         let status = GameStatus::Start(calculate_board(board, &deck));
 
         Game {
@@ -350,6 +351,7 @@ mod tests {
     use crate::world::board::Board;
     use crate::world::deck::Deck;
     use crate::world::game::{Game, GameActionResult, GameStatus};
+    use crate::world::reputation::Reputation;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
 
@@ -432,6 +434,7 @@ mod tests {
             deck: test_deck.start_deck.clone(),
             status: GameStatus::Start(Board {
                 current_resources: Resources::new(0),
+                current_reputation: Reputation::new(50),
                 drawn_card: None,
                 open_cards: HashMap::new(),
                 cards_to_use: HashSet::new(),

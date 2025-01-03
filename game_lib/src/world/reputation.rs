@@ -13,6 +13,10 @@ impl Reputation {
         }
         Reputation(rep)
     }
+
+    pub fn start_value() -> Self {
+        Reputation(50)
+    }
     pub fn value(&self) -> &u8 {
         &self.0
     }
