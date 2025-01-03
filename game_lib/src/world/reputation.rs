@@ -2,7 +2,7 @@ use std::fmt::Display;
 use std::ops::{Add, Sub};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
-struct Reputation(usize);
+pub struct Reputation(usize);
 
 
 impl Reputation {
