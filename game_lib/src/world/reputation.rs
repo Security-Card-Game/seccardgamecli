@@ -2,6 +2,7 @@ use std::fmt::Display;
 use std::ops::{Add, Sub};
 
 const MAX_VALUE: u8 = 100;
+const MIN_VALUE: u8 = 0;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
 pub struct Reputation(u8);
@@ -27,11 +28,8 @@ impl Add for &Reputation {
 
     fn add(self, rhs: Self) -> Self::Output {
         let sum = self.0 + rhs.0;
-        if sum > MAX_VALUE {
-            Reputation::new(100)
-        } else {
-            Reputation::new(sum)
-        }
+        let new_value = if sum > MAX_VALUE { MAX_VALUE } else { sum };
+        Reputation::new(new_value)
     }
 }
 
@@ -39,8 +37,9 @@ impl Sub for &Reputation {
     type Output = Reputation;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let sum = self.0 - rhs.0;
-        Reputation::new(sum)
+        let sum = self.0 as i16 - rhs.0 as i16;
+        let new_value = if sum < MIN_VALUE as i16 { MIN_VALUE } else { sum as u8 };
+        Reputation::new(new_value)
     }
 }
 
@@ -66,7 +65,6 @@ mod tests {
         Reputation::new(101);
     }
 
-
     #[test]
     pub fn add_10_to_20_should_return_30() {
         let input = Reputation::new(20);
@@ -79,16 +77,15 @@ mod tests {
     }
 
     #[test]
-    pub fn add_10_to_99_should_return_100() {
+    pub fn add_10_to_99_should_return_max_value() {
         let input = Reputation::new(99);
         let add_sum = Reputation::new(10);
-        let expected = Reputation::new(100);
+        let expected = Reputation::new(MAX_VALUE);
 
         let result = &input + &add_sum;
 
         assert_eq!(result, expected);
     }
-
 
     #[test]
     pub fn sub_10_from_30_should_return_20() {
@@ -102,12 +99,14 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    pub fn sub_20_from_10_should_panic() {
+    pub fn sub_20_from_10_should_return_min_value() {
         let input = Reputation::new(10);
         let sub = Reputation::new(20);
+        let expected = Reputation::new(MIN_VALUE);
 
-        &input - &sub;
+        let result = &input - &sub;
+
+        assert_eq!(result, expected);
     }
 
     #[test]

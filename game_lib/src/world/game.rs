@@ -5,6 +5,7 @@ use uuid::Uuid;
 use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::types::card_model::Card;
 use crate::world::actions::action_error::{ActionError, ActionResult};
+use crate::world::actions::add_reputation::add_reputation;
 use crate::world::actions::add_resources::add_resources;
 use crate::world::actions::calculate_board::calculate_board;
 use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
@@ -13,6 +14,7 @@ use crate::world::actions::close_event::close_event_card;
 use crate::world::actions::close_lucky::close_lucky_card;
 use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
 use crate::world::actions::draw_card::draw_card_and_place_on_board;
+use crate::world::actions::subtract_reputation::subtract_reputation;
 use crate::world::actions::subtract_resources::subtract_resources;
 use crate::world::actions::use_lucky_card::{activate_lucky_card, deactivate_lucky_card};
 use crate::world::board::Board;
@@ -223,6 +225,59 @@ impl Game {
         }
     }
 
+    /// Increases Reputation by given value, maxes out at MAX_VALUE (see Reputation implementation)
+    fn increase_reputation(&self, value: &Reputation) -> Self {
+        match &self.status {
+            GameStatus::InProgress(b) => {
+                let new_board = add_reputation(b.clone(), value);
+                Game {
+                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
+                    action_status: GameActionResult::Success,
+                    ..self.clone()
+                }
+            }
+            GameStatus::Start(b) => {
+                let new_board = add_reputation(b.clone(), value);
+                Game {
+                    status: GameStatus::Start(calculate_board(new_board, &self.deck)),
+                    action_status: GameActionResult::Success,
+                    ..self.clone()
+                }
+            }
+            GameStatus::Finished(_) => Game {
+                action_status: InvalidAction,
+                ..self.clone()
+            },
+        }
+    }
+
+    /// Decreases Reputation by given value, bottoms out at 0
+    fn decrease_reputation(&self, value: &Reputation) -> Self {
+        match &self.status {
+            GameStatus::InProgress(b) => {
+                let new_board = subtract_reputation(b.clone(), value);
+                Game {
+                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
+                    action_status: GameActionResult::Success,
+                    ..self.clone()
+                }
+            }
+            GameStatus::Start(b) => {
+                let new_board = subtract_reputation(b.clone(), value);
+                Game {
+                    status: GameStatus::Start(calculate_board(new_board, &self.deck)),
+                    action_status: GameActionResult::Success,
+                    ..self.clone()
+                }
+            }
+            GameStatus::Finished(_) => Game {
+                action_status: InvalidAction,
+                ..self.clone()
+            },
+        }
+    }
+
+
     /// Try anc closes an Oopsie card. Will roll a dice to calculate the costs.
     fn handle_non_oopsie_close(&self, result: ActionResult<Board>) -> Self {
         match result {
@@ -248,9 +303,8 @@ impl Game {
             GameStatus::InProgress(board) => {
                 if let Some(card_to_close) = board.open_cards.get(card_id) {
                     match &**card_to_close {
-                        Card::Evaluation(_) => {
-                            self.handle_non_oopsie_close(close_evaluation_card(board.clone(), card_id))
-                        }
+                        Card::Evaluation(_) => self
+                            .handle_non_oopsie_close(close_evaluation_card(board.clone(), card_id)),
                         Card::Attack(_) => self.handle_non_oopsie_close(
                             manually_close_attack_card(board.clone(), card_id),
                         ),
@@ -331,30 +385,29 @@ fn handle_action_error(board: &Board, deck: &Deck, err: ActionError) -> (Board, 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, HashSet};
     use fake::Fake;
+    use std::collections::{HashMap, HashSet};
 
+    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
+    use crate::cards::properties::cost_modifier::CostModifier;
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::tests::FakeEffectDescription;
     use crate::cards::properties::fix_cost::FixCost;
-    use crate::cards::properties::cost_modifier::CostModifier;
-    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
-    use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
-    use crate::cards::types::card_model::{Card};
-    use crate::cards::types::event::EventCard;
+    use crate::cards::types::attack::AttackCard;
+    use crate::cards::types::card_model::Card;
     use crate::cards::types::event::tests::FakeEventCard;
-    use crate::cards::types::lucky::LuckyCard;
+    use crate::cards::types::event::EventCard;
     use crate::cards::types::lucky::tests::FakeLuckyCard;
-    use crate::cards::types::oopsie::OopsieCard;
+    use crate::cards::types::lucky::LuckyCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::oopsie::OopsieCard;
     use crate::world::board::Board;
     use crate::world::deck::Deck;
     use crate::world::game::{Game, GameActionResult, GameStatus};
     use crate::world::reputation::Reputation;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
-
 
     #[derive(Clone)]
     struct TestDeck {
@@ -446,11 +499,10 @@ mod tests {
             fix_multiplier: ResourceFixMultiplier::new(2),
         };
 
-
         let sut = Game::create(
             test_deck.start_deck,
             Resources::new(10),
-            ResourceFixMultiplier::new(2)
+            ResourceFixMultiplier::new(2),
         );
 
         assert_eq!(sut, expectation);
@@ -463,7 +515,7 @@ mod tests {
         let sut = Game::create(
             test_deck.start_deck.clone(),
             resource_gain.clone(),
-            ResourceFixMultiplier::new(2)
+            ResourceFixMultiplier::new(2),
         );
 
         let game_after_round_1 = sut.next_round();
@@ -472,19 +524,27 @@ mod tests {
         assert!(board_after_round_1.drawn_card.is_some());
         assert_eq!(board_after_round_1.open_cards.len(), 1);
         assert_eq!(board_after_round_1.cost_modifier, None);
-        assert_eq!(board_after_round_1.turns_remaining, test_deck.cards.len() - 1);
+        assert_eq!(
+            board_after_round_1.turns_remaining,
+            test_deck.cards.len() - 1
+        );
         assert_eq!(board_after_round_1.current_resources, resource_gain.clone());
         assert!(board_after_round_1.cards_to_use.is_empty());
-
 
         let game_after_round_2 = game_after_round_1.next_round();
         assert_eq!(game_after_round_2.action_status, GameActionResult::Success);
         let board_after_round_2 = get_board_from_in_progress(&game_after_round_2);
         assert!(board_after_round_2.drawn_card.is_some());
         assert_eq!(board_after_round_2.open_cards.len(), 2);
-        assert_eq!(board_after_round_2.cost_modifier, Some(CostModifier::Increase(Resources::new(10))));
-        assert_eq!(board_after_round_2.turns_remaining, test_deck.cards.len() - 2);
-        assert_eq!(board_after_round_2.current_resources, &resource_gain * 2 );
+        assert_eq!(
+            board_after_round_2.cost_modifier,
+            Some(CostModifier::Increase(Resources::new(10)))
+        );
+        assert_eq!(
+            board_after_round_2.turns_remaining,
+            test_deck.cards.len() - 2
+        );
+        assert_eq!(board_after_round_2.current_resources, &resource_gain * 2);
         assert!(board_after_round_2.cards_to_use.is_empty());
     }
 
@@ -495,7 +555,7 @@ mod tests {
         let sut = Game::create(
             test_deck.start_deck.clone(),
             resource_gain.clone(),
-            ResourceFixMultiplier::new(2)
+            ResourceFixMultiplier::new(2),
         );
 
         let game_after_round_1 = sut.next_round();
@@ -504,7 +564,10 @@ mod tests {
         assert!(board_after_round_1.drawn_card.is_some());
         assert_eq!(board_after_round_1.open_cards.len(), 1);
         assert_eq!(board_after_round_1.cost_modifier, None);
-        assert_eq!(board_after_round_1.turns_remaining, test_deck.cards.len() - 1);
+        assert_eq!(
+            board_after_round_1.turns_remaining,
+            test_deck.cards.len() - 1
+        );
         assert_eq!(board_after_round_1.current_resources, resource_gain.clone());
         assert!(board_after_round_1.cards_to_use.is_empty());
 
@@ -514,11 +577,26 @@ mod tests {
 
         assert_eq!(game_after_activate.action_status, GameActionResult::Success);
         let board_after_activate = get_board_from_in_progress(&game_after_activate);
-        assert_eq!(board_after_activate.drawn_card, board_after_round_1.drawn_card);
-        assert_eq!(board_after_activate.open_cards, board_after_round_1.open_cards);
-        assert_eq!(board_after_activate.cost_modifier, Some(CostModifier::Decrease(Resources::new(20))));
-        assert_eq!(board_after_activate.turns_remaining, board_after_round_1.turns_remaining);
-        assert_eq!(board_after_activate.current_resources, board_after_round_1.current_resources);
+        assert_eq!(
+            board_after_activate.drawn_card,
+            board_after_round_1.drawn_card
+        );
+        assert_eq!(
+            board_after_activate.open_cards,
+            board_after_round_1.open_cards
+        );
+        assert_eq!(
+            board_after_activate.cost_modifier,
+            Some(CostModifier::Decrease(Resources::new(20)))
+        );
+        assert_eq!(
+            board_after_activate.turns_remaining,
+            board_after_round_1.turns_remaining
+        );
+        assert_eq!(
+            board_after_activate.current_resources,
+            board_after_round_1.current_resources
+        );
         assert!(board_after_activate.cards_to_use.contains(card_id));
         assert!(game_after_activate.is_card_activated(card_id))
     }
@@ -530,7 +608,7 @@ mod tests {
         let sut = Game::create(
             test_deck.start_deck.clone(),
             resource_gain.clone(),
-            ResourceFixMultiplier::new(2)
+            ResourceFixMultiplier::new(2),
         );
 
         let game_after_round_1 = sut.next_round();
@@ -539,7 +617,10 @@ mod tests {
         assert!(board_after_round_1.drawn_card.is_some());
         assert_eq!(board_after_round_1.open_cards.len(), 1);
         assert_eq!(board_after_round_1.cost_modifier, None);
-        assert_eq!(board_after_round_1.turns_remaining, test_deck.cards.len() - 1);
+        assert_eq!(
+            board_after_round_1.turns_remaining,
+            test_deck.cards.len() - 1
+        );
         assert_eq!(board_after_round_1.current_resources, resource_gain.clone());
         assert!(board_after_round_1.cards_to_use.is_empty());
 
@@ -549,23 +630,36 @@ mod tests {
 
         let game_after_deactivate = game_after_activate.deactivate_lucky_card(card_id);
 
-        assert_eq!(game_after_deactivate.action_status, GameActionResult::Success);
+        assert_eq!(
+            game_after_deactivate.action_status,
+            GameActionResult::Success
+        );
         let board_after_deactivate = get_board_from_in_progress(&game_after_deactivate);
-        assert_eq!(board_after_deactivate.drawn_card, board_after_round_1.drawn_card);
-        assert_eq!(board_after_deactivate.open_cards, board_after_round_1.open_cards);
+        assert_eq!(
+            board_after_deactivate.drawn_card,
+            board_after_round_1.drawn_card
+        );
+        assert_eq!(
+            board_after_deactivate.open_cards,
+            board_after_round_1.open_cards
+        );
         assert_eq!(board_after_deactivate.cost_modifier, None);
-        assert_eq!(board_after_deactivate.turns_remaining, board_after_round_1.turns_remaining);
-        assert_eq!(board_after_deactivate.current_resources, board_after_round_1.current_resources);
+        assert_eq!(
+            board_after_deactivate.turns_remaining,
+            board_after_round_1.turns_remaining
+        );
+        assert_eq!(
+            board_after_deactivate.current_resources,
+            board_after_round_1.current_resources
+        );
         assert!(board_after_deactivate.cards_to_use.is_empty());
         assert!(!game_after_deactivate.is_card_activated(card_id))
     }
 
-
     fn get_board_from_in_progress(game: &Game) -> Board {
         match &game.status {
             GameStatus::InProgress(b) => b.clone(),
-            GameStatus::Start(_)
-            | GameStatus::Finished(_) => panic!("Must be InProgress")
+            GameStatus::Start(_) | GameStatus::Finished(_) => panic!("Must be InProgress"),
         }
     }
 }
