@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use std::io::ErrorKind::ReadOnlyFilesystem;
 use std::ops::{Add, Sub};
 
 const MAX_VALUE: u8 = 100;
