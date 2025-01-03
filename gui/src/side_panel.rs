@@ -6,6 +6,7 @@ mod tweak_control;
 mod next_round_control;
 mod game_status_display;
 mod resource_control;
+mod reputation_control;
 
 impl SecCardGameApp {
     pub(crate) fn create_side_panel(&mut self, ctx: &Context) {
@@ -21,6 +22,10 @@ impl SecCardGameApp {
                 self.resource_control(ui);
 
                 ui.add_space(15.0);
+
+                self.reputation_control(ui);
+
+                ui.add_space(30.0);
 
                 self.tweak_control(ui);
 

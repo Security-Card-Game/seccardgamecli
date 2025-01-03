@@ -21,6 +21,8 @@ impl SecCardGameApp {
             game,
             input: Input {
                 next_res: initial_gain.to_string(),
+                dec_reputation: "0".to_string(),
+                inc_reputation: "0".to_string(),
                 pay_res: "0".to_string(),
                 message: Message::None,
                 multiplier: initial_multiplier.to_string(),

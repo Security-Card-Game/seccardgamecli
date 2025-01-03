@@ -37,7 +37,9 @@ impl SecCardGameApp {
             Command::SetMultiplier(m) => self.handle_set_multiplier(m.clone()),
             Command::CloseCard(card_id) => self.handle_card_closed(card_id.clone()),
             Command::DeactivateCard(card_id) => self.handle_deactivate_card(card_id.clone()),
-            Command::ActivateCard(card_id) => self.handle_activate_card(card_id.clone())
+            Command::ActivateCard(card_id) => self.handle_activate_card(card_id.clone()),
+            Command::IncreaseReputation(rep) => self.handle_increase_reputation(rep.clone()),
+            Command::DecreaseReputation(rep) => self.handle_decrease_reputation(rep.clone()),
         }
 
         self.reset_command(); // removes the command from the state after it is executed

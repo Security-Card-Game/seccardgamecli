@@ -13,15 +13,15 @@ impl SecCardGameApp {
         ui.add_space(5.0);
         match &self.game.status.clone() {
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
-                self.game_in_progress(ui, board);
+                self.resource_control_game_in_progress(ui, board);
             }
             GameStatus::Finished(board) => {
-                game_ended(ui, board);
+                resource_control_game_ended(ui, board);
             }
         }
     }
 
-    fn game_in_progress(&mut self, ui: &mut Ui, board: &Board) {
+    fn resource_control_game_in_progress(&mut self, ui: &mut Ui, board: &Board) {
         let cloned_board = board.clone();
         let available = create_resource_label(&cloned_board, "available");
         ui.label(available);
@@ -41,7 +41,7 @@ impl SecCardGameApp {
     }
 }
 
-fn game_ended(ui: &mut Ui, board: &Board) {
+fn resource_control_game_ended(ui: &mut Ui, board: &Board) {
     let available = create_resource_label(board, "left");
     ui.label(available);
 }

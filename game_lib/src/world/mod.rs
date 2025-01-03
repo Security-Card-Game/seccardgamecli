@@ -1,6 +1,7 @@
 pub mod board;
 pub mod deck;
 pub mod resources;
+pub mod reputation;
 pub mod result;
 
 mod actions;

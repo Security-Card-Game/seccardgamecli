@@ -26,6 +26,8 @@ enum Message {
 struct Input {
     next_res: String,
     pay_res: String,
+    inc_reputation: String,
+    dec_reputation: String,
     message: Message,
     multiplier: String,
 }
