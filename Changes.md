@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.0
+
+* [FEATURE] adds reputation. Must be increased and decreased manually.
+
 ## 0.6.0
 
 * [FEATURE] adds incident impact a coded field for incident cards. This breaks the old card format. Please re-init.
