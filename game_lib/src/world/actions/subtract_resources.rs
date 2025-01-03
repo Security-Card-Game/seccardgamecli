@@ -3,7 +3,7 @@ use crate::world::actions::action_error::ActionResult;
 use crate::world::board::Board;
 use crate::world::resources::Resources;
 
-pub fn remove_resources(board: Board, resources: &Resources) -> ActionResult<Board> {
+pub fn subtract_resources(board: Board, resources: &Resources) -> ActionResult<Board> {
     let current_resources = board.current_resources.clone();
     if current_resources.value() >= resources.value() {
         Ok(Board {
@@ -24,12 +24,12 @@ pub fn remove_resources(board: Board, resources: &Resources) -> ActionResult<Boa
 #[cfg(test)]
 mod tests {
     use crate::world::actions::action_error::ActionError;
-    use crate::world::actions::remove_resources::remove_resources;
+    use crate::world::actions::subtract_resources::subtract_resources;
     use crate::world::board::Board;
     use crate::world::resources::Resources;
 
     #[test]
-    fn remove_resources_success() {
+    fn subtract_resources_success() {
         let board = Board {
             current_resources: Resources::new(10),
             turns_remaining: 0,
@@ -41,13 +41,13 @@ mod tests {
             ..board.clone()
         };
 
-        let result = remove_resources(board, &Resources::new(10)).unwrap();
+        let result = subtract_resources(board, &Resources::new(10)).unwrap();
 
         assert_eq!(result, expected_board);
     }
 
     #[test]
-    fn remove_resources_failure() {
+    fn subtract_resources_failure() {
         let board = Board {
             current_resources: Resources::new(10),
             turns_remaining: 0,
@@ -59,7 +59,7 @@ mod tests {
             ..board.clone()
         };
 
-        let result = remove_resources(board, &Resources::new(11)).unwrap_err();
+        let result = subtract_resources(board, &Resources::new(11)).unwrap_err();
 
         assert_eq!(
             result,

@@ -13,7 +13,7 @@ use crate::world::actions::close_event::close_event_card;
 use crate::world::actions::close_lucky::close_lucky_card;
 use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
 use crate::world::actions::draw_card::draw_card_and_place_on_board;
-use crate::world::actions::remove_resources::remove_resources;
+use crate::world::actions::subtract_resources::subtract_resources;
 use crate::world::actions::use_lucky_card::{activate_lucky_card, deactivate_lucky_card};
 use crate::world::board::Board;
 use crate::world::deck::{CardRc, Deck};
@@ -204,7 +204,7 @@ impl Game {
     pub fn pay_resources(&self, to_pay: &Resources) -> Self {
         match &self.status {
             GameStatus::InProgress(board) => {
-                let new_board = remove_resources(board.clone(), to_pay);
+                let new_board = subtract_resources(board.clone(), to_pay);
 
                 let (b, res) = match new_board {
                     Ok(b) => (b, GameActionResult::Success),
