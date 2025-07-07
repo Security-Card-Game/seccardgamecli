@@ -31,6 +31,7 @@ pub struct CardContent {
     pub can_be_activated: bool,
     pub can_be_closed: bool,
     pub card_marker: CardMarker,
+    pub close_label: String,
 }
 
 #[derive(Clone, Debug)]
@@ -50,6 +51,7 @@ impl CardContent {
         duration: Option<usize>,
         can_be_closed: bool,
         multiplier: ResourceFixMultiplier,
+        close_label: String,
     ) -> CardContent {
         let actual_costs = match fix_cost {
             None => None,
@@ -79,6 +81,7 @@ impl CardContent {
             can_be_activated: Self::can_effect_be_activated(&card.effect()),
             can_be_closed,
             card_marker: CardMarker::None,
+            close_label,       
         }
     }
 
@@ -121,6 +124,7 @@ impl CardContent {
             None,
             can_be_closed,
             multiplier,
+            "X".to_string(),
         )
     }
 
@@ -198,6 +202,7 @@ impl CardContent {
             Some(duration),
             true,
             multiplier,
+            "X".to_string(),       
         )
     }
 
@@ -217,6 +222,7 @@ impl CardContent {
             None,
             true,
             multiplier,
+            "Fix".to_string(),      
         )
     }
 
@@ -236,6 +242,7 @@ impl CardContent {
             None,
             can_be_closed,
             multiplier,
+            "X".to_string(),      
         )
     }
 
@@ -255,6 +262,7 @@ impl CardContent {
             None,
             can_be_closed,
             multiplier,
+            "X".to_string(),     
         )
     }
 }
