@@ -157,7 +157,7 @@ where
         let available = ui.available_rect_before_wrap().width();
         ui.add_space(available + 20.0);
         if card.can_be_closed {
-            if ui.button("X").clicked() {
+            if ui.button(card.close_label.clone()).clicked() {
                 cmd_callback(Command::CloseCard(card.id));
             }
         }
