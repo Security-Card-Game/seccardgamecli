@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.1
+
+* [FEATURE] Change label of X on Oopise Cards to "Close"
+
 ## 0.7.0
 
 * [FEATURE] adds reputation. Must be increased and decreased manually.
