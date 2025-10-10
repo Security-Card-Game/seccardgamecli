@@ -3,6 +3,8 @@ use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
+use crate::cards::types::attack::AttackCard;
+use crate::cards::types::oopsie::OopsieCard;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
@@ -26,8 +28,16 @@ pub struct Board {
     pub(crate) drawn_card: Option<CardRcWithId>,
     pub open_cards: HashMap<Uuid, CardRc>,
     pub cards_to_use: HashSet<Uuid>,
+    pub active_incidents: Vec<Incident>,
     pub cost_modifier: Option<CostModifier>,
     pub turns_remaining: usize,
+}
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
+pub struct Incident {
+    pub attack_card_id: Uuid,
+    pub attack_title: String,
+    pub oopsie_card_id: Uuid,
+    pub oopsie_title: String,
 }
 
 impl Board {
@@ -38,6 +48,7 @@ impl Board {
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
+            active_incidents: Vec::new(),
             cost_modifier: None,
             turns_remaining: deck.total,
         }
@@ -50,6 +61,7 @@ impl Board {
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
+            active_incidents: Vec::new(),
             cost_modifier: None,
             turns_remaining: 0,
         }

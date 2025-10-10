@@ -491,6 +491,7 @@ mod tests {
                 drawn_card: None,
                 open_cards: HashMap::new(),
                 cards_to_use: HashSet::new(),
+                active_incidents: Vec::new(),
                 cost_modifier: None,
                 turns_remaining: test_deck.start_deck.total,
             }),
