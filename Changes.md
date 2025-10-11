@@ -1,5 +1,9 @@
 # Changes
 
+## upcoming
+
+* [BUG] does not reduce attack duration directly when it is drawn
+
 ## 0.7.1
 
 * [FEATURE] Change label of X on Oopise Cards to "Close"

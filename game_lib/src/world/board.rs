@@ -95,6 +95,24 @@ pub(crate) mod tests {
         (card_id, board, card_rc)
     }
 
+    pub fn generate_board_with_freshly_drawn_card(card: Card) -> (Uuid, Board, Rc<Card>) {
+        let card_rc = Rc::new(card.clone());
+        let card_id = Uuid::new_v4();
+
+        let drawn_card = CardRcWithId {
+            id: card_id.clone(),
+            card: card_rc.clone()
+        };
+        let open_cards = vec![(card_id.clone(), card_rc.clone())];
+
+        let board = Board {
+            drawn_card: Some(drawn_card),
+            open_cards: open_cards.into_iter().collect(),
+            ..Board::empty()
+        };
+        (card_id, board, card_rc)
+    }
+
     pub fn remove_card_from_open_cards(board: &Board, card_id: &Uuid) -> HashMap<Uuid, Rc<Card>> {
         let mut open_cards = board.open_cards.clone();
         open_cards.remove(card_id);
