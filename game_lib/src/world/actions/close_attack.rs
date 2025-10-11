@@ -100,6 +100,7 @@ fn close_attack_card(duration: &Duration, board: Board, id: &Uuid) -> ActionResu
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use std::rc::Rc;
 
     use fake::Fake;
@@ -107,21 +108,20 @@ mod tests {
     use uuid::Uuid;
 
     use crate::cards::properties::duration::Duration;
-    use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
+    use crate::cards::types::attack::AttackCard;
     use crate::cards::types::card_model::Card;
-    use crate::cards::types::event::EventCard;
-    use crate::cards::types::event::tests::FakeEventCard;
-    use crate::cards::types::lucky::LuckyCard;
-    use crate::cards::types::lucky::tests::FakeLuckyCard;
-    use crate::cards::types::oopsie::OopsieCard;
-    use crate::cards::types::oopsie::tests::FakeOopsieCard;
-    use crate::cards::types::evaluation::EvaluationCard;
     use crate::cards::types::evaluation::tests::FakeEvaluationCard;
+    use crate::cards::types::evaluation::EvaluationCard;
+    use crate::cards::types::event::tests::FakeEventCard;
+    use crate::cards::types::event::EventCard;
+    use crate::cards::types::lucky::tests::FakeLuckyCard;
+    use crate::cards::types::lucky::LuckyCard;
+    use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::oopsie::OopsieCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
     use crate::world::board::Board;
-    use crate::world::board::tests::generate_board_with_open_card;
 
     #[test]
     fn update_attack_cards_reduces_attack_duration() {
@@ -140,6 +140,7 @@ mod tests {
 
         let updated_card = board_after_update.open_cards.get(&card_id).unwrap();
 
+        assert_eq!(&**updated_card, &Card::from(expected_attack));
         assert!(!Rc::ptr_eq(&card_rc, updated_card));
         assert_eq!(&**updated_card, &Card::from(expected_attack));
     }
@@ -150,11 +151,11 @@ mod tests {
             duration: Duration::new(Some(1)),
             ..FakeAttackCard.fake()
         };
-        let (_, board, _) = generate_board_with_open_card(Card::from(attack));
+        let (id, board, _) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
-        assert!(board_after_update.open_cards.is_empty());
+        assert!(!board_after_update.open_cards.contains_key(&id));
     }
 
     #[test]
@@ -164,11 +165,11 @@ mod tests {
             ..FakeAttackCard.fake()
         };
 
-        let (_, board, _card_rc) = generate_board_with_open_card(Card::from(attack));
+        let (id, board, _card_rc) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
-        assert!(board_after_update.open_cards.is_empty());
+        assert!(!board_after_update.open_cards.contains_key(&id));
     }
 
     #[test]
@@ -211,12 +212,17 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board { ..Board::empty() };
+        let expected_board = Board {
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
+        };
 
         let err_result = manually_close_attack_card(board, &card_id).unwrap_err();
 
         assert_eq!(err_result, ActionError::AttackForceClosed(expected_board))
     }
+
 
     #[test]
     fn manually_close_attack_card_closes_card_and_returns_error_for_duration_not_0() {
@@ -227,7 +233,11 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board { ..Board::empty() };
+        let expected_board = Board {
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
+        };
 
         let err_result = manually_close_attack_card(board, &card_id).unwrap_err();
 
@@ -243,7 +253,11 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board { ..Board::empty() };
+        let expected_board = Board {
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
+        };
 
         let result = manually_close_attack_card(board, &card_id).unwrap();
 
@@ -258,7 +272,12 @@ mod tests {
         };
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
-        let expected_board = Board { ..Board::empty() };
+
+        let expected_board = Board {
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
+        };
 
         let result = manually_close_attack_card(board, &card_id).unwrap();
 

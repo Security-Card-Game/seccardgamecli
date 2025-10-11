@@ -58,23 +58,46 @@ impl Board {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use std::collections::HashMap;
     use std::rc::Rc;
-
+    use fake::Fake;
     use uuid::Uuid;
 
     use crate::cards::types::card_model::Card;
-    use crate::world::board::Board;
+    use crate::cards::types::event::EventCard;
+    use crate::cards::types::event::tests::FakeNoOpEventCard;
+    use crate::world::board::{Board, CardRcWithId};
 
+    /*
+     Generates a board with the card supplied in the open. Holds a random NoOp card in
+     the freshly drawn_card slot.
+
+    */
     pub fn generate_board_with_open_card(card: Card) -> (Uuid, Board, Rc<Card>) {
         let card_rc = Rc::new(card.clone());
         let card_id = Uuid::new_v4();
 
-        let open_cards = vec![(card_id.clone(), card_rc.clone())];
+        let noop_event_card : EventCard = FakeNoOpEventCard.fake();
+        let noop_card = Rc::new(Card::from(noop_event_card));
+        let noop_card_id = Uuid::new_v4();
+
+
+        let open_cards = vec![(card_id.clone(), card_rc.clone()), (noop_card_id.clone(), noop_card.clone())];
 
         let board = Board {
             open_cards: open_cards.into_iter().collect(),
+            drawn_card: Some(CardRcWithId {
+                id: noop_card_id,
+                card: noop_card.clone()
+            }),
             ..Board::empty()
         };
         (card_id, board, card_rc)
+    }
+
+    pub fn remove_card_from_open_cards(board: &Board, card_id: &Uuid) -> HashMap<Uuid, Rc<Card>> {
+        let mut open_cards = board.open_cards.clone();
+        open_cards.remove(card_id);
+        open_cards
     }
 }

@@ -127,7 +127,7 @@ mod tests {
     use crate::world::actions::calculate_board::calculate_board;
     use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
     use crate::world::board::Board;
-    use crate::world::board::tests::generate_board_with_open_card;
+    use crate::world::board::tests::{generate_board_with_open_card, remove_card_from_open_cards};
     use crate::world::deck::Deck;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
@@ -175,7 +175,7 @@ mod tests {
 
         let expected_board = Board {
             current_resources: Resources::new(5),
-            open_cards: HashMap::new(),
+            open_cards: remove_card_from_open_cards(&board_with_resourecs, &card_id),
             cost_modifier: None,
             ..board_with_resourecs.clone()
         };
@@ -207,7 +207,7 @@ mod tests {
 
         let expected_board = Board {
             current_resources: Resources::new(0),
-            open_cards: HashMap::new(),
+            open_cards: remove_card_from_open_cards(&board_with_resourecs, &card_id),
             cost_modifier: None,
             ..board_with_resourecs.clone()
         };
@@ -244,7 +244,7 @@ mod tests {
         )
         .unwrap();
 
-        assert!(result.0.open_cards.is_empty());
+        assert!(!result.0.open_cards.contains_key(&card_id));
         assert!(result.0.current_resources.value().clone() <= 10);
         assert!(result.0.cost_modifier.is_none());
     }
