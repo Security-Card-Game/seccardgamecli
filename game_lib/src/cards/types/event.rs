@@ -47,6 +47,7 @@ pub(crate) mod tests {
     use super::*;
 
     pub struct FakeEventCard;
+    pub struct FakeNoOpEventCard;
 
     impl Dummy<FakeEventCard> for EventCard {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeEventCard, _: &mut R) -> Self {
@@ -57,4 +58,15 @@ pub(crate) mod tests {
             }
         }
     }
+
+    impl Dummy<FakeNoOpEventCard> for EventCard {
+        fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeNoOpEventCard, _: &mut R) -> Self {
+            EventCard {
+                title: FakeTitle.fake(),
+                description: FakeDescription.fake(),
+                effect: Effect::NOP
+            }
+        }
+    }
+
 }

@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use uuid::Uuid;
 
 use crate::cards::types::card_model::Card;
@@ -32,7 +34,6 @@ fn close_if_allowed(card_id: &Uuid, ec: &EvaluationCard, board: Board) -> Action
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
 
     use fake::Fake;
     use rstest::rstest;
@@ -53,7 +54,7 @@ mod tests {
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::close_evaluation::close_evaluation_card;
     use crate::world::board::Board;
-    use crate::world::board::tests::generate_board_with_open_card;
+    use crate::world::board::tests::{generate_board_with_open_card, remove_card_from_open_cards};
 
     #[test]
     fn try_close_non_open_card() {
@@ -94,8 +95,9 @@ mod tests {
         let (card_id, board, _) = generate_board_with_open_card(card);
 
         let expected_board = Board {
-            open_cards: HashMap::new(),
-            ..board.clone()
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
         };
 
         let result = close_evaluation_card(board, &card_id).unwrap();
