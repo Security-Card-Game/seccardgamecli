@@ -33,9 +33,9 @@ fn close_if_allowed(card_id: &Uuid, lc: &LuckyCard, board: Board) -> ActionResul
     }
 }
 
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
 
     use fake::Fake;
     use rstest::rstest;

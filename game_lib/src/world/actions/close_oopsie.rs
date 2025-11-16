@@ -99,6 +99,7 @@ fn roll_dice(fix_cost: &FixCost) -> Resources {
     }
 }
 
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
     use std::collections::{HashMap, HashSet};

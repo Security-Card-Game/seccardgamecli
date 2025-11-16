@@ -411,13 +411,6 @@ mod tests {
 
     #[derive(Clone)]
     struct TestDeck {
-        first_card: Card,
-        second_card: Card,
-        third_card: Card,
-        fourth_card: Card,
-        fifth_card: Card,
-        sixth_card: Card,
-        seventh_card: Card,
         cards: Vec<Card>,
         start_deck: Deck,
     }
@@ -467,13 +460,6 @@ mod tests {
                 total: cards.len(),
             };
             TestDeck {
-                first_card,
-                second_card,
-                third_card,
-                fourth_card,
-                fifth_card,
-                sixth_card,
-                seventh_card,
                 cards,
                 start_deck,
             }

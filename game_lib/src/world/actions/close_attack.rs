@@ -114,6 +114,7 @@ fn close_attack_card(duration: &Duration, board: Board, id: &Uuid) -> ActionResu
     }
 }
 
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;

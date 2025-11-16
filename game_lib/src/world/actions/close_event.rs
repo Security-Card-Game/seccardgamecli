@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use uuid::Uuid;
 
 use crate::cards::types::card_model::Card;
@@ -32,7 +34,6 @@ fn close_if_allowed(card_id: &Uuid, ec: &EventCard, board: Board) -> ActionResul
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
 
     use fake::Fake;
     use rstest::rstest;

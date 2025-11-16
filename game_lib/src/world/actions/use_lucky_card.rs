@@ -45,6 +45,7 @@ fn remove_lucky_card(board: Board, id: &Uuid) -> Board {
     }
 }
 
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;

@@ -77,6 +77,7 @@ fn calculate_remaining_rounds(deck: &Deck) -> usize {
     deck.get_remaining_card_count()
 }
 
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
