@@ -386,7 +386,13 @@ mod tests {
             Rc::new(Card::Event(FakeEventCard.fake())),
             Rc::new(Card::Event(FakeEventCard.fake())),
             Rc::new(Card::Event(FakeEventCard.fake())),
-            Rc::new(Card::Event(FakeEventCard.fake()))
+            Rc::new(Card::Event(FakeEventCard.fake())),
+            Rc::new(Card::Event(FakeEventCard.fake())),
+            Rc::new(Card::Event(FakeEventCard.fake())),
+            Rc::new(Card::Event(FakeEventCard.fake())),
+            Rc::new(Card::Event(FakeEventCard.fake())),
+            Rc::new(Card::Event(FakeEventCard.fake())),
+            Rc::new(Card::Event(FakeEventCard.fake())),
         ];
 
         let draw_1 = draw(count, cards.clone(), event_card_extractor).unwrap();
