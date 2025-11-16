@@ -249,11 +249,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board {
-            drawn_card: board.drawn_card.clone(),
-            open_cards: remove_card_from_open_cards(&board, &card_id),
-            ..Board::empty()
-        };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let err_result = manually_close_attack_card(board, &card_id).unwrap_err();
 
@@ -269,11 +265,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board {
-            drawn_card: board.drawn_card.clone(),
-            open_cards: remove_card_from_open_cards(&board, &card_id),
-            ..Board::empty()
-        };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let err_result = manually_close_attack_card(board, &card_id).unwrap_err();
 
@@ -289,11 +281,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board {
-            drawn_card: board.drawn_card.clone(),
-            open_cards: remove_card_from_open_cards(&board, &card_id),
-            ..Board::empty()
-        };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let result = manually_close_attack_card(board, &card_id).unwrap();
 
@@ -309,11 +297,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board {
-            drawn_card: board.drawn_card.clone(),
-            open_cards: remove_card_from_open_cards(&board, &card_id),
-            ..Board::empty()
-        };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let result = manually_close_attack_card(board, &card_id).unwrap();
 
@@ -348,5 +332,14 @@ mod tests {
         let result = manually_close_attack_card(board, &Uuid::new_v4()).unwrap_err();
 
         assert_eq!(result, ActionError::InvalidState(expected_board));
+    }
+
+    fn create_board_with_card_removed(card_id: &Uuid, board: &Board) -> Board {
+        let expected_board = Board {
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
+        };
+        expected_board
     }
 }
