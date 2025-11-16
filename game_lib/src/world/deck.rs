@@ -22,6 +22,7 @@ pub struct Deck {
     pub total: usize,
 }
 
+
 impl Deck {
     pub(crate) fn new(cards: Vec<Card>) -> Deck {
         let total = cards.len();
