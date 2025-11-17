@@ -9,7 +9,7 @@ use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::cards::properties::target::Target;
 use game_lib::cards::properties::title::Title;
 use game_lib::cards::types::attack::AttackCard;
-use game_lib::cards::types::card_model::Card;
+use game_lib::cards::types::card_model::{Card, CardCategory};
 use game_lib::cards::types::event::EventCard;
 use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
@@ -83,9 +83,9 @@ fn deserialize_editor_content(content: String, original_card: &Card) -> serde_js
 pub fn create(cfg: &Config) -> CliResult<()> {
     print_stats(cfg)?;
     println!();
-    let creatable_card_types: Vec<&&str> = Card::CARD_TYPES
+    let creatable_card_types: Vec<&&CardCategory> = Card::CARD_TYPES
         .iter()
-        .filter(|i| i.ne(&&Card::EVALUATION))
+        .filter(|i| i.ne(&&&Card::EVALUATION))
         .collect();
 
     let card_type_index = Select::new()
@@ -96,10 +96,10 @@ pub fn create(cfg: &Config) -> CliResult<()> {
         .unwrap();
 
     let card = match *creatable_card_types[card_type_index] {
-        Card::EVENT_CARD => create_event_card(),
-        Card::ATTACK_CARD => create_attack_card(),
-        Card::LUCKY_CARD => create_lucky_card(),
-        Card::OOPSIE_CARD => create_oopsie_card(),
+        &Card::EVENT_CARD => create_event_card(),
+        &Card::ATTACK_CARD => create_attack_card(),
+        &Card::LUCKY_CARD => create_lucky_card(),
+        &Card::OOPSIE_CARD => create_oopsie_card(),
         _ => {
             return Err(CliError::new(
                 ErrorKind::CardError,
