@@ -1,9 +1,5 @@
-use crate::cards::types::attack::AttackCard;
-use crate::cards::types::card_model::Card;
+use crate::cards::types::card_model::{Card, CardCategory, CardTrait};
 use crate::cards::types::evaluation::EvaluationCard;
-use crate::cards::types::event::EventCard;
-use crate::cards::types::lucky::LuckyCard;
-use crate::cards::types::oopsie::OopsieCard;
 use log::warn;
 use rand::prelude::{SliceRandom, ThreadRng};
 use std::rc::Rc;
@@ -24,10 +20,10 @@ pub struct Deck {
 
 
 impl Deck {
-    pub(crate) fn new(cards: Vec<Card>) -> Deck {
+    pub(crate) fn new(cards: Vec<CardRc>) -> Deck {
         let total = cards.len();
         Deck {
-            remaining_cards: cards,
+            remaining_cards: cards.into_iter().map(|c| (*c).clone()).collect(),
             played_cards: 0,
             total,
         }
@@ -38,45 +34,9 @@ impl Deck {
     }
 }
 
-#[derive(Clone)]
-pub enum NormalCards {
-    Event(EventCard),
-    Oopsie(OopsieCard),
-    Lucky(LuckyCard),
-}
-
-#[derive(Clone)]
-pub enum AttackCards {
-    Attack(AttackCard),
-}
-
-pub(crate) trait CardInDeck: Clone {
-    fn get_type(&self) -> String;
-}
-
-impl CardInDeck for NormalCards {
-    fn get_type(&self) -> String {
-        match self {
-            NormalCards::Event(_) => "event".to_string(),
-            NormalCards::Oopsie(_) => "oopsie".to_string(),
-            NormalCards::Lucky(_) => "lucky".to_string(),
-        }
-    }
-}
-impl CardInDeck for AttackCards {
-    fn get_type(&self) -> String {
-        "attack".to_string()
-    }
-}
-impl CardInDeck for EvaluationCard {
-    fn get_type(&self) -> String {
-        "evaluation".to_string()
-    }
-}
-
 pub struct PreparedDeck {
-    cards: Vec<NormalCards>,
-    attacks: Vec<AttackCards>,
+    cards: Vec<CardRc>,
+    attacks: Vec<CardRc>,
     evaluation: Vec<EvaluationCard>,
 }
 
@@ -87,25 +47,6 @@ pub struct DeckComposition {
     pub lucky: usize,
     pub evaluation: usize,
 }
-
-impl From<NormalCards> for Card {
-    fn from(value: NormalCards) -> Self {
-        match value {
-            NormalCards::Event(ec) => Card::Event(ec),
-            NormalCards::Oopsie(oc) => Card::Oopsie(oc),
-            NormalCards::Lucky(lc) => Card::Lucky(lc),
-        }
-    }
-}
-
-impl From<AttackCards> for Card {
-    fn from(value: AttackCards) -> Self {
-        match value {
-            AttackCards::Attack(ac) => Card::Attack(ac),
-        }
-    }
-}
-
 pub type CardRc = Rc<Card>;
 
 pub trait DeckRepository {
@@ -128,47 +69,29 @@ pub trait DeckPreparation {
 impl DeckPreparation for PreparedDeck {
     fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck {
         dbg!("Creating a new deck");
-        let mut cards: Vec<NormalCards> = vec![];
+        let mut cards: Vec<CardRc> = vec![];
 
         let total_event_cards = access.get_event_cards();
 
-        let event_cards = draw(composition.events, total_event_cards, |e| {
-            match e.as_ref() {
-                Card::Event(ec) => Some(NormalCards::Event(ec.clone())),
-                _ => None,
-            }
-        })
+        let event_cards = draw(composition.events, total_event_cards, &Card::EVENT_CARD)
         .map_err(|e| format!("Event Cards: {}", e).to_string())
         .unwrap();
         cards.append(&mut event_cards.clone());
 
         let total_oopsie_cards = access.get_oopsie_cards().to_vec();
-        let oopsie_cards = draw(composition.oopsies, total_oopsie_cards, |o| {
-            match o.as_ref() {
-                Card::Oopsie(oc) => Some(NormalCards::Oopsie(oc.clone())),
-                _ => None,
-            }
-        })
+        let oopsie_cards = draw(composition.oopsies, total_oopsie_cards, &Card::OOPSIE_CARD)
         .map_err(|e| format!("Oopsie Cards: {}", e).to_string())
         .unwrap();
         cards.append(&mut oopsie_cards.clone());
 
         let total_lucky_cards = access.get_lucky_cards().to_vec();
-        let lucky_cards = draw(composition.lucky, total_lucky_cards, |l| match l.as_ref() {
-            Card::Lucky(lc) => Some(NormalCards::Lucky(lc.clone())),
-            _ => None,
-        })
+        let lucky_cards = draw(composition.lucky, total_lucky_cards, &Card::LUCKY_CARD)
         .map_err(|e| format!("Lucky Cards: {}", e).to_string())
         .unwrap();
         cards.append(&mut lucky_cards.clone());
 
         let total_attack_cards = access.get_attack_cards().to_vec();
-        let attack_cards = draw(composition.attacks, total_attack_cards, |a| {
-            match a.as_ref() {
-                Card::Attack(ac) => Some(AttackCards::Attack(ac.clone())),
-                _ => None,
-            }
-        })
+        let attack_cards = draw(composition.attacks, total_attack_cards, &Card::ATTACK_CARD)
         .map_err(|e| format!("Attack Cards: {}", e).to_string())
         .unwrap();
 
@@ -200,7 +123,7 @@ impl DeckPreparation for PreparedDeck {
 
         let normal_cards = &self.cards.clone();
         let attack_cards = &self.attacks;
-        let mut cards: Vec<Card> = normal_cards.iter().map(|c| c.clone().into()).collect();
+        let mut cards: Vec<CardRc> = normal_cards.iter().map(|c| c.clone()).collect();
         cards.shuffle(&mut rng);
 
         let cards = Self::add_attack_cards(&mut rng, attack_graces, attack_cards, cards);
@@ -214,12 +137,12 @@ impl PreparedDeck {
     fn add_attack_cards(
         mut rng: &mut ThreadRng,
         attack_graces: usize,
-        attack_cards: &Vec<AttackCards>,
-        cards: Vec<Card>,
-    ) -> Vec<Card> {
+        attack_cards: &Vec<CardRc>,
+        cards: Vec<CardRc>,
+    ) -> Vec<CardRc> {
         let (no_attack_cards, to_have_attack_cards) = cards.split_at(attack_graces);
 
-        let mut part_with_attacks: Vec<Card> = to_have_attack_cards.to_vec();
+        let mut part_with_attacks: Vec<CardRc> = to_have_attack_cards.to_vec();
         part_with_attacks.extend(
             attack_cards
                 .iter()
@@ -240,8 +163,8 @@ impl PreparedDeck {
     fn add_evaluation_cards(
         mut rng: &mut ThreadRng,
         evaluation_cards: &Vec<EvaluationCard>,
-        cards: Vec<Card>,
-    ) -> Vec<Card> {
+        cards: Vec<CardRc>,
+    ) -> Vec<CardRc> {
         let eval_count = evaluation_cards.len();
         let chunk_size = cards.len() / (eval_count + 1);
         let chunks = cards.chunks(chunk_size);
@@ -254,7 +177,9 @@ impl PreparedDeck {
             }
             let mut chunk_with_eval = chunk.to_vec();
             if i - 1 < eval_count {
-                chunk_with_eval.push(evaluation_cards[i - 1].clone().into());
+                chunk_with_eval.push(
+                    Rc::new(Card::from(evaluation_cards[i - 1].clone()))
+                );
             }
             chunk_with_eval.shuffle(&mut rng);
             cards.extend(chunk_with_eval)
@@ -264,14 +189,20 @@ impl PreparedDeck {
     }
 }
 
-fn draw<T, F>(count: usize, cards: Vec<CardRc>, extractor: F) -> Result<Vec<T>, String>
-where
-    T: CardInDeck,
-    F: Fn(&CardRc) -> Option<T>,
-{
+fn draw(count: usize, cards: Vec<CardRc>, category: &CardCategory) -> Result<Vec<CardRc>, String> {
+    fn extract(card: &CardRc, cat: &CardCategory) ->  Option<CardRc>
+    {
+        if card.category() == cat {
+            Some(card.clone())
+        } else {
+            None
+        }
+    }
+
+
     let cards_to_use = cards
         .iter()
-        .map(|c| extractor(c))
+        .map(|c| extract(c, category) )
         .filter(|o| o.is_some())
         .map(|o| o.unwrap())
         .collect::<Vec<_>>();
@@ -281,14 +212,14 @@ where
     }
 
     if cards_to_use.len() < count {
-        let card_type = cards_to_use[0].get_type();
+        let card_type = cards_to_use[0].category();
         warn!(
             "Not enough {} cards to draw {} cards from. Will duplicate!",
             card_type, count
         );
     }
 
-    let mut cards_to_draw_from: Vec<T> = vec![];
+    let mut cards_to_draw_from: Vec<CardRc> = vec![];
     while cards_to_draw_from.len() < count {
         let mut shuffled = cards_to_use.clone();
         shuffled.shuffle(&mut thread_rng());
@@ -304,21 +235,15 @@ mod tests {
     use std::collections;
     use fake::Fake;
     use collections::HashSet;
+    use crate::cards::types::event::EventCard;
     use crate::cards::types::event::tests::FakeEventCard;
     use crate::cards::types::lucky::tests::FakeLuckyCard;
     use super::*;
 
-    fn event_card_extractor(card: &CardRc) -> Option<NormalCards> {
-        match card.as_ref() {
-            Card::Event(ec) => Some(NormalCards::Event(ec.clone())),
-            _ => None,
-        }
-    }
-
-    fn extract_cards_from_result(res: &Vec<NormalCards>) -> Vec<&EventCard> {
-        res.iter().map(|c| match c {
-            NormalCards::Event(e) => e,
-            _ => panic!("Should only contain events"),
+    fn extract_cards_from_result(res: &Vec<CardRc>) -> Vec<&EventCard> {
+        res.iter().map(|c| match &**c {
+            Card::Event(ec) => ec,
+            _ => panic!("Only event card expected in result. Got: {:?}", c),
         })
             .collect()
     }
@@ -333,7 +258,7 @@ mod tests {
             Rc::new(Card::Lucky(FakeLuckyCard.fake()))
         ];
 
-        assert!(draw(count, cards, event_card_extractor).is_err());
+        assert!(draw(count, cards, &Card::EVENT_CARD).is_err());
     }
 
     #[test]
@@ -344,7 +269,7 @@ mod tests {
             Rc::new(Card::Event(FakeEventCard.fake()))
         ];
 
-        let res = draw(count, cards, event_card_extractor)
+        let res = draw(count, cards, &Card::EVENT_CARD)
             .unwrap();
 
         let drawn_cards = extract_cards_from_result(&res);
@@ -364,7 +289,7 @@ mod tests {
             Rc::new(Card::Event(FakeEventCard.fake()))
         ];
 
-        let res = draw(count, cards, event_card_extractor)
+        let res = draw(count, cards, &Card::EVENT_CARD)
             .unwrap();
 
         let drawn_cards = extract_cards_from_result(&res);
@@ -396,8 +321,8 @@ mod tests {
             Rc::new(Card::Event(FakeEventCard.fake())),
         ];
 
-        let draw_1 = draw(count, cards.clone(), event_card_extractor).unwrap();
-        let draw_2 = draw(count, cards, event_card_extractor).unwrap();
+        let draw_1 = draw(count, cards.clone(), &Card::EVENT_CARD).unwrap();
+        let draw_2 = draw(count, cards, &Card::EVENT_CARD).unwrap();
 
         let drawn_cards_1 = extract_cards_from_result(&draw_1);
         let drawn_cards_2 = extract_cards_from_result(&draw_2);

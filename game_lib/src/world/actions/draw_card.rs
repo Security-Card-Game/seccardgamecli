@@ -76,7 +76,7 @@ mod tests {
         let remaining_card = Card::from(FakeEventCard.fake::<EventCard>());
         let cards = vec![next_card.clone(), remaining_card.clone()];
 
-        let deck = Deck::new(cards);
+        let deck = Deck::new(cards.iter().map(|c| Rc::new(c.clone()) ).collect());
 
         let CardAndNewDeck {
             drawn_card: _,
@@ -96,7 +96,7 @@ mod tests {
         let next_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let cards = vec![next_card.clone()];
 
-        let deck = Deck::new(cards);
+        let deck = Deck::new(cards.iter().map(|c| Rc::new(c.clone()) ).collect());
 
         let CardAndNewDeck {
             drawn_card: _,
@@ -140,7 +140,7 @@ mod tests {
         let remaining_card = Card::from(FakeEventCard.fake::<EventCard>());
         let cards = vec![next_card.clone(), remaining_card.clone()];
 
-        let deck = Deck::new(cards);
+        let deck = Deck::new(cards.iter().map(|c| Rc::new(c.clone()) ).collect());
         let board = Board::empty();
 
         let (_, board_after_draw) = draw_card_and_place_on_board(deck, board).unwrap();
