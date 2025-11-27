@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn calculate_remaining_rounds() {
-        let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
+        let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>()).into();
 
         let deck = Deck {
             remaining_cards: vec![oopsie_card],
@@ -227,7 +227,7 @@ mod tests {
 
     #[test]
     fn calculate_board_no_fix_modifiers() {
-        let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
+        let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>()).into();
         let event_card_base: EventCard = FakeEventCard.fake();
         let event_modifier: CostModifier = FakeCostModifier.fake();
         let event_card = Card::from(EventCard {
@@ -265,11 +265,11 @@ mod tests {
     fn calculate_board_fix_modifiers() {
         let oopsie_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let oopsie_card_rc = Rc::new(oopsie_card.clone());
-        let cards = vec![(Uuid::new_v4(), oopsie_card_rc)];
+        let cards = vec![(Uuid::new_v4(), oopsie_card_rc.clone())];
         let open_cards: HashMap<_, _> = cards.into_iter().collect();
 
         let deck = Deck {
-            remaining_cards: vec![oopsie_card],
+            remaining_cards: vec![oopsie_card_rc],
             played_cards: 2,
             total: 3,
         };

@@ -4,10 +4,9 @@ use std::path::PathBuf;
 use dialoguer::Input;
 use log::info;
 
-use game_lib::cards::types::card_model::Card;
 use game_lib::file::cards::write_data_to_file;
 use game_lib::file::repository::DeckLoader;
-use game_lib::world::deck::{Deck, DeckComposition, DeckPreparation, PreparedDeck};
+use game_lib::world::deck::{CardRc, Deck, DeckComposition, DeckPreparation, PreparedDeck};
 
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
 use crate::cli::config::Config;
@@ -59,7 +58,7 @@ pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliR
     Ok(())
 }
 
-fn write_cards_to_deck(deck: Vec<Card>, path: String) -> CliResult<()> {
+fn write_cards_to_deck(deck: Vec<CardRc>, path: String) -> CliResult<()> {
     fs::create_dir(&path).map_err(|e| CliError {
         kind: ErrorKind::FileSystemError,
         message: format!("Could not create directory {}", path).to_string(),
