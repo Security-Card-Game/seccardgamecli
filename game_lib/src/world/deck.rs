@@ -13,7 +13,7 @@ use rand::thread_rng;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Deck {
-    pub remaining_cards: Vec<Card>,
+    pub remaining_cards: Vec<CardRc>,
     pub played_cards: usize,
     pub total: usize,
 }
@@ -23,7 +23,7 @@ impl Deck {
     pub(crate) fn new(cards: Vec<CardRc>) -> Deck {
         let total = cards.len();
         Deck {
-            remaining_cards: cards.into_iter().map(|c| (*c).clone()).collect(),
+            remaining_cards: cards,
             played_cards: 0,
             total,
         }

@@ -403,7 +403,7 @@ mod tests {
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
     use crate::cards::types::oopsie::OopsieCard;
     use crate::world::board::Board;
-    use crate::world::deck::Deck;
+    use crate::world::deck::{CardRc, Deck};
     use crate::world::game::{Game, GameActionResult, GameStatus};
     use crate::world::reputation::Reputation;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
@@ -411,7 +411,7 @@ mod tests {
 
     #[derive(Clone)]
     struct TestDeck {
-        cards: Vec<Card>,
+        cards: Vec<CardRc>,
         start_deck: Deck,
     }
 
@@ -445,14 +445,14 @@ mod tests {
                 effect: Effect::OnNextFix(FakeEffectDescription.fake(), FakeCostModifier.fake()),
                 ..FakeEventCard.fake()
             });
-            let cards = vec![
-                first_card.clone(),
-                second_card.clone(),
-                third_card.clone(),
-                fourth_card.clone(),
-                fifth_card.clone(),
-                sixth_card.clone(),
-                seventh_card.clone(),
+            let cards: Vec<CardRc> = vec![
+                first_card.into(),
+                second_card.into(),
+                third_card.into(),
+                fourth_card.into(),
+                fifth_card.into(),
+                sixth_card.into(),
+                seventh_card.into(),
             ];
             let start_deck = Deck {
                 remaining_cards: cards.clone(),
