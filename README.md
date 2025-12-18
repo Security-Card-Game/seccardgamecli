@@ -17,7 +17,7 @@ Important, this game runs locally on your computer. If you want to play
 together, share your screen!
 
 Run `seccardgame` with the `init` command. Then run it `game play`. This will ask you about the deck composition
-and then opens the UI.
+and then opens the UI. You can find binaries under releases. Be aware, this is a CLI and need to be run in a terminal. It will create a config file and clone the cards into a folder.
 
 On the left side panel you can enter the resources you will gain every turn and also start a
 new turn with the `Draw card` button. Also, your available resources are displayed there. To pay
