@@ -9,22 +9,80 @@ use std::collections::HashSet;
 
 use uuid::Uuid;
 
-use crate::cards::properties::effect::Effect;
 use crate::cards::properties::cost_modifier::CostModifier;
+use crate::cards::properties::effect::Effect;
+use crate::cards::properties::target::Target;
 use crate::cards::types::card_model::Card;
-use crate::world::board::Board;
+use crate::world::board::{Board, Incident};
 use crate::world::deck::{CardRc, Deck};
 use crate::world::resources::Resources;
-
 
 pub(crate) fn calculate_board(board: Board, deck: &Deck) -> Board {
     let remaining_rounds = calculate_remaining_rounds(deck);
     let fix_modifier = calculate_cost_modifier(&board);
+    let active_incidents = determine_active_incidents(&board);
     Board {
         turns_remaining: remaining_rounds,
         cost_modifier: fix_modifier,
+        active_incidents,
         ..board
     }
+}
+
+fn determine_active_incidents(board: &Board) -> Vec<Incident> {
+    let attacks = board
+        .open_cards
+        .iter()
+        .filter_map(|(id, card)| {
+            if let Card::Attack(attack) = &**card {
+                Some((id, attack))
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let oopsies = board
+        .open_cards
+        .iter()
+        .filter_map(|(id, card)| {
+            if let Card::Oopsie(oopsie) = &**card {
+                Some((id, oopsie))
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let mut incidents = Vec::new();
+
+    for (attack_id, attack) in attacks.iter() {
+        let attack_targets = match &attack.effect {
+            Effect::Incident(_, targets, _) => targets,
+            _ => continue,
+        };
+
+        for (oopsie_id, oopsie) in oopsies.iter() {
+            let oopsie_targets = match &oopsie.effect {
+                Effect::AttackSurface(_, targets) => targets,
+                _ => continue,
+            };
+
+            let attack_set: HashSet<_> = HashSet::from_iter(attack_targets.iter());
+            let oopsie_set: HashSet<_> = HashSet::from_iter(oopsie_targets.iter());
+            let has_matching_target = attack_set.intersection(&oopsie_set).next().is_some();
+
+            if has_matching_target {
+                incidents.push(Incident {
+                    attack_card_id: **attack_id,
+                    attack_title: attack.title.value().to_string(),
+                    oopsie_card_id: **oopsie_id,
+                    oopsie_title: oopsie.title.value().to_string(),
+                });
+            }
+        }
+    }
+    incidents
 }
 
 fn calculate_cost_modifier(board: &Board) -> Option<CostModifier> {
@@ -83,24 +141,25 @@ mod tests {
     use std::collections::HashMap;
     use std::rc::Rc;
 
+    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
+    use crate::cards::properties::effect_description::tests::FakeEffectDescription;
+    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
+    use crate::cards::properties::target::Target;
+    use crate::cards::types::attack::tests::FakeAttackCard;
+    use crate::cards::types::attack::AttackCard;
+    use crate::cards::types::card_model::Card;
+    use crate::cards::types::event::tests::FakeEventCard;
+    use crate::cards::types::event::EventCard;
+    use crate::cards::types::lucky::tests::FakeLuckyCard;
+    use crate::cards::types::lucky::LuckyCard;
+    use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::oopsie::OopsieCard;
+    use crate::world::board::Board;
+    use crate::world::deck::Deck;
     use fake::Fake;
     use rstest::rstest;
     use uuid::Uuid;
-    use crate::cards::properties::incident_impact::tests::FakeFixedIncidentImpact;
-    use crate::cards::properties::effect_description::tests::FakeEffectDescription;
-    use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
-    use crate::cards::types::attack::AttackCard;
-    use crate::cards::types::attack::tests::FakeAttackCard;
-    use crate::cards::types::card_model::Card;
-    use crate::cards::types::event::EventCard;
-    use crate::cards::types::event::tests::FakeEventCard;
-    use crate::cards::types::lucky::LuckyCard;
-    use crate::cards::types::lucky::tests::FakeLuckyCard;
-    use crate::cards::types::oopsie::OopsieCard;
-    use crate::cards::types::oopsie::tests::FakeOopsieCard;
-    use crate::world::board::Board;
-    use crate::world::deck::Deck;
-
+    use crate::cards::properties::title::Title;
     use super::*;
 
     #[test]
@@ -259,6 +318,157 @@ mod tests {
         let new_board = calculate_board(board, &deck);
 
         assert_eq!(new_board, expected_board)
+    }
+
+    #[test]
+    fn determine_active_incidents_empty_board_no_incidents() {
+        let empty_board = Board::empty();
+        let active_incidents = determine_active_incidents(&empty_board);
+        assert_eq!(active_incidents, vec![])
+    }
+
+    #[test]
+    fn determine_active_incidents_matches_multiple_attacks_one_oopsies() {
+        let (uuid_oopsie_backend, oopsie_card_rc_backend) = generate_oopsie(Target::new("backend"), "o1");
+        let (uuid_attack_backend_1, attack_card_rc_backend_1) = generate_attack(Target::new("backend"), "a1");
+        let (uuid_attack_backend_2, attack_card_rc_backend_2) = generate_attack(Target::new("backend"), "a2");
+        let (uuid_attack_frontend, attack_card_rc_frontend) = generate_attack(Target::new("frontend"), "a3");
+
+        let cards = vec![
+            (uuid_oopsie_backend.clone(), oopsie_card_rc_backend),
+            (uuid_attack_backend_1.clone(), attack_card_rc_backend_1),
+            (uuid_attack_backend_2.clone(), attack_card_rc_backend_2),
+            (uuid_attack_frontend.clone(), attack_card_rc_frontend),
+        ];
+        let open_cards: HashMap<_, _> = cards.into_iter().collect();
+
+        let board = Board {
+            open_cards,
+            ..Board::empty()
+        };
+
+        let active_incidents = determine_active_incidents(&board);
+
+        assert_vec_eq_ignore_order(
+            active_incidents,
+            vec![
+                Incident {
+                    attack_card_id: uuid_attack_backend_1,
+                    attack_title: "a1".to_string(),
+                    oopsie_card_id: uuid_oopsie_backend,
+                    oopsie_title: "o1".to_string()
+                },
+                Incident {
+                    attack_card_id: uuid_attack_backend_2,
+                    attack_title: "a2".to_string(),
+                    oopsie_card_id: uuid_oopsie_backend,
+                    oopsie_title: "o1".to_string()
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn determine_active_incidents_matches_one_attack_multiple_oopsies() {
+        let (uuid_oopsie_backend_1, oopsie_card_rc_backend_1) = generate_oopsie(Target::new("backend"), "o1");
+        let (uuid_oopsie_backend_2, oopsie_card_rc_backend_2) = generate_oopsie(Target::new("backend"), "o2");
+        let (uuid_oopsie_frontend, oopsie_card_rc_frontend) = generate_oopsie(Target::new("fronted"), "o3");
+        let (uuid_attack, attack_card_rc) = generate_attack(Target::new("backend"), "a");
+
+        let cards = vec![
+            (uuid_oopsie_backend_1.clone(), oopsie_card_rc_backend_1),
+            (uuid_oopsie_backend_2.clone(), oopsie_card_rc_backend_2),
+            (uuid_oopsie_frontend.clone(), oopsie_card_rc_frontend),
+            (uuid_attack.clone(), attack_card_rc),
+        ];
+        let open_cards: HashMap<_, _> = cards.into_iter().collect();
+
+        let board = Board {
+            open_cards,
+            ..Board::empty()
+        };
+
+        let active_incidents = determine_active_incidents(&board);
+
+        assert_vec_eq_ignore_order(
+            active_incidents,
+            vec![
+                Incident {
+                    attack_card_id: uuid_attack,
+                    attack_title: "a".to_string(),
+                    oopsie_card_id: uuid_oopsie_backend_1,
+                    oopsie_title: "o1".to_string()
+                },
+                Incident {
+                    attack_card_id: uuid_attack,
+                    attack_title: "a".to_string(),
+                    oopsie_card_id: uuid_oopsie_backend_2,
+                    oopsie_title: "o2".to_string()
+                }
+            ]
+        );
+    }
+
+    fn generate_oopsie(target: Target, title: &str) -> (Uuid, Rc<Card>) {
+        (
+            Uuid::new_v4(),
+            Rc::new(Card::from(OopsieCard {
+                effect: Effect::AttackSurface(
+                    FakeEffectDescription.fake(),
+                    vec![target],
+                ),
+                title: Title::new(title),
+                ..FakeOopsieCard.fake::<OopsieCard>()
+            })),
+        )
+    }
+
+    fn generate_attack(target: Target, title: &str) -> (Uuid, Rc<Card>) {
+        (
+            Uuid::new_v4(),
+            Rc::new(Card::from(AttackCard {
+                effect: Effect::Incident(
+                    FakeEffectDescription.fake(),
+                    vec![target],
+                    FakeFixedIncidentImpact.fake(),
+                ),
+                title: Title::new(title),
+                ..FakeAttackCard.fake::<AttackCard>()
+            }))
+        )
+    }
+
+    fn assert_vec_eq_ignore_order<T: Ord + std::fmt::Debug>(mut a: Vec<T>, mut b: Vec<T>) {
+        a.sort();
+        b.sort();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn determine_active_incidents_matches_one_incident_with_attack() {
+        let (uuid_oopsie, oopsie_card_rc) = generate_oopsie(Target::new("backend"), "o");
+        let (uuid_attack, attack_card_rc) = generate_attack(Target::new("backend"), "a");
+        let cards = vec![
+            (uuid_oopsie.clone(), oopsie_card_rc),
+            (uuid_attack.clone(), attack_card_rc),
+        ];
+        let open_cards: HashMap<_, _> = cards.into_iter().collect();
+
+        let board = Board {
+            open_cards,
+            ..Board::empty()
+        };
+
+        let active_incidents = determine_active_incidents(&board);
+
+        let expected_incident = Incident {
+            attack_card_id: uuid_attack,
+            attack_title: "a".to_string(),
+            oopsie_card_id: uuid_oopsie,
+            oopsie_title: "o".to_string()
+        };
+
+        assert_vec_eq_ignore_order(active_incidents, vec![expected_incident])
     }
 
     #[test]
