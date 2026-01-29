@@ -8,3 +8,4 @@ mod actions;
 pub mod game;
 pub mod resource_fix_multiplier;
 pub mod part_of_hundred;
+mod game_path_test;
