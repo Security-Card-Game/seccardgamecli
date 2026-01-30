@@ -1,3 +1,4 @@
+use game_lib::world::deck::DeckComposition;
 use game_lib::world::game::Game;
 use game_setup::config::config::Config;
 use crate::actions::command::Command;
@@ -23,8 +24,27 @@ enum AppState {
     GameView(GameViewState)
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct StartGameData {
+    deck_composition: DeckComposition,
+    grace_rounds: u8,
+}
+
+impl AppEvent  {
+    pub fn start_game(deck_composition: DeckComposition, grace_rounds: u8) -> Self {
+        AppEvent::StartGame(StartGameData { deck_composition, grace_rounds })
+    }
+}
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum AppEvent {
+    StartGame(StartGameData),
+}
+
+
+
 pub(crate) struct SecCardGameApp {
     state: AppState,
+    last_event: Option<AppEvent>,
     config: Config
 }
 

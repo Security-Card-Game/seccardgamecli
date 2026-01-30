@@ -1,4 +1,6 @@
 use egui::{Context, RichText, Ui};
+use game_lib::world::deck::DeckComposition;
+use crate::AppEvent;
 
 struct LabelValue {
     label: String,
@@ -77,7 +79,10 @@ impl InitView {
         }
     }
 
-    pub fn draw_ui(&mut self, ctx: &Context) {
+    pub fn draw_ui<F>(&mut self, event_callback: &mut F, ctx: &Context)
+    where
+        F: FnMut(AppEvent),
+    {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Grid::new("init_view").show(ui, |ui| {
                     ui.label(RichText::new("Game Deck Settings").strong());
@@ -98,6 +103,19 @@ impl InitView {
                     self.evaluation_card_count.draw_component(ui);
                     ui.end_row();
             });
+            ui.add_space(10.0);
+           return if ui.button("Start Game").clicked() {
+               let deck_composition = DeckComposition {
+                   events: self.event_card_count.value.parse().unwrap_or(0),
+                   attacks: self.attack_card_count.value.parse().unwrap_or(0),
+                   oopsies: self.oopsie_card_count.value.parse().unwrap_or(0),
+                   lucky: self.lucky_card_count.value.parse().unwrap_or(0),
+                   evaluation: self.evaluation_card_count.value.parse().unwrap_or(0),
+               };
+               let grace_rounds = self.grace_rounds.value.parse().unwrap_or(0);
+               event_callback(AppEvent::start_game(deck_composition, grace_rounds)
+               )
+           }
         });
     }
 }

@@ -40,7 +40,7 @@ pub fn create_deck(config: &Config) -> Deck {
         evaluation: evaluation_cards as usize,
     };
 
-    game_setup::creation::create::create_deck(deck_composition, grace_period, config)
+    game_setup::creation::create::create_deck(&deck_composition, grace_period, config)
 }
 
 pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliResult<()> {

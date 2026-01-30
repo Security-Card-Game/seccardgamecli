@@ -40,6 +40,7 @@ pub struct PreparedDeck {
     evaluation: Vec<EvaluationCard>,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct DeckComposition {
     pub events: usize,
     pub attacks: usize,
@@ -60,14 +61,14 @@ pub trait DeckRepository {
 pub trait DeckPreparation {
     /// Assembles a `PreparedDeck` by pulling the specified number of cards from a `DeckRepository`
     /// based on the given `DeckComposition`.
-    fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck;
+    fn prepare<T: DeckRepository>(composition: &DeckComposition, access: T) -> PreparedDeck;
 
     /// Shuffles the deck and inserts attack cards only after a grace period of cards/turns
     fn shuffle(&self, grace_period: usize) -> Deck;
 }
 
 impl DeckPreparation for PreparedDeck {
-    fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck {
+    fn prepare<T: DeckRepository>(composition: &DeckComposition, access: T) -> PreparedDeck {
         dbg!("Creating a new deck");
         let mut cards: Vec<CardRc> = vec![];
 

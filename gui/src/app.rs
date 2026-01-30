@@ -2,10 +2,11 @@ use egui::{Context, Ui};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use super::{GameViewState, Input, Message, SecCardGameApp};
+use super::{AppEvent, GameViewState, Input, Message, SecCardGameApp};
 use crate::actions::command_handler::CommandHandler;
 use crate::card_window::card_view_model::CardContent;
 use crate::card_window::card_window::display_card;
+use crate::init_view::init_view::InitView;
 use crate::AppState::{GameView, Init};
 use game_lib::world::board::Board;
 use game_lib::world::deck::{CardRc, Deck};
@@ -13,10 +14,19 @@ use game_lib::world::game::{Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 use game_setup::config::config::Config;
-use crate::init_view::init_view::InitView;
+use game_setup::creation::create::create_deck;
 
 impl SecCardGameApp {
     fn start_game(deck: Deck, config: Config) -> Self {
+        let game_view = Self::create_game_view_state(deck);
+        Self {
+            state: GameView(game_view),
+            last_event: None,
+            config
+        }
+    }
+
+    pub fn create_game_view_state(deck: Deck) -> GameViewState {
         let game = Game::create(deck, Resources::new(5), ResourceFixMultiplier::default());
         let initial_gain = game.resource_gain.value().clone();
         let initial_multiplier = game.fix_multiplier.value().clone();
@@ -32,14 +42,11 @@ impl SecCardGameApp {
             },
             command: None,
         };
-        Self {
-            state: GameView(game_view),
-            config
-        }
+        game_view
     }
 
     fn init(config: Config) -> Self {
-        Self { state: Init(), config }
+        Self { state: Init(), last_event: None, config }
     }
 }
 impl GameViewState {
@@ -88,10 +95,22 @@ impl eframe::App for SecCardGameApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         Self::create_menu_bar(ctx);
+        if let Some(app_event) = &self.last_event {
+                match app_event {
+                    AppEvent::StartGame(data) => {
+                        let deck = create_deck(&data.deck_composition, data.grace_rounds, &self.config);
+                        self.state = GameView(Self::create_game_view_state(deck));
+                    }
+                }
+                self.last_event= None;
+        }
 
         match &mut self.state {
             Init() => {
-                InitView::new().draw_ui(ctx);
+                let mut set_event =  |event| self.last_event = Some(event);
+                InitView::new().draw_ui(
+                    &mut set_event,
+                    ctx);
             }
             GameView(gv) => {
                 gv.process_command();
