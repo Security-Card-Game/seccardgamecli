@@ -1,4 +1,5 @@
 use game_lib::world::game::Game;
+use game_setup::config::config::Config;
 use crate::actions::command::Command;
 
 mod app;
@@ -24,6 +25,7 @@ enum AppState {
 
 pub(crate) struct SecCardGameApp {
     state: AppState,
+    config: Config
 }
 
 enum Message {

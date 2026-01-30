@@ -12,10 +12,11 @@ use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
+use game_setup::config::config::Config;
 use crate::init_view::init_view::InitView;
 
 impl SecCardGameApp {
-    fn start_game(deck: Deck) -> Self {
+    fn start_game(deck: Deck, config: Config) -> Self {
         let game = Game::create(deck, Resources::new(5), ResourceFixMultiplier::default());
         let initial_gain = game.resource_gain.value().clone();
         let initial_multiplier = game.fix_multiplier.value().clone();
@@ -33,11 +34,12 @@ impl SecCardGameApp {
         };
         Self {
             state: GameView(game_view),
+            config
         }
     }
 
-    fn init() -> Self {
-        Self { state: Init() }
+    fn init(config: Config) -> Self {
+        Self { state: Init(), config }
     }
 }
 impl GameViewState {
@@ -69,14 +71,14 @@ impl GameViewState {
 
 impl SecCardGameApp {
     /// Called once before the first frame.
-    pub fn new_with_deck(cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
+    pub fn new_with_deck(cc: &eframe::CreationContext<'_>, deck: Deck, config: Config) -> Self {
         cc.egui_ctx.set_pixels_per_point(1.4);
-        SecCardGameApp::start_game(deck)
+        SecCardGameApp::start_game(deck, config)
     }
 
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>, config: Config) -> Self {
         cc.egui_ctx.set_pixels_per_point(1.4);
-        SecCardGameApp::init()
+        SecCardGameApp::init(config)
     }
 }
 

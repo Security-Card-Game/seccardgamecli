@@ -7,13 +7,13 @@ edition = "2021"
 
 [dependencies]
 game_lib = { path = "../game_lib" }
+game_setup = { path = "../game_setup" }
 
 uuid = { version = "1.10.0" , features = [
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
-getrandom = { version = "0.2.15"}
 
 
 egui = "0.28.1"
@@ -22,5 +22,4 @@ eframe = { version = "0.28.1", default-features = false, features = [
     "glow",          # Use the glow rendering backend. Alternative: "wgpu".
 ] }
 
-log = "0.4.22"
 rand = "0.8.5"

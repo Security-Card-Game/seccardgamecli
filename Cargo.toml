@@ -3,6 +3,7 @@ resolver="2"
 members = [
     "seccardgame",
     "game_lib",
+    "game_setup",
     "gui",
 ]
 

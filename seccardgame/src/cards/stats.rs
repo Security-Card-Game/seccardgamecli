@@ -13,9 +13,8 @@ use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::file::cards::get_card_directory;
 use game_lib::file::general::count_cards_in_directory;
-
+use game_setup::config::config::Config;
 use crate::cli::cli_result::CliResult;
-use crate::cli::config::Config;
 
 pub struct CardStats {
     pub event_cards: u32,

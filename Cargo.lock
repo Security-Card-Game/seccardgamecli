@@ -1047,14 +1047,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "game_setup"
+version = "1.0.0"
+dependencies = [
+ "game_lib",
+ "git2",
+ "log",
+ "openssl",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "testing_logger",
+]
+
+[[package]]
 name = "game_ui"
 version = "0.4.1"
 dependencies = [
  "eframe",
  "egui",
  "game_lib",
- "getrandom 0.2.16",
- "log",
+ "game_setup",
  "rand 0.8.5",
  "uuid",
 ]
@@ -2348,6 +2361,7 @@ dependencies = [
  "dialoguer",
  "flexi_logger",
  "game_lib",
+ "game_setup",
  "game_ui",
  "git2",
  "log",

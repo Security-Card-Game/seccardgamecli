@@ -3,12 +3,12 @@
 use egui::Vec2;
 
 use game_lib::world::deck::Deck;
-
+use game_setup::config::config::Config;
 use crate::SecCardGameApp;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
-pub fn run(predefined_deck: Option<Deck>) -> eframe::Result<()> {
+pub fn run(predefined_deck: Option<Deck>, config: Config) -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_decorations(true)
@@ -23,13 +23,13 @@ pub fn run(predefined_deck: Option<Deck>) -> eframe::Result<()> {
         eframe::run_native(
             "seccard game",
             native_options,
-            Box::new(|cc| Ok(Box::new(SecCardGameApp::new_with_deck(cc, deck)))),
+            Box::new(|cc| Ok(Box::new(SecCardGameApp::new_with_deck(cc, deck, config)))),
         )
     } else {
         eframe::run_native(
             "seccard game",
             native_options,
-            Box::new(|cc| Ok(Box::new(SecCardGameApp::new(cc)))),
+            Box::new(|cc| Ok(Box::new(SecCardGameApp::new(cc, config)))),
         )
-    } 
+    }
 }

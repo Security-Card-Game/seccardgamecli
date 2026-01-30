@@ -3,9 +3,8 @@ use std::process::exit;
 use clap::{Arg, Command};
 use flexi_logger::Logger;
 use log::error;
-
-use crate::cli::cli_result::CliResult;
-use crate::cli::config::{init, CfgInit, Config};
+use game_setup::config::config::{init, CfgInit, Config};
+use crate::cli::cli_result::{CliError, CliResult};
 use crate::game::create::create_deck_and_write_to_disk;
 use crate::game::openui::open_ui;
 use crate::game::play::play_deck;
@@ -109,7 +108,7 @@ fn handle_commands() -> CliResult<()> {
                 game_path: path,
                 config_path: cfg,
             };
-            init(cfg_init)
+            init(cfg_init).map_err(|e| CliError::from(e))
         }
         Some(("cards", sub_matches)) => {
             let config = load_config(cfg);

@@ -1,6 +1,5 @@
 use std::fmt;
 use std::fmt::Formatter;
-use game_setup::results::GameSetupError;
 
 #[derive(Clone, Debug, PartialEq)]
 #[allow(dead_code)]
@@ -10,9 +9,6 @@ pub enum ErrorKind {
     FileSystemError,
     ConfigError,
     NotImplemented,
-    UserInterfaceError,
-    GUI,
-    GameSetupError,
 }
 
 impl fmt::Display for ErrorKind {
@@ -23,27 +19,18 @@ impl fmt::Display for ErrorKind {
             ErrorKind::CardError => write!(f, "CardCreationError"),
             ErrorKind::ConfigError => write!(f, "ConfigError"),
             ErrorKind::NotImplemented => write!(f, "NotImplemented"),
-            ErrorKind::UserInterfaceError => write!(f, "UserInterfaceError"),
-            ErrorKind::GUI => write!(f, "GUIError"),
-            ErrorKind::GameSetupError => write!(f, "GameSetupError"),
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct CliError {
+pub struct GameSetupError {
     pub kind: ErrorKind,
     pub message: String,
     pub original_message: Option<String>,
 }
 
-impl From<Box<GameSetupError>> for CliError {
-    fn from(value: Box<GameSetupError>) -> Self {
-        CliError::new(ErrorKind::GameSetupError, &value.message, Some(value.original_message.unwrap()))
-    }
-}
-
-impl fmt::Display for CliError {
+impl fmt::Display for GameSetupError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.original_message {
             Some(orig) => write!(f, "[{}]: {} (Reason: {})", self.kind, self.message, orig),
@@ -52,9 +39,9 @@ impl fmt::Display for CliError {
     }
 }
 
-impl CliError {
+impl GameSetupError {
     pub fn new(kind: ErrorKind, message: &str, original_message: Option<String>) -> Self {
-        CliError {
+        GameSetupError {
             kind,
             message: message.to_string(),
             original_message,
@@ -62,4 +49,4 @@ impl CliError {
     }
 }
 
-pub type CliResult<T> = Result<T, CliError>;
+pub type GameSetupResult<T> = Result<T, Box<GameSetupError>>;

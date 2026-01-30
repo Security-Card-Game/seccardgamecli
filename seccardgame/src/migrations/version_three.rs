@@ -12,9 +12,8 @@ use game_lib::cards::types::lucky::LuckyCard;
 use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::file::cards::{get_card_directory, write_data_to_file};
 use game_lib::file::general::{ensure_directory_exists, get_files_in_directory_with_filter};
-
+use game_setup::config::config::Config;
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::cli::config::Config;
 
 pub fn convert(config: &Config) -> CliResult<()> {
     convert_cards(EventCard::empty(), &config.game_path);
