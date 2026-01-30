@@ -6,7 +6,7 @@ use super::{AppEvent, GameViewState, Input, Message, SecCardGameApp};
 use crate::actions::command_handler::CommandHandler;
 use crate::card_window::card_view_model::CardContent;
 use crate::card_window::card_window::display_card;
-use crate::init_view::init_view::InitView;
+use crate::init_view::init_view::InitViewState;
 use crate::AppState::{GameView, Init};
 use game_lib::world::board::Board;
 use game_lib::world::deck::{CardRc, Deck};
@@ -46,7 +46,7 @@ impl SecCardGameApp {
     }
 
     fn init(config: Config) -> Self {
-        Self { state: Init(), last_event: None, config }
+        Self { state: Init(InitViewState::new()), last_event: None, config }
     }
 }
 impl GameViewState {
@@ -106,9 +106,9 @@ impl eframe::App for SecCardGameApp {
         }
 
         match &mut self.state {
-            Init() => {
+            Init(state) => {
                 let mut set_event =  |event| self.last_event = Some(event);
-                InitView::new().draw_ui(
+                state.draw_ui(
                     &mut set_event,
                     ctx);
             }

@@ -1,6 +1,7 @@
 use game_lib::world::deck::DeckComposition;
 use game_lib::world::game::Game;
 use game_setup::config::config::Config;
+use init_view::init_view::LabelValue;
 use crate::actions::command::Command;
 
 mod app;
@@ -18,9 +19,17 @@ pub(crate) struct GameViewState {
     input: Input,
     command: CommandToExecute,
 }
+pub(crate) struct InitViewState {
+    event_card_count: LabelValue,
+    attack_card_count: LabelValue,
+    oopsie_card_count: LabelValue,
+    lucky_card_count: LabelValue,
+    evaluation_card_count: LabelValue,
+    grace_rounds: LabelValue,
+}
 
 enum AppState {
-    Init(),
+    Init(InitViewState),
     GameView(GameViewState)
 }
 
