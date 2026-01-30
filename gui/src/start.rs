@@ -8,7 +8,7 @@ use crate::SecCardGameApp;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
-pub fn run(deck: Deck) -> eframe::Result<()> {
+pub fn run(predefined_deck: Option<Deck>) -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_decorations(true)
@@ -19,9 +19,17 @@ pub fn run(deck: Deck) -> eframe::Result<()> {
             .with_maximized(true),
         ..Default::default()
     };
-    eframe::run_native(
-        "seccard game",
-        native_options,
-        Box::new(|cc| Ok(Box::new(SecCardGameApp::new(cc, deck)))),
-    )
+    if let Some(deck) = predefined_deck {
+        eframe::run_native(
+            "seccard game",
+            native_options,
+            Box::new(|cc| Ok(Box::new(SecCardGameApp::new_with_deck(cc, deck)))),
+        )
+    } else {
+        eframe::run_native(
+            "seccard game",
+            native_options,
+            Box::new(|cc| Ok(Box::new(SecCardGameApp::new(cc)))),
+        )
+    } 
 }

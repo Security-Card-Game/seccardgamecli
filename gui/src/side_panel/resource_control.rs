@@ -1,13 +1,13 @@
 use egui::{RichText, Ui};
 
+use crate::actions::command::Command;
+use crate::GameViewState;
 use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
-use crate::actions::command::Command;
-use crate::SecCardGameApp;
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn resource_control(&mut self, ui: &mut Ui) {
         ui.label("Resources");
         ui.add_space(5.0);

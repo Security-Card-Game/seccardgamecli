@@ -5,8 +5,9 @@ use flexi_logger::Logger;
 use log::error;
 
 use crate::cli::cli_result::CliResult;
-use crate::cli::config::{CfgInit, Config, init};
+use crate::cli::config::{init, CfgInit, Config};
 use crate::game::create::create_deck_and_write_to_disk;
+use crate::game::openui::open_ui;
 use crate::game::play::play_deck;
 use crate::migrations::*;
 
@@ -60,6 +61,12 @@ fn cli() -> Command {
                 .subcommand(
                     Command::new("play")
                         .about("Prompts for deck creation and then starts the UI")
+                        .arg_required_else_help(false)
+                        .arg(Arg::new("path").default_missing_value("deck")),
+                )
+                .subcommand(
+                    Command::new("ui")
+                        .about("Starts the UI")
                         .arg_required_else_help(false)
                         .arg(Arg::new("path").default_missing_value("deck")),
                 ),
@@ -124,6 +131,7 @@ fn handle_commands() -> CliResult<()> {
                     create_deck_and_write_to_disk(path, &config)
                 }
                 Some(("play", _)) => play_deck(&config),
+                Some(("ui", _)) => open_ui(&config),
                 _ => {
                     println!("Unknown command!");
                     exit(-1)

@@ -1,8 +1,8 @@
-use egui::Ui;
 use crate::actions::command::Command;
-use crate::SecCardGameApp;
+use crate::GameViewState;
+use egui::Ui;
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn tweak_control(&mut self, ui: &mut Ui) {
         ui.label("Tweaks");
         ui.add_space(5.0);

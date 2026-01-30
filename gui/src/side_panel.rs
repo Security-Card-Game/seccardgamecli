@@ -1,6 +1,6 @@
 use egui::Context;
 
-use crate::SecCardGameApp;
+use crate::GameViewState;
 
 mod tweak_control;
 mod next_round_control;
@@ -8,7 +8,7 @@ mod game_status_display;
 mod resource_control;
 mod reputation_control;
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn create_side_panel(&mut self, ctx: &Context) {
         egui::SidePanel::left("control_panel")
             .resizable(false)

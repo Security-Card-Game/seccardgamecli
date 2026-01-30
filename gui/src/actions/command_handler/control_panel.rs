@@ -1,11 +1,12 @@
-use game_lib::world::reputation::Reputation;
 /// # Control Panel handling
 /// Commands which can be triggered by a the control panel should be handled here.
-use crate::{Message, SecCardGameApp};
+use crate::{GameViewState, Message};
+use game_lib::world::reputation::Reputation;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 
-impl SecCardGameApp {
+
+impl GameViewState {
     pub(super) fn handle_pay_resources(&mut self, res: usize) {
         self.game = self.game.pay_resources(&Resources::new(res));
     }

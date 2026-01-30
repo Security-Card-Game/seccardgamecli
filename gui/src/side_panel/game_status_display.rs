@@ -1,9 +1,9 @@
 use eframe::epaint::Color32;
 use egui::{RichText, Ui};
 
-use crate::{Message, SecCardGameApp};
+use crate::{GameViewState, Message};
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn game_status_display(&mut self, ui: &mut Ui) {
         self.display_cards_remaining(ui);
         ui.add_space(20.0);

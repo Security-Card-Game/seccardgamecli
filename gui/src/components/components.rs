@@ -1,8 +1,8 @@
-use crate::SecCardGameApp;
-use egui::Ui;
 use crate::actions::command::Command;
+use crate::GameViewState;
+use egui::Ui;
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn numeric_enter_component<T, B, F>(&mut self,
                                      ui: &mut Ui,
                                      mut backing_field: B,
@@ -11,7 +11,7 @@ impl SecCardGameApp {
     )
     where
         T: Default + std::str::FromStr,
-        B: FnMut(&mut SecCardGameApp) -> &mut String,
+        B: FnMut(&mut GameViewState) -> &mut String,
         F: FnOnce(T) -> Command,
     {
         ui.horizontal(|ui| {

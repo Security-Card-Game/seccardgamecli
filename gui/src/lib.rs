@@ -10,10 +10,19 @@ mod side_panel;
 
 pub(crate) type CommandToExecute = Option<Command>;
 
-pub(crate) struct SecCardGameApp {
+pub(crate) struct GameViewState {
     game: Game,
     input: Input,
     command: CommandToExecute,
+}
+
+enum AppState {
+    Init(),
+    GameView(GameViewState)
+}
+
+pub(crate) struct SecCardGameApp {
+    state: AppState,
 }
 
 enum Message {
