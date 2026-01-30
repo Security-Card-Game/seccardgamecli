@@ -7,6 +7,7 @@ pub mod start;
 mod actions;
 mod components;
 mod side_panel;
+mod init_view;
 
 pub(crate) type CommandToExecute = Option<Command>;
 

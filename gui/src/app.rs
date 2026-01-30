@@ -12,6 +12,7 @@ use game_lib::world::deck::{CardRc, Deck};
 use game_lib::world::game::{Game, GameStatus};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
+use crate::init_view::init_view::InitView;
 
 impl SecCardGameApp {
     fn start_game(deck: Deck) -> Self {
@@ -68,33 +69,37 @@ impl GameViewState {
 
 impl SecCardGameApp {
     /// Called once before the first frame.
-    pub fn new_with_deck(_cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
+    pub fn new_with_deck(cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
+        cc.egui_ctx.set_pixels_per_point(1.4);
         SecCardGameApp::start_game(deck)
     }
 
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        cc.egui_ctx.set_pixels_per_point(1.4);
         SecCardGameApp::init()
     }
 }
 
 impl eframe::App for SecCardGameApp {
+
+
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        Self::create_menu_bar(ctx);
+
         match &mut self.state {
-            Init() => {}
+            Init() => {
+                InitView::new().draw_ui(ctx);
+            }
             GameView(gv) => {
                 gv.process_command();
-
-
                 gv.create_side_panel(ctx);
-
                 egui::CentralPanel::default().show(ctx, |ui| {
                     // The central panel the region left after adding TopPanel's and SidePanel's
                     gv.update_cards(ctx, ui);
                 });
             }
         }
-        Self::create_menu_bar(ctx);
     }
 }
 
