@@ -1,4 +1,5 @@
-use egui::{Context, RichText, Ui};
+use egui::Context;
+use egui::RichText;
 use game_lib::world::deck::DeckComposition;
 pub(crate) use crate::{AppEvent, InitViewState};
 pub(crate) use crate::components::components::LabelValue;
@@ -22,17 +23,17 @@ impl InitViewState {
                 value: "15".to_string(),
             },
             lucky_card_count: LabelValue {
-                label: "Number of lucky Cards".to_string(),
+                label: "Number of lucky cards".to_string(),
                 description: None,
                 value: "5".to_string(),
             },
             evaluation_card_count: LabelValue {
-                label: "Experimental: Evaluation Cards".to_string(),
+                label: "Experimental: Evaluation cards".to_string(),
                 description: Some("The deck will be split into n + 1 parts and all parts except the first will contain an evaluation card. 0 disables them.".to_string()),
                 value: "0".to_string(),
             },
             grace_rounds: LabelValue {
-                label: "Grace Rounds".to_string(),
+                label: "Grace rounds".to_string(),
                 description: Some("Number of turns after which attacks are possible".to_string()),
                 value: "6".to_string(),
             },
