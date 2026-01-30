@@ -11,7 +11,7 @@ impl LabelValue {
         self.value = new_value;
     }
 
-    fn draw_component(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn draw_component(&mut self, ui: &mut Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.label(&self.label);
@@ -82,20 +82,20 @@ impl InitView {
             egui::Grid::new("init_view").show(ui, |ui| {
                     ui.label(RichText::new("Game Deck Settings").strong());
                     ui.end_row();
-                    self.event_card_count.draw_component(ctx, ui);
+                    self.event_card_count.draw_component(ui);
                     ui.end_row();
-                    self.attack_card_count.draw_component(ctx, ui);
+                    self.attack_card_count.draw_component(ui);
                     ui.end_row();
-                    self.oopsie_card_count.draw_component(ctx, ui);
+                    self.oopsie_card_count.draw_component(ui);
                     ui.end_row();
-                    self.lucky_card_count.draw_component(ctx, ui);
+                    self.lucky_card_count.draw_component(ui);
                     ui.end_row();
-                    self.grace_rounds.draw_component(ctx, ui);
+                    self.grace_rounds.draw_component(ui);
                     ui.end_row();
 
                     ui.label(RichText::new("Experimental Settings").strong());
                     ui.end_row();
-                    self.evaluation_card_count.draw_component(ctx, ui);
+                    self.evaluation_card_count.draw_component(ui);
                     ui.end_row();
             });
         });
