@@ -2,37 +2,37 @@ use egui::Context;
 use egui::RichText;
 use game_lib::world::deck::DeckComposition;
 pub(crate) use crate::{AppEvent, InitViewState};
-pub(crate) use crate::components::components::LabelValue;
+pub(crate) use crate::components::components::LabelWithInputComponent;
 
 impl InitViewState {
     pub fn new() -> Self {
         InitViewState {
-            event_card_count: LabelValue {
+            event_card_count: LabelWithInputComponent {
                 label: "Number of event cards".to_string(),
                 description: None,
                 value: "10".to_string(),
             },
-            attack_card_count: LabelValue {
+            attack_card_count: LabelWithInputComponent {
                 label: "Number of attack cards".to_string(),
                 description: None,
                 value: "5".to_string(),
             },
-            oopsie_card_count: LabelValue {
+            oopsie_card_count: LabelWithInputComponent {
                 label: "Number of oopsie cards".to_string(),
                 description: None,
                 value: "15".to_string(),
             },
-            lucky_card_count: LabelValue {
+            lucky_card_count: LabelWithInputComponent {
                 label: "Number of lucky cards".to_string(),
                 description: None,
                 value: "5".to_string(),
             },
-            evaluation_card_count: LabelValue {
+            evaluation_card_count: LabelWithInputComponent {
                 label: "Experimental: Evaluation cards".to_string(),
                 description: Some("The deck will be split into n + 1 parts and all parts except the first will contain an evaluation card. 0 disables them.".to_string()),
                 value: "0".to_string(),
             },
-            grace_rounds: LabelValue {
+            grace_rounds: LabelWithInputComponent {
                 label: "Grace rounds".to_string(),
                 description: Some("Number of turns after which attacks are possible".to_string()),
                 value: "6".to_string(),
@@ -48,20 +48,20 @@ impl InitViewState {
             egui::Grid::new("init_view").show(ui, |ui| {
                     ui.label(RichText::new("Game Deck Settings").strong());
                     ui.end_row();
-                    self.event_card_count.draw_component(ui);
+                    self.event_card_count.draw_component(0, ui);
                     ui.end_row();
-                    self.attack_card_count.draw_component(ui);
+                    self.attack_card_count.draw_component(0, ui);
                     ui.end_row();
-                    self.oopsie_card_count.draw_component(ui);
+                    self.oopsie_card_count.draw_component(0, ui);
                     ui.end_row();
-                    self.lucky_card_count.draw_component(ui);
+                    self.lucky_card_count.draw_component(0, ui);
                     ui.end_row();
-                    self.grace_rounds.draw_component(ui);
+                    self.grace_rounds.draw_component(0, ui);
                     ui.end_row();
 
                     ui.label(RichText::new("Experimental Settings").strong());
                     ui.end_row();
-                    self.evaluation_card_count.draw_component(ui);
+                    self.evaluation_card_count.draw_component(0, ui);
                     ui.end_row();
             });
             ui.add_space(10.0);
