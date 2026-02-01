@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use crate::components::components::LabelWithInputComponent;
 use crate::{AppEvent, ViewState};
-use egui::{Context, RichText};
+use egui::{Context, RichText, ComboBox};
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
@@ -14,6 +14,7 @@ pub(crate) struct InitViewState {
     lucky_card_count: LabelWithInputComponent,
     evaluation_card_count: LabelWithInputComponent,
     grace_rounds: LabelWithInputComponent,
+    scenario_value: String,
     scenarios: Vec<Rc<Scenario>>,
 }
 
@@ -22,6 +23,7 @@ impl InitViewState {
         let scenarios = DeckLoader::create(&config.game_path).get_scenarios();
         InitViewState {
             scenarios,
+            scenario_value: "None".to_string(),
             event_card_count: LabelWithInputComponent {
                 label: "Number of event cards".to_string(),
                 description: None,
@@ -79,10 +81,25 @@ impl ViewState for InitViewState {
             });
             ui.add_space(10.0);
 
-            self.scenarios.iter().for_each(|scenario| {
-                ui.label(RichText::new(&*scenario.title.value()).strong());
-                ui.end_row();
+            ui.horizontal(|ui| {
+                let mut scenario_values = vec!["None"];
+                scenario_values.append(&mut self.scenarios.iter().map(|scenario| &*scenario.title.value()).collect::<Vec<&str>>());
+                ComboBox::new("scenarios", "Select Scenario")
+                    .width(300.0)
+                    .selected_text(self.scenario_value.clone())
+                    .show_ui(ui, |ui| {
+                        for title in  scenario_values {
+                            ui.selectable_value(&mut self.scenario_value, title.to_string(), title);
+                        }
+                    });
+
+                let current_scenario = self.scenarios.iter().find(|scenario| scenario.title.value() == &self.scenario_value);
+                if let Some(scenario) = current_scenario {
+                    let mut content = format!("{:?}", scenario);
+                    ui.text_edit_multiline(&mut content);
+                }
             });
+
 
             return if ui.button("Start Game").clicked() {
                 let deck_composition = DeckComposition {
