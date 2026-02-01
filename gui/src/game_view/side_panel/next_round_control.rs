@@ -3,7 +3,7 @@ use egui::Ui;
 use game_lib::world::game::GameStatus;
 
 use crate::game_view::actions::command::Command;
-use crate::{GameViewState, Message};
+use crate::game_view::state::{GameViewState, Message};
 
 impl GameViewState {
     pub(crate) fn next_round_controls(&mut self, ui: &mut Ui) {

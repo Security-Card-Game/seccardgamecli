@@ -1,7 +1,6 @@
 use eframe::epaint::Color32;
 use egui::{RichText, Ui};
-
-use crate::{GameViewState, Message};
+use crate::game_view::state::{GameViewState, Message};
 
 impl GameViewState {
     pub(crate) fn game_status_display(&mut self, ui: &mut Ui) {

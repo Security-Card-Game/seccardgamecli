@@ -1,10 +1,9 @@
 /// # Control Panel handling
 /// Commands which can be triggered by a the control panel should be handled here.
-use crate::{GameViewState, Message};
 use game_lib::world::reputation::Reputation;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
-
+use crate::game_view::state::{GameViewState, Message};
 
 impl GameViewState {
     pub(crate) fn handle_pay_resources(&mut self, res: usize) {

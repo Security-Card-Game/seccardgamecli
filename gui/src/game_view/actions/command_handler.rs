@@ -8,7 +8,8 @@ use crate::game_view::actions::command::Command;
 /// to various methods which in turn mutate the GUI state (e.g. remove a card from the board). Once
 /// this is done, the command is set to none and the update cycle is completed.
 
-use crate::{GameViewState, Message};
+use crate::{GameViewState};
+use crate::game_view::state::Message;
 
 pub(crate) trait CommandHandler {
     fn process_command(&mut self);
