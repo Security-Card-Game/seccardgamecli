@@ -1,7 +1,11 @@
+use std::rc::Rc;
 use crate::components::components::LabelWithInputComponent;
 use crate::{AppEvent, ViewState};
 use egui::{Context, RichText};
-use game_lib::world::deck::DeckComposition;
+use game_lib::cards::game_variants::scenario::Scenario;
+use game_lib::file::repository::DeckLoader;
+use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
+use game_setup::config::config::Config;
 
 pub(crate) struct InitViewState {
     event_card_count: LabelWithInputComponent,
@@ -10,11 +14,14 @@ pub(crate) struct InitViewState {
     lucky_card_count: LabelWithInputComponent,
     evaluation_card_count: LabelWithInputComponent,
     grace_rounds: LabelWithInputComponent,
+    scenarios: Vec<Rc<Scenario>>,
 }
 
 impl InitViewState {
-    pub fn new() -> Self {
+    pub fn new(config: &Config) -> Self {
+        let scenarios = DeckLoader::create(&config.game_path).get_scenarios();
         InitViewState {
+            scenarios,
             event_card_count: LabelWithInputComponent {
                 label: "Number of event cards".to_string(),
                 description: None,
@@ -71,6 +78,12 @@ impl ViewState for InitViewState {
                 ui.end_row();
             });
             ui.add_space(10.0);
+
+            self.scenarios.iter().for_each(|scenario| {
+                ui.label(RichText::new(&*scenario.title.value()).strong());
+                ui.end_row();
+            });
+
             return if ui.button("Start Game").clicked() {
                 let deck_composition = DeckComposition {
                     events: self.event_card_count.value.parse().unwrap_or(0),

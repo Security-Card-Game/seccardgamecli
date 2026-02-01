@@ -4,6 +4,7 @@ use log::warn;
 use rand::prelude::{SliceRandom, ThreadRng};
 use std::rc::Rc;
 use rand::thread_rng;
+use crate::cards::game_variants::scenario::Scenario;
 
 /// This represents the current deck of cards. It also keeps count of the already played cards and the
 /// remaining cards. This file also contains all the methods needed to create a new Deck. E.g shuffling the cards
@@ -55,6 +56,10 @@ pub trait DeckRepository {
     fn get_lucky_cards(&self) -> Vec<CardRc>;
     fn get_oopsie_cards(&self) -> Vec<CardRc>;
     fn get_attack_cards(&self) -> Vec<CardRc>;
+}
+
+pub trait GameVariantsRepository {
+    fn get_scenarios(&self) -> Vec<Rc<Scenario>>;
 }
 
 /// Defines a trait for deck preparation.

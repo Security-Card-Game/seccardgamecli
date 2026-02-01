@@ -12,7 +12,7 @@ use game_setup::creation::create::create_deck;
 impl SecCardGameApp {
     fn init(config: Config) -> Self {
         Self {
-            active_view: Box::new(InitViewState::new()),
+            active_view: Box::new(InitViewState::new(&config)),
             last_event: None,
             config,
         }
