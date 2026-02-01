@@ -1,5 +1,5 @@
-use crate::actions::command::Command;
-use crate::card_window::card_view_model::{CardContent, CardMarker};
+use crate::game_view::actions::command::Command;
+use crate::game_view::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;

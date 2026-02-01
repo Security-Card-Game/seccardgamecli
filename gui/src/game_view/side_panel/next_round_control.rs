@@ -2,7 +2,7 @@ use egui::Ui;
 
 use game_lib::world::game::GameStatus;
 
-use crate::actions::command::Command;
+use crate::game_view::actions::command::Command;
 use crate::{GameViewState, Message};
 
 impl GameViewState {

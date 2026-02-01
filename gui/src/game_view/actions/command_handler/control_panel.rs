@@ -7,11 +7,11 @@ use game_lib::world::resources::Resources;
 
 
 impl GameViewState {
-    pub(super) fn handle_pay_resources(&mut self, res: usize) {
+    pub(crate) fn handle_pay_resources(&mut self, res: usize) {
         self.game = self.game.pay_resources(&Resources::new(res));
     }
 
-    pub(super) fn handle_set_multiplier(&mut self, m: isize) {
+    pub(crate) fn handle_set_multiplier(&mut self, m: isize) {
         if m <= 0 {
             self.input.message = Message::Failure("Invalid Action, must be > 0!".to_string());
         }
@@ -20,16 +20,16 @@ impl GameViewState {
             .set_fix_multiplier(ResourceFixMultiplier::new(m.unsigned_abs()));
     }
 
-    pub(super) fn handle_set_resource_gain(&mut self, res: usize) {
+    pub(crate) fn handle_set_resource_gain(&mut self, res: usize) {
         self.game = self.game.set_resource_gain(Resources::new(res));
         self.input.next_res = res.to_string();
     }
 
-    pub(super) fn handle_increase_reputation(&mut self, rep: u8) {
+    pub(crate) fn handle_increase_reputation(&mut self, rep: u8) {
         self.game = self.game.increase_reputation(&Reputation::new(rep));
     }
 
-    pub(super) fn handle_decrease_reputation(&mut self, rep: u8) {
+    pub(crate) fn handle_decrease_reputation(&mut self, rep: u8) {
         self.game = self.game.decrease_reputation(&Reputation::new(rep));
     }
 

@@ -1,4 +1,4 @@
-use crate::actions::command::Command;
+use crate::game_view::actions::command::Command;
 /// # Command Handler to handle Game Actions
 /// ## Concept
 /// The GUI state (SecCardGameApp) contains a shareable, mutable reference containing a command

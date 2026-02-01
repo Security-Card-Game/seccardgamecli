@@ -1,16 +1,14 @@
 use game_lib::world::deck::DeckComposition;
 use game_lib::world::game::Game;
 use game_setup::config::config::Config;
-use init_view::init_view::LabelValue;
-use crate::actions::command::Command;
+use init_view::init_view::LabelWithInputComponent;
+use game_view::actions::command::Command;
 
 mod app;
-mod card_window;
 pub mod start;
-mod actions;
 mod components;
-mod side_panel;
 mod init_view;
+mod game_view;
 
 pub(crate) type CommandToExecute = Option<Command>;
 
@@ -20,12 +18,12 @@ pub(crate) struct GameViewState {
     command: CommandToExecute,
 }
 pub(crate) struct InitViewState {
-    event_card_count: LabelValue,
-    attack_card_count: LabelValue,
-    oopsie_card_count: LabelValue,
-    lucky_card_count: LabelValue,
-    evaluation_card_count: LabelValue,
-    grace_rounds: LabelValue,
+    event_card_count: LabelWithInputComponent,
+    attack_card_count: LabelWithInputComponent,
+    oopsie_card_count: LabelWithInputComponent,
+    lucky_card_count: LabelWithInputComponent,
+    evaluation_card_count: LabelWithInputComponent,
+    grace_rounds: LabelWithInputComponent,
 }
 
 enum AppState {

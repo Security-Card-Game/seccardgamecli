@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use super::{AppEvent, GameViewState, Input, Message, SecCardGameApp};
-use crate::actions::command_handler::CommandHandler;
-use crate::card_window::card_view_model::CardContent;
-use crate::card_window::card_window::display_card;
+use crate::game_view::actions::command_handler::CommandHandler;
+use crate::game_view::card_window::card_view_model::CardContent;
+use crate::game_view::card_window::card_window::display_card;
 use crate::init_view::init_view::InitViewState;
 use crate::AppState::{GameView, Init};
 use game_lib::world::board::Board;

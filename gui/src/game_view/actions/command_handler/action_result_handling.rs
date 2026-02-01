@@ -5,7 +5,7 @@ use game_lib::world::game::GameActionResult;
 
 
 impl GameViewState {
-    pub(super) fn process_game_action_status(&mut self) {
+    pub(crate) fn process_game_action_status(&mut self) {
         match &self.game.action_status {
             GameActionResult::OopsieFixed(res) => {
                 self.input.message =

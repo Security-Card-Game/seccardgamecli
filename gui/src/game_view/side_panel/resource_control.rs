@@ -1,6 +1,6 @@
 use egui::{RichText, Ui};
 
-use crate::actions::command::Command;
+use crate::game_view::actions::command::Command;
 use crate::GameViewState;
 use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::world::board::Board;

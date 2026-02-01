@@ -1,4 +1,4 @@
-use crate::actions::command::Command;
+use crate::game_view::actions::command::Command;
 use crate::GameViewState;
 use egui::Ui;
 
