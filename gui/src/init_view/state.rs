@@ -1,10 +1,11 @@
 use std::rc::Rc;
 use crate::components::components::LabelWithInputComponent;
-use crate::{AppEvent, ViewState};
+use crate::{AppEvent, StartGameData, ViewState};
 use egui::{Context, RichText, ComboBox};
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
+use game_lib::world::game::GameInitSettings;
 use game_setup::config::config::Config;
 
 pub(crate) struct InitViewState {
@@ -15,6 +16,7 @@ pub(crate) struct InitViewState {
     evaluation_card_count: LabelWithInputComponent,
     grace_rounds: LabelWithInputComponent,
     scenario_value: String,
+    current_scenario: Option<Rc<Scenario>>,
     scenarios: Vec<Rc<Scenario>>,
 }
 
@@ -24,6 +26,7 @@ impl InitViewState {
         InitViewState {
             scenarios,
             scenario_value: "None".to_string(),
+            current_scenario: None,
             event_card_count: LabelWithInputComponent {
                 label: "Number of event cards".to_string(),
                 description: None,
@@ -93,8 +96,8 @@ impl ViewState for InitViewState {
                         }
                     });
 
-                let current_scenario = self.scenarios.iter().find(|scenario| scenario.title.value() == &self.scenario_value);
-                if let Some(scenario) = current_scenario {
+                self.current_scenario = self.scenarios.iter().find(|scenario | scenario.title.value() == &self.scenario_value).cloned();
+                if let Some(scenario) = self.current_scenario.as_ref() {
                     let mut content = format!("{:?}", scenario);
                     ui.text_edit_multiline(&mut content);
                 }
@@ -110,8 +113,22 @@ impl ViewState for InitViewState {
                     evaluation: self.evaluation_card_count.value.parse().unwrap_or(0),
                 };
                 let grace_rounds = self.grace_rounds.value.parse().unwrap_or(0);
-                app_event_callback(AppEvent::start_game(deck_composition, grace_rounds))
+
+
+                let game_init_settings = if let Some(selected_scenario) = self.current_scenario.as_ref() {
+                    selected_scenario.preset.into()
+                } else {
+                    GameInitSettings::default()
+                };
+                let start_game_data = StartGameData {
+                    deck_composition,
+                    grace_rounds,
+                    game_init_settings
+                };
+
+                app_event_callback(AppEvent::start_game(start_game_data))
             };
         });
     }
+
 }

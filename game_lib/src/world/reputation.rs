@@ -6,7 +6,7 @@ use crate::cards::serialization::helper::Number;
 const MAX_VALUE: u8 = 100;
 const MIN_VALUE: u8 = 0;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Default)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Default, Copy)]
 pub struct Reputation(u8);
 
 impl Reputation {

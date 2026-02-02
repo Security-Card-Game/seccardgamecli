@@ -58,6 +58,7 @@ pub struct Game {
     pub fix_multiplier: ResourceFixMultiplier,
 }
 
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct GameInitSettings {
     pub resource_gain: Resources,
     pub resources: Resources,

@@ -2,7 +2,7 @@ use crate::cards::serialization::helper::Number;
 use log::warn;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Clone, Debug, PartialOrd, PartialEq)]
+#[derive(Clone, Debug, PartialOrd, PartialEq, Copy)]
 pub struct ResourceFixMultiplier(usize);
 
 impl ResourceFixMultiplier {
