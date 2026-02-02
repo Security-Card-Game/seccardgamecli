@@ -3,7 +3,7 @@ use egui::Context;
 use super::{AppEvent, GameViewState, SecCardGameApp};
 use crate::init_view::state::InitViewState;
 use game_lib::world::deck::Deck;
-use game_lib::world::game::Game;
+use game_lib::world::game::{Game, GameInitSettings};
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
 use game_setup::config::config::Config;
@@ -33,7 +33,7 @@ impl SecCardGameApp {
     }
 
     fn create_game_view_state(deck: Deck) -> Box<GameViewState> {
-        let game = Game::create(deck, Resources::new(5), ResourceFixMultiplier::default());
+        let game = Game::create(deck, GameInitSettings::default());
         Box::new(GameViewState::new(game))
     }
 }

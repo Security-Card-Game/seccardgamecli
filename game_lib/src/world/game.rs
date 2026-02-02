@@ -58,10 +58,29 @@ pub struct Game {
     pub fix_multiplier: ResourceFixMultiplier,
 }
 
+pub struct GameInitSettings {
+    pub resource_gain: Resources,
+    pub resources: Resources,
+    pub fix_multiplier: ResourceFixMultiplier,
+    pub reputation: Reputation,
+}
+
 pub struct CardCount {
     pub played_cards: usize,
     pub total_cards: usize,
 }
+
+impl Default for GameInitSettings {
+    fn default() -> Self {
+        GameInitSettings {
+            resource_gain: Resources::new(5),
+            resources: Resources::default(),
+            fix_multiplier: ResourceFixMultiplier::default(),
+            reputation: Reputation::start_value(),
+        }
+    }
+}
+
 
 /// This defines the API on how to interact with the Game. It will in turn use corresponding
 /// actions from the actions module, combines them when needed. Every interaction return a new Game
@@ -147,18 +166,18 @@ impl Game {
     /// Use this to start.
     pub fn create(
         deck: Deck,
-        initial_resource_gain: Resources,
-        fix_multiplier: ResourceFixMultiplier,
+        init_settings: GameInitSettings,
     ) -> Self {
-        let board = Board::init(&deck, Resources::new(0), Reputation::start_value());
+        
+        let board = Board::init(&deck, init_settings.resources, init_settings.reputation);
         let status = GameStatus::Start(calculate_board(board, &deck));
 
         Game {
             deck,
             status,
             action_status: GameActionResult::Success,
-            resource_gain: initial_resource_gain.clone(),
-            fix_multiplier,
+            resource_gain: init_settings.resource_gain,
+            fix_multiplier: init_settings.fix_multiplier,
         }
     }
 
@@ -404,7 +423,7 @@ mod tests {
     use crate::cards::types::oopsie::OopsieCard;
     use crate::world::board::Board;
     use crate::world::deck::{CardRc, Deck};
-    use crate::world::game::{Game, GameActionResult, GameStatus};
+    use crate::world::game::{Game, GameActionResult, GameInitSettings, GameStatus};
     use crate::world::reputation::Reputation;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
@@ -487,8 +506,12 @@ mod tests {
 
         let sut = Game::create(
             test_deck.start_deck,
-            Resources::new(10),
-            ResourceFixMultiplier::new(2),
+            GameInitSettings {
+                resources: Resources::new(0),
+                resource_gain: Resources::new(10),
+                fix_multiplier: ResourceFixMultiplier::new(2),
+                reputation: Reputation::start_value(),
+            }
         );
 
         assert_eq!(sut, expectation);
@@ -500,8 +523,11 @@ mod tests {
         let resource_gain = Resources::new(10);
         let sut = Game::create(
             test_deck.start_deck.clone(),
-            resource_gain.clone(),
-            ResourceFixMultiplier::new(2),
+            GameInitSettings {
+                resource_gain: resource_gain.clone(),
+                fix_multiplier: ResourceFixMultiplier::new(2),
+                ..GameInitSettings::default()
+            }
         );
 
         let game_after_round_1 = sut.next_round();
@@ -540,8 +566,11 @@ mod tests {
         let resource_gain = Resources::new(10);
         let sut = Game::create(
             test_deck.start_deck.clone(),
-            resource_gain.clone(),
-            ResourceFixMultiplier::new(2),
+            GameInitSettings {
+                resource_gain: resource_gain.clone(),
+                fix_multiplier: ResourceFixMultiplier::new(2),
+                ..GameInitSettings::default()
+            }
         );
 
         let game_after_round_1 = sut.next_round();
@@ -593,8 +622,11 @@ mod tests {
         let resource_gain = Resources::new(10);
         let sut = Game::create(
             test_deck.start_deck.clone(),
-            resource_gain.clone(),
-            ResourceFixMultiplier::new(2),
+            GameInitSettings {
+                resource_gain: resource_gain.clone(),
+                fix_multiplier: ResourceFixMultiplier::new(2),
+                ..GameInitSettings::default()
+            }
         );
 
         let game_after_round_1 = sut.next_round();
