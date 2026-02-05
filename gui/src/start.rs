@@ -14,9 +14,7 @@ pub fn run(predefined_deck: Option<Deck>, config: Config) -> eframe::Result<()> 
             .with_decorations(true)
             .with_close_button(true)
             .with_resizable(true)
-            .with_minimize_button(true)
-            .with_min_inner_size(Vec2::new(1000.0, 600.0))
-            .with_maximized(true),
+            .with_minimize_button(true),
         ..Default::default()
     };
     if let Some(deck) = predefined_deck {
