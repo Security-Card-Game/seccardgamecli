@@ -22,7 +22,7 @@ impl Default for LabelWithInputLayoutOptions {
 }
 
 impl LabelWithInputComponent {
-    fn update(&mut self, new_value: String) {
+    pub fn update(&mut self, new_value: String) {
         self.value = new_value;
     }
 
@@ -58,7 +58,7 @@ impl LabelWithInputComponent {
 
                     ui.allocate_ui_with_layout(
                         egui::Vec2::new(
-                            label_width - ui.spacing().item_spacing.x,
+                            label_width - ui.spacing().item_spacing.x - options.input_width,
                             Self::CELL_HEIGHT,
                         ),
                         Layout::top_down(Align::Min),
