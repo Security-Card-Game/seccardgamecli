@@ -111,7 +111,7 @@ impl Default for DeckSettings {
                 label: "Grace rounds".to_string(),
                 description: Some("Number of turns after which attacks are possible".to_string()),
                 value: "6".to_string(),
-            }
+            },
         }
     }
 }
@@ -252,19 +252,12 @@ impl InitViewState {
                 }
             });
 
-        let selection_unchanged = self.scenario_settings.scenario_value == old_selection;
-        if selection_unchanged {
-            return;
-        };
-
         self.scenario_settings.current_scenario = self
             .scenario_settings
             .scenarios
             .iter()
             .find(|scenario| scenario.title.value() == &self.scenario_settings.scenario_value)
             .cloned();
-
-        ui.add_space(Self::DEFAULT_SPACE_Y);
 
         let empty_description =
             Description::new("No description available. Select a scenario to see its description.");
@@ -275,6 +268,8 @@ impl InitViewState {
             .map(|scenario| &scenario.description)
             .unwrap_or(&empty_description);
 
+        ui.add_space(Self::DEFAULT_SPACE_Y);
+
         ScrollArea::vertical()
             .max_height(50.0)
             .max_width(max_width)
@@ -284,48 +279,52 @@ impl InitViewState {
                 ui.label(description.value()); // read-only, wraps by default
             });
 
-        if let Some(scenario) = self.scenario_settings.current_scenario.as_ref() {
-            self.game_preset
-                .initial_resources
-                .update(scenario.preset.resources.value().to_string());
-            self.game_preset
-                .initial_resource_gain
-                .update(scenario.preset.resource_gain.value().to_string());
-            self.game_preset
-                .initial_reputation
-                .update(scenario.preset.reputation.value().to_string());
-            self.game_preset
-                .initial_fix_multiplier
-                .update(scenario.preset.multiplier.value().to_string());
-            self.game_goals
-                .min_resources
-                .update(scenario.goal.minimum_resources.value().to_string());
-            self.game_goals
-                .min_reputation
-                .update(scenario.goal.minimum_reputation.value().to_string());
-        } else {
-            let default_preset = GamePreset::default();
-            let default_goals = GameGoalsControls::default();
+        let update_inputs = self.scenario_settings.scenario_value != old_selection;
 
-            self.game_preset
-                .initial_resources
-                .update(default_preset.initial_resources.value);
-            self.game_preset
-                .initial_resource_gain
-                .update(default_preset.initial_resource_gain.value);
-            self.game_preset
-                .initial_fix_multiplier
-                .update(default_preset.initial_fix_multiplier.value);
-            self.game_preset
-                .initial_reputation
-                .update(default_preset.initial_reputation.value);
-            self.game_goals
-                .min_resources
-                .update(default_goals.min_resources.value);
-            self.game_goals
-                .min_reputation
-                .update(default_goals.min_reputation.value);
-        }
+        if update_inputs {
+            if let Some(scenario) = self.scenario_settings.current_scenario.as_ref() {
+                self.game_preset
+                    .initial_resources
+                    .update(scenario.preset.resources.value().to_string());
+                self.game_preset
+                    .initial_resource_gain
+                    .update(scenario.preset.resource_gain.value().to_string());
+                self.game_preset
+                    .initial_reputation
+                    .update(scenario.preset.reputation.value().to_string());
+                self.game_preset
+                    .initial_fix_multiplier
+                    .update(scenario.preset.multiplier.value().to_string());
+                self.game_goals
+                    .min_resources
+                    .update(scenario.goal.minimum_resources.value().to_string());
+                self.game_goals
+                    .min_reputation
+                    .update(scenario.goal.minimum_reputation.value().to_string());
+            } else {
+                let default_preset = GamePreset::default();
+                let default_goals = GameGoalsControls::default();
+
+                self.game_preset
+                    .initial_resources
+                    .update(default_preset.initial_resources.value);
+                self.game_preset
+                    .initial_resource_gain
+                    .update(default_preset.initial_resource_gain.value);
+                self.game_preset
+                    .initial_fix_multiplier
+                    .update(default_preset.initial_fix_multiplier.value);
+                self.game_preset
+                    .initial_reputation
+                    .update(default_preset.initial_reputation.value);
+                self.game_goals
+                    .min_resources
+                    .update(default_goals.min_resources.value);
+                self.game_goals
+                    .min_reputation
+                    .update(default_goals.min_reputation.value);
+            }
+        };
     }
 
     fn draw_game_preset(&mut self, ui: &mut Ui) {
