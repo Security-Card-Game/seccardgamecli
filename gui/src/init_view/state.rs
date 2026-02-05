@@ -3,12 +3,12 @@ use crate::{AppEvent, StartGameData, ViewState};
 use eframe::emath::Align;
 use egui::{ComboBox, Context, Layout, RichText, ScrollArea, Ui, Vec2};
 use game_lib::cards::game_variants::scenario::Scenario;
+use game_lib::cards::properties::description::Description;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
 use game_lib::world::game::GameInitSettings;
 use game_setup::config::config::Config;
 use std::rc::Rc;
-use game_lib::cards::properties::description::Description;
 
 pub(crate) struct InitViewState {
     event_card_count: LabelWithInputComponent,
@@ -70,7 +70,7 @@ impl InitViewState {
     const MARGIN_TB: f32 = 10.0;
 
     const LEFT_COL_WIDTH: f32 = 250.0; // game settings + start button
-    const RIGHT_COL_WIDTH: f32 = 520.0; // scenario selection
+    const RIGHT_COL_WIDTH: f32 = 400.0; // scenario selection
     const CONTENT_MAX_WIDTH: f32 = Self::LEFT_COL_WIDTH + Self::GAP + Self::RIGHT_COL_WIDTH;
 
     fn draw_game_deck_settings(&mut self, ui: &mut egui::Ui) {
@@ -98,6 +98,7 @@ impl InitViewState {
 
     fn draw_scenario_selection(&mut self, ui: &mut egui::Ui) {
         ui.label(RichText::new("Scenario").strong());
+        let max_width = ui.available_width();
 
         let mut scenario_values = vec!["None"];
         scenario_values.append(
@@ -109,7 +110,7 @@ impl InitViewState {
         );
 
         ComboBox::new("scenarios", "Select Scenario")
-            .width(ui.available_width())
+            .width(max_width)
             .selected_text(self.scenario_value.clone())
             .show_ui(ui, |ui| {
                 for title in scenario_values {
@@ -130,6 +131,7 @@ impl InitViewState {
 
         ScrollArea::vertical()
             .max_height(50.0)
+            .max_width(max_width)
             .auto_shrink([false; 2])
             .show(ui, |ui| {
                 ui.set_width(ui.available_width()); // helps wrapping behave nicely
@@ -203,24 +205,19 @@ impl InitViewState {
         app_event_callback: &mut dyn FnMut(AppEvent),
         ui: &mut Ui,
     ) {
-        ui.vertical_centered(|ui| {
+        ui.vertical(|ui| {
             let col_width = ui.available_width();
-            ui.allocate_ui(Vec2::new(col_width, 0.0), |ui| {
-                ui.spacing_mut().item_spacing.x = Self::GAP;
 
-                ui.allocate_ui_with_layout(
-                    Vec2::new(col_width, 0.0),
-                    Layout::top_down(Align::Min),
-                    |ui| {
-                        ui.set_width(Self::LEFT_COL_WIDTH);
-                        self.draw_game_deck_settings(ui);
-                        ui.add_space(Self::DEFAULT_SPACE_Y);
-                        self.draw_scenario_selection(ui);
-                        ui.add_space(Self::DEFAULT_SPACE_Y);
-                        self.draw_start_button(app_event_callback, ui);
-                    },
-                );
-            });
+            ui.allocate_ui_with_layout(
+                Vec2::new(col_width, 0.0),
+                Layout::top_down(Align::Min),
+                |ui| {
+                    ui.spacing_mut().item_spacing.x = Self::DEFAULT_SPACE_Y;
+
+                    self.draw_game_deck_settings(ui);
+                    self.draw_scenario_selection(ui);
+                    self.draw_start_button(app_event_callback, ui);
+                });
         });
     }
 }
@@ -228,7 +225,7 @@ impl ViewState for InitViewState {
     fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             let needs_single_col = ui.available_width() < Self::CONTENT_MAX_WIDTH;
-            egui::ScrollArea::vertical().show(ui, |ui| {
+            ScrollArea::vertical().show(ui, |ui| {
                 ui.add_space(Self::MARGIN_TB);
                 if needs_single_col {
                     self.draw_single_col_layout(app_event_callback, ui);
