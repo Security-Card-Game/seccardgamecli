@@ -7,7 +7,7 @@ use game_lib::world::game::GameStatus;
 
 impl GameViewState {
     pub(crate) fn reputation_control(&mut self, ui: &mut Ui) {
-        ui.label("Reputation");
+        ui.label(RichText::new("Reputation").strong());
         ui.add_space(5.0);
         match &self.game.status.clone() {
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
@@ -35,7 +35,6 @@ impl GameViewState {
             "Decrease",
             |value| Command::DecreaseReputation(value),
         );
-
     }
 }
 

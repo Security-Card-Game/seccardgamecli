@@ -1,11 +1,12 @@
-use egui::Context;
-
-use super::{AppEvent, GameViewState, SecCardGameApp};
+use super::{AppEvent, GameGoals, GameViewState, SecCardGameApp};
 use crate::init_view::state::InitViewState;
+use egui::Context;
+use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::world::deck::Deck;
 use game_lib::world::game::{Game, GameInitSettings};
 use game_setup::config::config::Config;
 use game_setup::creation::create::create_deck;
+use std::rc::Rc;
 
 impl SecCardGameApp {
     fn init(config: Config) -> Self {
@@ -19,7 +20,12 @@ impl SecCardGameApp {
     pub fn new_with_deck(cc: &eframe::CreationContext<'_>, deck: Deck, config: Config) -> Self {
         cc.egui_ctx.set_pixels_per_point(1.4);
         Self {
-            active_view: Self::create_game_view_state(deck, GameInitSettings::default()),
+            active_view: Self::create_game_view_state(
+                deck,
+                GameInitSettings::default(),
+                GameGoals::default(),
+                None,
+            ),
             last_event: None,
             config,
         }
@@ -30,9 +36,14 @@ impl SecCardGameApp {
         SecCardGameApp::init(config)
     }
 
-    fn create_game_view_state(deck: Deck, settings: GameInitSettings) -> Box<GameViewState> {
+    fn create_game_view_state(
+        deck: Deck,
+        settings: GameInitSettings,
+        goals: GameGoals,
+        scenario: Option<Rc<Scenario>>,
+    ) -> Box<GameViewState> {
         let game = Game::create(deck, settings);
-        Box::new(GameViewState::new(game))
+        Box::new(GameViewState::new(game, goals, scenario.clone()))
     }
 }
 
@@ -49,13 +60,17 @@ impl eframe::App for SecCardGameApp {
 }
 
 impl SecCardGameApp {
-
     fn handle_app_event(&mut self) {
         if let Some(app_event) = &self.last_event {
             match app_event {
                 AppEvent::StartGame(data) => {
                     let deck = create_deck(&data.deck_composition, data.grace_rounds, &self.config);
-                    self.active_view = Self::create_game_view_state(deck, data.game_init_settings);
+                    self.active_view = Self::create_game_view_state(
+                        deck,
+                        data.game_init_settings,
+                        data.game_goals,
+                        data.scenario.clone(),
+                    );
                 }
             }
             self.last_event = None;

@@ -1,14 +1,16 @@
-use std::collections::HashMap;
-use egui::{Context, Ui};
-use uuid::Uuid;
-use game_lib::world::board::Board;
-use game_lib::world::deck::CardRc;
-use game_lib::world::game::{Game, GameStatus};
 use crate::game_view::actions::command::Command;
 use crate::game_view::actions::command_handler::CommandHandler;
 use crate::game_view::card_window::card_view_model::CardContent;
 use crate::game_view::card_window::card_window::display_card;
-use crate::{AppEvent, ViewState};
+use crate::{AppEvent, GameGoals, ViewState};
+use egui::{Context, Ui};
+use game_lib::cards::game_variants::scenario::Scenario;
+use game_lib::world::board::Board;
+use game_lib::world::deck::CardRc;
+use game_lib::world::game::{Game, GameStatus};
+use std::collections::HashMap;
+use std::rc::Rc;
+use uuid::Uuid;
 
 pub(super) type CommandToExecute = Option<Command>;
 
@@ -20,18 +22,20 @@ pub(super) enum Message {
 }
 
 pub(super) struct Input {
-   pub(super) next_res: String,
-   pub(super) pay_res: String,
-   pub(super) inc_reputation: String,
-   pub(super) dec_reputation: String,
-   pub(super) message: Message,
-   pub(super) multiplier: String,
+    pub(super) next_res: String,
+    pub(super) pay_res: String,
+    pub(super) inc_reputation: String,
+    pub(super) dec_reputation: String,
+    pub(super) message: Message,
+    pub(super) multiplier: String,
 }
 
 pub(crate) struct GameViewState {
     pub(super) game: Game,
     pub(super) input: Input,
     pub(super) command: CommandToExecute,
+    pub(super) game_goals: GameGoals,
+    pub(super) scenario: Option<Rc<Scenario>>,
 }
 
 impl ViewState for GameViewState {
@@ -46,8 +50,7 @@ impl ViewState for GameViewState {
 }
 
 impl GameViewState {
-
-    pub fn new(game: Game) -> Self {
+    pub fn new(game: Game, game_goals: GameGoals, scenario: Option<Rc<Scenario>>) -> Self {
         let initial_gain = game.resource_gain.value().clone();
         let initial_multiplier = game.fix_multiplier.value().clone();
         GameViewState {
@@ -61,6 +64,8 @@ impl GameViewState {
                 multiplier: initial_multiplier.to_string(),
             },
             command: None,
+            game_goals,
+            scenario,
         }
     }
     fn update_cards(&mut self, ctx: &Context, ui: &mut Ui) {
@@ -86,6 +91,4 @@ impl GameViewState {
             display_card(&card_to_display, &mut set_command, ctx, ui);
         }
     }
-
 }
-

@@ -1,10 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use egui::Vec2;
-
+use crate::SecCardGameApp;
 use game_lib::world::deck::Deck;
 use game_setup::config::config::Config;
-use crate::SecCardGameApp;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]

@@ -1,10 +1,10 @@
 use crate::game_view::actions::command::Command;
 use crate::GameViewState;
-use egui::Ui;
+use egui::{RichText, Ui};
 
 impl GameViewState {
     pub(crate) fn tweak_control(&mut self, ui: &mut Ui) {
-        ui.label("Tweaks");
+        ui.label(RichText::new("Tweaks").strong());
         ui.add_space(5.0);
 
         ui.label("Multiply all fix costs by:");

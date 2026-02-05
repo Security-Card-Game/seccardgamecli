@@ -1,5 +1,5 @@
 use crate::components::label_with_input::{LabelWithInputComponent, LabelWithInputLayoutOptions};
-use crate::{AppEvent, StartGameData, ViewState};
+use crate::{AppEvent, GameGoals, StartGameData, ViewState};
 use eframe::emath::Align;
 use egui::{ComboBox, Context, Layout, RichText, ScrollArea, Ui, Vec2};
 use game_lib::cards::game_variants::scenario::Scenario;
@@ -17,7 +17,7 @@ pub struct InitViewState {
     deck_settings: DeckSettings,
     game_preset: GamePreset,
     scenario_settings: ScenarioSettings,
-    game_goals: GameGoals,
+    game_goals: GameGoalsControls,
 }
 
 struct DeckSettings {
@@ -29,7 +29,7 @@ struct DeckSettings {
     grace_rounds: LabelWithInputComponent,
 }
 
-struct GameGoals {
+struct GameGoalsControls {
     min_resources: LabelWithInputComponent,
     min_reputation: LabelWithInputComponent,
 }
@@ -116,9 +116,9 @@ impl Default for DeckSettings {
     }
 }
 
-impl Default for GameGoals {
+impl Default for GameGoalsControls {
     fn default() -> Self {
-        GameGoals {
+        GameGoalsControls {
             min_resources: LabelWithInputComponent {
                 label: "Minimum resources".to_string(),
                 description: Some(
@@ -133,6 +133,15 @@ impl Default for GameGoals {
                 ),
                 value: "0".to_string(),
             },
+        }
+    }
+}
+
+impl Into<GameGoals> for &GameGoalsControls {
+    fn into(self) -> GameGoals {
+        GameGoals {
+            min_resources: (&self.min_resources).into(),
+            min_reputation: (&self.min_reputation).into(),
         }
     }
 }
@@ -170,7 +179,7 @@ impl InitViewState {
             },
             deck_settings: DeckSettings::default(),
             game_preset: GamePreset::default(),
-            game_goals: GameGoals::default(),
+            game_goals: GameGoalsControls::default(),
         }
     }
 }
@@ -296,7 +305,7 @@ impl InitViewState {
                 .update(scenario.goal.minimum_reputation.value().to_string());
         } else {
             let default_preset = GamePreset::default();
-            let default_goals = GameGoals::default();
+            let default_goals = GameGoalsControls::default();
 
             self.game_preset
                 .initial_resources
@@ -375,6 +384,8 @@ impl InitViewState {
                 deck_composition,
                 grace_rounds,
                 game_init_settings,
+                game_goals: (&self.game_goals).into(),
+                scenario: self.scenario_settings.current_scenario.clone(),
             };
 
             app_event_callback(AppEvent::start_game(start_game_data))
