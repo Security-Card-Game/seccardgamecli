@@ -118,7 +118,7 @@ impl Into<GameInitSettings> for &GamePreset {
             resource_gain: Resources::new((&self.initial_resource_gain).into()),
             resources: Resources::new((&self.initial_resources).into()),
             fix_multiplier: ResourceFixMultiplier::new((&self.initial_fix_multiplier).into()),
-            reputation: Reputation::new(reputation.max(100).into()),
+            reputation: Reputation::new(reputation.min(100).into()),
         }
     }
 }
