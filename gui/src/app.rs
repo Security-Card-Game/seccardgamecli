@@ -52,7 +52,7 @@ impl eframe::App for SecCardGameApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         self.handle_app_event();
 
-        Self::create_menu_bar(ctx);
+        self.create_menu_bar(ctx);
 
         let mut event_publisher = |event| self.last_event = Some(event);
         self.active_view.draw_ui(&mut event_publisher, ctx);
@@ -72,18 +72,24 @@ impl SecCardGameApp {
                         data.scenario.clone(),
                     );
                 }
+                AppEvent::NewGame => {
+                    self.active_view = Box::new(InitViewState::new(&self.config));
+                }
             }
             self.last_event = None;
         };
     }
 
-    fn create_menu_bar(ctx: &Context) {
+    fn create_menu_bar(&mut self, ctx: &Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
                 if !is_web {
                     ui.menu_button("File", |ui| {
+                        if ui.button("New game").clicked() {
+                            self.last_event = Some(AppEvent::new_game());
+                        }
                         if ui.button("Quit").clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }

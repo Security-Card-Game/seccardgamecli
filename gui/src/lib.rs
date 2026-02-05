@@ -44,10 +44,15 @@ impl AppEvent {
     pub fn start_game(start_game_data: StartGameData) -> Self {
         AppEvent::StartGame(start_game_data)
     }
+
+    pub fn new_game() -> Self {
+        AppEvent::NewGame
+    }
 }
 #[derive(Debug, Clone)]
 pub(crate) enum AppEvent {
     StartGame(StartGameData),
+    NewGame,
 }
 
 pub(crate) struct SecCardGameApp {
