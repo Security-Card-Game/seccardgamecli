@@ -1,12 +1,13 @@
-use std::rc::Rc;
-use crate::components::components::{LabelWithInputLayoutOptions, LabelWithInputComponent};
+use crate::components::components::{LabelWithInputComponent, LabelWithInputLayoutOptions};
 use crate::{AppEvent, StartGameData, ViewState};
-use egui::{Context, RichText, ComboBox};
+use eframe::emath::Align;
+use egui::{ComboBox, Context, Layout, RichText, Ui, Vec2};
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
 use game_lib::world::game::GameInitSettings;
 use game_setup::config::config::Config;
+use std::rc::Rc;
 
 pub(crate) struct InitViewState {
     event_card_count: LabelWithInputComponent,
@@ -60,81 +61,180 @@ impl InitViewState {
         }
     }
 }
-impl ViewState for InitViewState {
-    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context) {
-        let control_layout_options = LabelWithInputLayoutOptions::default();
-        
-        egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                egui::Grid::new("init_view")
-                    .min_col_width(ui.available_width() / 4.0)
-                    .show(ui, |ui| {
-                        ui.label(RichText::new("Game Deck Settings").strong());
-                        ui.end_row();
-                        self.event_card_count.draw_component(0, ui, control_layout_options);
-                        ui.end_row();
-                        self.attack_card_count.draw_component(0, ui, control_layout_options);
-                        ui.end_row();
-                        self.oopsie_card_count.draw_component(0, ui, control_layout_options);
-                        ui.end_row();
-                        self.lucky_card_count.draw_component(0, ui, control_layout_options);
-                        ui.end_row();
-                        self.grace_rounds.draw_component(0, ui, control_layout_options);
-                        ui.end_row();
 
-                        ui.label(RichText::new("Experimental Settings").strong());
-                        ui.end_row();
-                        self.evaluation_card_count.draw_component(0, ui, control_layout_options);
-                        ui.end_row();
-                    });
-                ui.add_space(10.0);
+impl InitViewState {
+    const GAP: f32 = 20.0;
+    const DEFAULT_SPACING_Y: f32 = 5.0;
+    const DEFAULT_SPACE_Y: f32 = 10.0;
+    const MARGIN_TB: f32 = 10.0;
 
-                ui.horizontal(|ui| {
-                    let mut scenario_values = vec!["None"];
-                    scenario_values.append(&mut self.scenarios.iter().map(|scenario| &*scenario.title.value()).collect::<Vec<&str>>());
-                    ComboBox::new("scenarios", "Select Scenario")
-                        .width(300.0)
-                        .selected_text(self.scenario_value.clone())
-                        .show_ui(ui, |ui| {
-                            for title in scenario_values {
-                                ui.selectable_value(&mut self.scenario_value, title.to_string(), title);
-                            }
-                        });
+    const LEFT_COL_WIDTH: f32 = 250.0; // game settings + start button
+    const RIGHT_COL_WIDTH: f32 = 520.0; // scenario selection
+    const CONTENT_MAX_WIDTH: f32 = Self::LEFT_COL_WIDTH + Self::GAP + Self::RIGHT_COL_WIDTH;
 
-                    self.current_scenario = self.scenarios.iter().find(|scenario| scenario.title.value() == &self.scenario_value).cloned();
-                    if let Some(scenario) = self.current_scenario.as_ref() {
-                        let mut content = format!("{:?}", scenario);
-                        ui.text_edit_multiline(&mut content);
-                    }
+    fn draw_game_deck_settings(&mut self, ui: &mut egui::Ui) {
+        let control_layout_options = LabelWithInputLayoutOptions {
+            max_width: Self::LEFT_COL_WIDTH,
+            ..LabelWithInputLayoutOptions::default()
+        };
+        ui.spacing_mut().item_spacing.y = Self::DEFAULT_SPACING_Y;
+        ui.label(RichText::new("Game Deck Settings").strong());
+        self.event_card_count
+            .draw_component(0, ui, control_layout_options);
+        self.attack_card_count
+            .draw_component(0, ui, control_layout_options);
+        self.oopsie_card_count
+            .draw_component(0, ui, control_layout_options);
+        self.lucky_card_count
+            .draw_component(0, ui, control_layout_options);
+        self.grace_rounds
+            .draw_component(0, ui, control_layout_options);
+        ui.add_space(Self::DEFAULT_SPACE_Y);
+        ui.label(RichText::new("Experimental Settings").strong());
+        self.evaluation_card_count
+            .draw_component(0, ui, control_layout_options);
+    }
+
+    fn draw_scenario_selection(&mut self, ui: &mut egui::Ui) {
+        ui.label(RichText::new("Scenarios & Presets").strong());
+
+        let mut scenario_values = vec!["None"];
+        scenario_values.append(
+            &mut self
+                .scenarios
+                .iter()
+                .map(|scenario| &*scenario.title.value())
+                .collect::<Vec<&str>>(),
+        );
+
+        ComboBox::new("scenarios", "Select Scenario")
+            .width(ui.available_width())
+            .selected_text(self.scenario_value.clone())
+            .show_ui(ui, |ui| {
+                for title in scenario_values {
+                    ui.selectable_value(&mut self.scenario_value, title.to_string(), title);
+                }
+            });
+
+        self.current_scenario = self
+            .scenarios
+            .iter()
+            .find(|scenario| scenario.title.value() == &self.scenario_value)
+            .cloned();
+
+        ui.add_space(Self::DEFAULT_SPACE_Y);
+
+        if let Some(scenario) = self.current_scenario.as_ref() {
+            let mut content = format!("{:?}", scenario);
+
+            ui.add_sized(
+                Vec2::new(Self::RIGHT_COL_WIDTH, 200.0),
+                egui::TextEdit::multiline(&mut content)
+                    .desired_width(Self::RIGHT_COL_WIDTH)
+                    .code_editor(),
+            );
+        };
+    }
+
+    fn draw_start_button(
+        &mut self,
+        app_event_callback: &mut dyn FnMut(AppEvent),
+        ui: &mut egui::Ui,
+    ) {
+        if ui.button("Start Game").clicked() {
+            let deck_composition = DeckComposition {
+                events: self.event_card_count.value.parse().unwrap_or(0),
+                attacks: self.attack_card_count.value.parse().unwrap_or(0),
+                oopsies: self.oopsie_card_count.value.parse().unwrap_or(0),
+                lucky: self.lucky_card_count.value.parse().unwrap_or(0),
+                evaluation: self.evaluation_card_count.value.parse().unwrap_or(0),
+            };
+            let grace_rounds = self.grace_rounds.value.parse().unwrap_or(0);
+
+            let game_init_settings = if let Some(selected_scenario) = self.current_scenario.as_ref()
+            {
+                selected_scenario.preset.into()
+            } else {
+                GameInitSettings::default()
+            };
+            let start_game_data = StartGameData {
+                deck_composition,
+                grace_rounds,
+                game_init_settings,
+            };
+
+            app_event_callback(AppEvent::start_game(start_game_data))
+        };
+    }
+
+    fn draw_two_col_layout(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
+        ui.vertical_centered(|ui| {
+            ui.allocate_ui(Vec2::new(Self::CONTENT_MAX_WIDTH, 0.0), |ui| {
+                ui.with_layout(Layout::left_to_right(Align::Min), |ui| {
+                    ui.spacing_mut().item_spacing.x = Self::GAP;
+
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(Self::LEFT_COL_WIDTH, 0.0),
+                        Layout::top_down(Align::Min),
+                        |ui| {
+                            ui.set_width(Self::LEFT_COL_WIDTH);
+                            self.draw_game_deck_settings(ui);
+                        },
+                    );
+
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(Self::RIGHT_COL_WIDTH, 0.0),
+                        Layout::top_down(Align::Min),
+                        |ui| {
+                            ui.set_width(Self::RIGHT_COL_WIDTH);
+                            self.draw_scenario_selection(ui);
+                            ui.add_space(Self::DEFAULT_SPACE_Y);
+                            self.draw_start_button(app_event_callback, ui);
+                        },
+                    );
                 });
-
-
-                return if ui.button("Start Game").clicked() {
-                    let deck_composition = DeckComposition {
-                        events: self.event_card_count.value.parse().unwrap_or(0),
-                        attacks: self.attack_card_count.value.parse().unwrap_or(0),
-                        oopsies: self.oopsie_card_count.value.parse().unwrap_or(0),
-                        lucky: self.lucky_card_count.value.parse().unwrap_or(0),
-                        evaluation: self.evaluation_card_count.value.parse().unwrap_or(0),
-                    };
-                    let grace_rounds = self.grace_rounds.value.parse().unwrap_or(0);
-
-
-                    let game_init_settings = if let Some(selected_scenario) = self.current_scenario.as_ref() {
-                        selected_scenario.preset.into()
-                    } else {
-                        GameInitSettings::default()
-                    };
-                    let start_game_data = StartGameData {
-                        deck_composition,
-                        grace_rounds,
-                        game_init_settings
-                    };
-
-                    app_event_callback(AppEvent::start_game(start_game_data))
-                };
             });
         });
     }
 
+    fn draw_single_col_layout(
+        &mut self,
+        app_event_callback: &mut dyn FnMut(AppEvent),
+        ui: &mut Ui,
+    ) {
+        ui.vertical_centered(|ui| {
+            let col_width = ui.available_width();
+            ui.allocate_ui(Vec2::new(col_width, 0.0), |ui| {
+                ui.spacing_mut().item_spacing.x = Self::GAP;
+
+                ui.allocate_ui_with_layout(
+                    Vec2::new(col_width, 0.0),
+                    Layout::top_down(Align::Min),
+                    |ui| {
+                        ui.set_width(Self::LEFT_COL_WIDTH);
+                        self.draw_game_deck_settings(ui);
+                        ui.add_space(Self::DEFAULT_SPACE_Y);
+                        self.draw_scenario_selection(ui);
+                        ui.add_space(Self::DEFAULT_SPACE_Y);
+                        self.draw_start_button(app_event_callback, ui);
+                    },
+                );
+            });
+        });
+    }
+}
+impl ViewState for InitViewState {
+    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let needs_single_col = ui.available_width() < Self::CONTENT_MAX_WIDTH;
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.add_space(Self::MARGIN_TB);
+                if needs_single_col {
+                    self.draw_single_col_layout(app_event_callback, ui);
+                } else {
+                    self.draw_two_col_layout(app_event_callback, ui);
+                }
+            });
+        });
+    }
 }
