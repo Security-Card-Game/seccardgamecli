@@ -1,13 +1,14 @@
 use crate::components::components::{LabelWithInputComponent, LabelWithInputLayoutOptions};
 use crate::{AppEvent, StartGameData, ViewState};
 use eframe::emath::Align;
-use egui::{ComboBox, Context, Layout, RichText, Ui, Vec2};
+use egui::{ComboBox, Context, Layout, RichText, ScrollArea, Ui, Vec2};
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
 use game_lib::world::game::GameInitSettings;
 use game_setup::config::config::Config;
 use std::rc::Rc;
+use game_lib::cards::properties::description::Description;
 
 pub(crate) struct InitViewState {
     event_card_count: LabelWithInputComponent,
@@ -96,7 +97,7 @@ impl InitViewState {
     }
 
     fn draw_scenario_selection(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new("Scenarios & Presets").strong());
+        ui.label(RichText::new("Scenario").strong());
 
         let mut scenario_values = vec!["None"];
         scenario_values.append(
@@ -124,16 +125,16 @@ impl InitViewState {
 
         ui.add_space(Self::DEFAULT_SPACE_Y);
 
-        if let Some(scenario) = self.current_scenario.as_ref() {
-            let mut content = format!("{:?}", scenario);
+        let empty_description = Description::new("No description available. Select a scenario to see its description.");
+        let description = self.current_scenario.as_ref().map(|scenario| &scenario.description).unwrap_or(&empty_description);
 
-            ui.add_sized(
-                Vec2::new(Self::RIGHT_COL_WIDTH, 200.0),
-                egui::TextEdit::multiline(&mut content)
-                    .desired_width(Self::RIGHT_COL_WIDTH)
-                    .code_editor(),
-            );
-        };
+        ScrollArea::vertical()
+            .max_height(50.0)
+            .auto_shrink([false; 2])
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width()); // helps wrapping behave nicely
+                ui.label(description.value()); // read-only, wraps by default
+            });
     }
 
     fn draw_start_button(
