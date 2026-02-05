@@ -157,10 +157,9 @@ impl InitViewState {
     const RIGHT_COL_WIDTH: f32 = 400.0; // scenario selection
     const CONTENT_MAX_WIDTH: f32 = Self::LEFT_COL_WIDTH + Self::GAP + Self::RIGHT_COL_WIDTH;
 
-    fn draw_game_deck_settings(&mut self, ui: &mut egui::Ui) {
+    fn draw_game_deck_settings(&mut self, ui: &mut Ui) {
         let control_layout_options = LabelWithInputLayoutOptions {
             max_width: Self::LEFT_COL_WIDTH,
-            input_width: 50.0,
             ..LabelWithInputLayoutOptions::default()
         };
         ui.spacing_mut().item_spacing.y = Self::DEFAULT_SPACING_Y;
@@ -187,7 +186,7 @@ impl InitViewState {
             .draw_component(0, ui, control_layout_options);
     }
 
-    fn draw_scenario_selection(&mut self, ui: &mut egui::Ui) {
+    fn draw_scenario_selection(&mut self, ui: &mut Ui) {
         ui.label(RichText::new("Scenario").strong());
         let max_width = ui.available_width();
 
@@ -201,6 +200,8 @@ impl InitViewState {
                 .collect::<Vec<&str>>(),
         );
 
+        let old_selection = self.scenario_settings.scenario_value.clone();
+
         ComboBox::new("scenarios", "Select Scenario")
             .width(max_width)
             .selected_text(self.scenario_settings.scenario_value.clone())
@@ -213,6 +214,10 @@ impl InitViewState {
                     );
                 }
             });
+
+        if self.scenario_settings.scenario_value == old_selection {
+            return;
+        };
 
         self.scenario_settings.current_scenario = self
             .scenario_settings
@@ -237,14 +242,44 @@ impl InitViewState {
             .max_width(max_width)
             .auto_shrink([false; 2])
             .show(ui, |ui| {
-                ui.set_width(ui.available_width()); // helps wrapping behave nicely
+                ui.set_width(ui.available_width()); // helps to wrap behave nicely
                 ui.label(description.value()); // read-only, wraps by default
             });
+
+        if let Some(scenario) = self.scenario_settings.current_scenario.as_ref() {
+            self.game_preset
+                .initial_resources
+                .update(scenario.preset.resources.value().to_string());
+            self.game_preset
+                .initial_resource_gain
+                .update(scenario.preset.resource_gain.value().to_string());
+            self.game_preset
+                .initial_reputation
+                .update(scenario.preset.reputation.value().to_string());
+            self.game_preset
+                .initial_fix_multiplier
+                .update(scenario.preset.multiplier.value().to_string());
+        } else {
+            let defaults = GamePreset::default();
+            self.game_preset
+                .initial_resources
+                .update(defaults.initial_resources.value);
+            self.game_preset
+                .initial_resource_gain
+                .update(defaults.initial_resource_gain.value);
+            self.game_preset
+                .initial_fix_multiplier
+                .update(defaults.initial_fix_multiplier.value);
+            self.game_preset
+                .initial_reputation
+                .update(defaults.initial_reputation.value);
+        }
     }
 
     fn draw_game_preset(&mut self, ui: &mut Ui) {
         let control_layout_options = LabelWithInputLayoutOptions {
             max_width: Self::RIGHT_COL_WIDTH,
+            input_width: 50.0,
             ..LabelWithInputLayoutOptions::default()
         };
 
