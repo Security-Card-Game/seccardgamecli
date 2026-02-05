@@ -126,8 +126,13 @@ impl InitViewState {
 
         ui.add_space(Self::DEFAULT_SPACE_Y);
 
-        let empty_description = Description::new("No description available. Select a scenario to see its description.");
-        let description = self.current_scenario.as_ref().map(|scenario| &scenario.description).unwrap_or(&empty_description);
+        let empty_description =
+            Description::new("No description available. Select a scenario to see its description.");
+        let description = self
+            .current_scenario
+            .as_ref()
+            .map(|scenario| &scenario.description)
+            .unwrap_or(&empty_description);
 
         ScrollArea::vertical()
             .max_height(50.0)
@@ -217,7 +222,8 @@ impl InitViewState {
                     self.draw_game_deck_settings(ui);
                     self.draw_scenario_selection(ui);
                     self.draw_start_button(app_event_callback, ui);
-                });
+                },
+            );
         });
     }
 }
