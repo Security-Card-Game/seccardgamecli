@@ -13,6 +13,13 @@ use game_lib::world::resources::Resources;
 use game_setup::config::config::Config;
 use std::rc::Rc;
 
+pub struct InitViewState {
+    deck_settings: DeckSettings,
+    game_preset: GamePreset,
+    scenario_settings: ScenarioSettings,
+    game_goals: GameGoals,
+}
+
 struct DeckSettings {
     event_card_count: LabelWithInputComponent,
     attack_card_count: LabelWithInputComponent,
@@ -22,16 +29,15 @@ struct DeckSettings {
     grace_rounds: LabelWithInputComponent,
 }
 
+struct GameGoals {
+    min_resources: LabelWithInputComponent,
+    min_reputation: LabelWithInputComponent,
+}
+
 struct ScenarioSettings {
     scenario_value: String,
     current_scenario: Option<Rc<Scenario>>,
     scenarios: Vec<Rc<Scenario>>,
-}
-
-pub struct InitViewState {
-    deck_settings: DeckSettings,
-    game_preset: GamePreset,
-    scenario_settings: ScenarioSettings,
 }
 
 struct GamePreset {
@@ -110,6 +116,27 @@ impl Default for DeckSettings {
     }
 }
 
+impl Default for GameGoals {
+    fn default() -> Self {
+        GameGoals {
+            min_resources: LabelWithInputComponent {
+                label: "Minimum resources".to_string(),
+                description: Some(
+                    "The minimum amount of resources you need at the end of the game".to_string(),
+                ),
+                value: "0".to_string(),
+            },
+            min_reputation: LabelWithInputComponent {
+                label: "Minimum reputation".to_string(),
+                description: Some(
+                    "The minimum reputation you need at the end of the game".to_string(),
+                ),
+                value: "0".to_string(),
+            },
+        }
+    }
+}
+
 impl Into<GameInitSettings> for &GamePreset {
     fn into(self) -> GameInitSettings {
         let reputation: u8 = (&self.initial_reputation).into();
@@ -143,6 +170,7 @@ impl InitViewState {
             },
             deck_settings: DeckSettings::default(),
             game_preset: GamePreset::default(),
+            game_goals: GameGoals::default(),
         }
     }
 }
@@ -215,7 +243,8 @@ impl InitViewState {
                 }
             });
 
-        if self.scenario_settings.scenario_value == old_selection {
+        let selection_unchanged = self.scenario_settings.scenario_value == old_selection;
+        if selection_unchanged {
             return;
         };
 
@@ -259,20 +288,34 @@ impl InitViewState {
             self.game_preset
                 .initial_fix_multiplier
                 .update(scenario.preset.multiplier.value().to_string());
+            self.game_goals
+                .min_resources
+                .update(scenario.goal.minimum_resources.value().to_string());
+            self.game_goals
+                .min_reputation
+                .update(scenario.goal.minimum_reputation.value().to_string());
         } else {
-            let defaults = GamePreset::default();
+            let default_preset = GamePreset::default();
+            let default_goals = GameGoals::default();
+
             self.game_preset
                 .initial_resources
-                .update(defaults.initial_resources.value);
+                .update(default_preset.initial_resources.value);
             self.game_preset
                 .initial_resource_gain
-                .update(defaults.initial_resource_gain.value);
+                .update(default_preset.initial_resource_gain.value);
             self.game_preset
                 .initial_fix_multiplier
-                .update(defaults.initial_fix_multiplier.value);
+                .update(default_preset.initial_fix_multiplier.value);
             self.game_preset
                 .initial_reputation
-                .update(defaults.initial_reputation.value);
+                .update(default_preset.initial_reputation.value);
+            self.game_goals
+                .min_resources
+                .update(default_goals.min_resources.value);
+            self.game_goals
+                .min_reputation
+                .update(default_goals.min_reputation.value);
         }
     }
 
@@ -296,6 +339,23 @@ impl InitViewState {
             .draw_component(0, ui, control_layout_options);
         self.game_preset
             .initial_fix_multiplier
+            .draw_component(0, ui, control_layout_options);
+    }
+
+    fn draw_game_goals(&mut self, ui: &mut Ui) {
+        let control_layout_options = LabelWithInputLayoutOptions {
+            max_width: Self::RIGHT_COL_WIDTH,
+            input_width: 50.0,
+            ..LabelWithInputLayoutOptions::default()
+        };
+
+        ui.label(RichText::new("Game Goals").strong());
+
+        self.game_goals
+            .min_resources
+            .draw_component(0, ui, control_layout_options);
+        self.game_goals
+            .min_reputation
             .draw_component(0, ui, control_layout_options);
     }
 
@@ -333,6 +393,8 @@ impl InitViewState {
                         |ui| {
                             ui.set_width(Self::LEFT_COL_WIDTH);
                             self.draw_game_deck_settings(ui);
+                            ui.set_width(Self::LEFT_COL_WIDTH);
+                            self.draw_start_button(app_event_callback, ui);
                         },
                     );
 
@@ -345,7 +407,7 @@ impl InitViewState {
                             ui.add_space(Self::DEFAULT_SPACE_Y);
                             self.draw_game_preset(ui);
                             ui.add_space(Self::DEFAULT_SPACE_Y);
-                            self.draw_start_button(app_event_callback, ui);
+                            self.draw_game_goals(ui);
                         },
                     );
                 });
@@ -370,6 +432,7 @@ impl InitViewState {
                     self.draw_game_deck_settings(ui);
                     self.draw_scenario_selection(ui);
                     self.draw_game_preset(ui);
+                    self.draw_game_goals(ui);
                     self.draw_start_button(app_event_callback, ui);
                 },
             );
