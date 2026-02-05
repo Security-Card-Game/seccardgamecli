@@ -10,25 +10,68 @@ use game_lib::world::game::GameInitSettings;
 use game_setup::config::config::Config;
 use std::rc::Rc;
 
-pub(crate) struct InitViewState {
+struct DeckSettings {
     event_card_count: LabelWithInputComponent,
     attack_card_count: LabelWithInputComponent,
     oopsie_card_count: LabelWithInputComponent,
     lucky_card_count: LabelWithInputComponent,
     evaluation_card_count: LabelWithInputComponent,
     grace_rounds: LabelWithInputComponent,
+}
+
+struct ScenarioSettings {
     scenario_value: String,
     current_scenario: Option<Rc<Scenario>>,
     scenarios: Vec<Rc<Scenario>>,
 }
 
-impl InitViewState {
-    pub fn new(config: &Config) -> Self {
-        let scenarios = DeckLoader::create(&config.game_path).get_scenarios();
-        InitViewState {
-            scenarios,
-            scenario_value: "None".to_string(),
-            current_scenario: None,
+pub struct InitViewState {
+    deck_settings: DeckSettings,
+    game_preset: GamePreset,
+    scenario_settings: ScenarioSettings,
+}
+
+struct GamePreset {
+    initial_resources: LabelWithInputComponent,
+    initial_reputation: LabelWithInputComponent,
+    initial_resource_gain: LabelWithInputComponent,
+    initial_fix_multiplier: LabelWithInputComponent,
+}
+
+impl Default for GamePreset {
+    fn default() -> Self {
+        let default = GameInitSettings::default();
+
+        GamePreset {
+            initial_resources: LabelWithInputComponent {
+                label: "Initial resources".to_string(),
+                description: Some("The number of resources you start the game with.".to_string()),
+                value: default.resources.to_string(),
+            },
+            initial_reputation: LabelWithInputComponent {
+                label: "Initial reputation".to_string(),
+                description: Some(
+                    "The number of reputation points you start the game with.".to_string(),
+                ),
+                value: default.reputation.to_string(),
+            },
+            initial_resource_gain: LabelWithInputComponent {
+                label: "Initial resource gain".to_string(),
+                description: Some("The number of resources you gain per turn.".to_string()),
+                value: default.resource_gain.to_string(),
+            },
+            initial_fix_multiplier: LabelWithInputComponent {
+                label: "Initial fix multiplier".to_string(),
+                description: Some("The multiplier for fixing cards.".to_string()),
+                value: default.fix_multiplier.value().to_string(),
+            },
+        }
+    }
+}
+
+impl Default for DeckSettings {
+    fn default() -> Self {
+        DeckSettings {
             event_card_count: LabelWithInputComponent {
                 label: "Number of event cards".to_string(),
                 description: None,
@@ -58,7 +101,31 @@ impl InitViewState {
                 label: "Grace rounds".to_string(),
                 description: Some("Number of turns after which attacks are possible".to_string()),
                 value: "6".to_string(),
+            }
+        }
+    }
+}
+
+impl Default for ScenarioSettings {
+    fn default() -> Self {
+        ScenarioSettings {
+            scenarios: vec![],
+            scenario_value: "None".to_string(),
+            current_scenario: None,
+        }
+    }
+}
+
+impl InitViewState {
+    pub fn new(config: &Config) -> Self {
+        let scenarios = DeckLoader::create(&config.game_path).get_scenarios();
+        InitViewState {
+            scenario_settings: ScenarioSettings {
+                scenarios,
+                ..ScenarioSettings::default()
             },
+            deck_settings: DeckSettings::default(),
+            game_preset: GamePreset::default(),
         }
     }
 }
@@ -80,19 +147,25 @@ impl InitViewState {
         };
         ui.spacing_mut().item_spacing.y = Self::DEFAULT_SPACING_Y;
         ui.label(RichText::new("Game Deck Settings").strong());
-        self.event_card_count
+        self.deck_settings
+            .event_card_count
             .draw_component(0, ui, control_layout_options);
-        self.attack_card_count
+        self.deck_settings
+            .attack_card_count
             .draw_component(0, ui, control_layout_options);
-        self.oopsie_card_count
+        self.deck_settings
+            .oopsie_card_count
             .draw_component(0, ui, control_layout_options);
-        self.lucky_card_count
+        self.deck_settings
+            .lucky_card_count
             .draw_component(0, ui, control_layout_options);
-        self.grace_rounds
+        self.deck_settings
+            .grace_rounds
             .draw_component(0, ui, control_layout_options);
         ui.add_space(Self::DEFAULT_SPACE_Y);
         ui.label(RichText::new("Experimental Settings").strong());
-        self.evaluation_card_count
+        self.deck_settings
+            .evaluation_card_count
             .draw_component(0, ui, control_layout_options);
     }
 
@@ -103,6 +176,7 @@ impl InitViewState {
         let mut scenario_values = vec!["None"];
         scenario_values.append(
             &mut self
+                .scenario_settings
                 .scenarios
                 .iter()
                 .map(|scenario| &*scenario.title.value())
@@ -111,17 +185,22 @@ impl InitViewState {
 
         ComboBox::new("scenarios", "Select Scenario")
             .width(max_width)
-            .selected_text(self.scenario_value.clone())
+            .selected_text(self.scenario_settings.scenario_value.clone())
             .show_ui(ui, |ui| {
                 for title in scenario_values {
-                    ui.selectable_value(&mut self.scenario_value, title.to_string(), title);
+                    ui.selectable_value(
+                        &mut self.scenario_settings.scenario_value,
+                        title.to_string(),
+                        title,
+                    );
                 }
             });
 
-        self.current_scenario = self
+        self.scenario_settings.current_scenario = self
+            .scenario_settings
             .scenarios
             .iter()
-            .find(|scenario| scenario.title.value() == &self.scenario_value)
+            .find(|scenario| scenario.title.value() == &self.scenario_settings.scenario_value)
             .cloned();
 
         ui.add_space(Self::DEFAULT_SPACE_Y);
@@ -129,6 +208,7 @@ impl InitViewState {
         let empty_description =
             Description::new("No description available. Select a scenario to see its description.");
         let description = self
+            .scenario_settings
             .current_scenario
             .as_ref()
             .map(|scenario| &scenario.description)
@@ -151,20 +231,45 @@ impl InitViewState {
     ) {
         if ui.button("Start Game").clicked() {
             let deck_composition = DeckComposition {
-                events: self.event_card_count.value.parse().unwrap_or(0),
-                attacks: self.attack_card_count.value.parse().unwrap_or(0),
-                oopsies: self.oopsie_card_count.value.parse().unwrap_or(0),
-                lucky: self.lucky_card_count.value.parse().unwrap_or(0),
-                evaluation: self.evaluation_card_count.value.parse().unwrap_or(0),
+                events: self
+                    .deck_settings
+                    .event_card_count
+                    .value
+                    .parse()
+                    .unwrap_or(0),
+                attacks: self
+                    .deck_settings
+                    .attack_card_count
+                    .value
+                    .parse()
+                    .unwrap_or(0),
+                oopsies: self
+                    .deck_settings
+                    .oopsie_card_count
+                    .value
+                    .parse()
+                    .unwrap_or(0),
+                lucky: self
+                    .deck_settings
+                    .lucky_card_count
+                    .value
+                    .parse()
+                    .unwrap_or(0),
+                evaluation: self
+                    .deck_settings
+                    .evaluation_card_count
+                    .value
+                    .parse()
+                    .unwrap_or(0),
             };
-            let grace_rounds = self.grace_rounds.value.parse().unwrap_or(0);
+            let grace_rounds = self.deck_settings.grace_rounds.value.parse().unwrap_or(0);
 
-            let game_init_settings = if let Some(selected_scenario) = self.current_scenario.as_ref()
-            {
-                selected_scenario.preset.into()
-            } else {
-                GameInitSettings::default()
-            };
+            let game_init_settings =
+                if let Some(selected_scenario) = self.scenario_settings.current_scenario.as_ref() {
+                    selected_scenario.preset.into()
+                } else {
+                    GameInitSettings::default()
+                };
             let start_game_data = StartGameData {
                 deck_composition,
                 grace_rounds,
