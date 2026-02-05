@@ -1,4 +1,4 @@
-use crate::components::components::{LabelWithInputComponent, LabelWithInputLayoutOptions};
+use crate::components::label_with_input::{LabelWithInputComponent, LabelWithInputLayoutOptions};
 use crate::{AppEvent, StartGameData, ViewState};
 use eframe::emath::Align;
 use egui::{ComboBox, Context, Layout, RichText, ScrollArea, Ui, Vec2};
