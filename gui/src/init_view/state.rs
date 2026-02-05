@@ -7,6 +7,9 @@ use game_lib::cards::properties::description::Description;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
 use game_lib::world::game::GameInitSettings;
+use game_lib::world::reputation::Reputation;
+use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
+use game_lib::world::resources::Resources;
 use game_setup::config::config::Config;
 use std::rc::Rc;
 
@@ -46,19 +49,20 @@ impl Default for GamePreset {
             initial_resources: LabelWithInputComponent {
                 label: "Initial resources".to_string(),
                 description: Some("The number of resources you start the game with.".to_string()),
-                value: default.resources.to_string(),
+                value: default.resources.value().to_string(),
             },
             initial_reputation: LabelWithInputComponent {
                 label: "Initial reputation".to_string(),
                 description: Some(
-                    "The number of reputation points you start the game with.".to_string(),
+                    "The number of reputation points you start the game with. [0 - 100]"
+                        .to_string(),
                 ),
-                value: default.reputation.to_string(),
+                value: default.reputation.value().to_string(),
             },
             initial_resource_gain: LabelWithInputComponent {
                 label: "Initial resource gain".to_string(),
                 description: Some("The number of resources you gain per turn.".to_string()),
-                value: default.resource_gain.to_string(),
+                value: default.resource_gain.value().to_string(),
             },
             initial_fix_multiplier: LabelWithInputComponent {
                 label: "Initial fix multiplier".to_string(),
@@ -106,6 +110,19 @@ impl Default for DeckSettings {
     }
 }
 
+impl Into<GameInitSettings> for &GamePreset {
+    fn into(self) -> GameInitSettings {
+        let reputation: u8 = (&self.initial_reputation).into();
+
+        GameInitSettings {
+            resource_gain: Resources::new((&self.initial_resource_gain).into()),
+            resources: Resources::new((&self.initial_resources).into()),
+            fix_multiplier: ResourceFixMultiplier::new((&self.initial_fix_multiplier).into()),
+            reputation: Reputation::new(reputation.max(100).into()),
+        }
+    }
+}
+
 impl Default for ScenarioSettings {
     fn default() -> Self {
         ScenarioSettings {
@@ -143,6 +160,7 @@ impl InitViewState {
     fn draw_game_deck_settings(&mut self, ui: &mut egui::Ui) {
         let control_layout_options = LabelWithInputLayoutOptions {
             max_width: Self::LEFT_COL_WIDTH,
+            input_width: 50.0,
             ..LabelWithInputLayoutOptions::default()
         };
         ui.spacing_mut().item_spacing.y = Self::DEFAULT_SPACING_Y;
@@ -224,52 +242,40 @@ impl InitViewState {
             });
     }
 
-    fn draw_start_button(
-        &mut self,
-        app_event_callback: &mut dyn FnMut(AppEvent),
-        ui: &mut egui::Ui,
-    ) {
+    fn draw_game_preset(&mut self, ui: &mut Ui) {
+        let control_layout_options = LabelWithInputLayoutOptions {
+            max_width: Self::RIGHT_COL_WIDTH,
+            ..LabelWithInputLayoutOptions::default()
+        };
+
+        ui.label(RichText::new("Game Presets").strong());
+
+        self.game_preset
+            .initial_resources
+            .draw_component(0, ui, control_layout_options);
+        self.game_preset
+            .initial_resource_gain
+            .draw_component(0, ui, control_layout_options);
+        self.game_preset
+            .initial_reputation
+            .draw_component(0, ui, control_layout_options);
+        self.game_preset
+            .initial_fix_multiplier
+            .draw_component(0, ui, control_layout_options);
+    }
+
+    fn draw_start_button(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
         if ui.button("Start Game").clicked() {
             let deck_composition = DeckComposition {
-                events: self
-                    .deck_settings
-                    .event_card_count
-                    .value
-                    .parse()
-                    .unwrap_or(0),
-                attacks: self
-                    .deck_settings
-                    .attack_card_count
-                    .value
-                    .parse()
-                    .unwrap_or(0),
-                oopsies: self
-                    .deck_settings
-                    .oopsie_card_count
-                    .value
-                    .parse()
-                    .unwrap_or(0),
-                lucky: self
-                    .deck_settings
-                    .lucky_card_count
-                    .value
-                    .parse()
-                    .unwrap_or(0),
-                evaluation: self
-                    .deck_settings
-                    .evaluation_card_count
-                    .value
-                    .parse()
-                    .unwrap_or(0),
+                events: (&self.deck_settings.event_card_count).into(),
+                attacks: (&self.deck_settings.attack_card_count).into(),
+                oopsies: (&self.deck_settings.oopsie_card_count).into(),
+                lucky: (&self.deck_settings.lucky_card_count).into(),
+                evaluation: (&self.deck_settings.evaluation_card_count).into(),
             };
-            let grace_rounds = self.deck_settings.grace_rounds.value.parse().unwrap_or(0);
+            let grace_rounds = (&self.deck_settings.grace_rounds).into();
 
-            let game_init_settings =
-                if let Some(selected_scenario) = self.scenario_settings.current_scenario.as_ref() {
-                    selected_scenario.preset.into()
-                } else {
-                    GameInitSettings::default()
-                };
+            let game_init_settings = (&self.game_preset).into();
             let start_game_data = StartGameData {
                 deck_composition,
                 grace_rounds,
@@ -302,6 +308,8 @@ impl InitViewState {
                             ui.set_width(Self::RIGHT_COL_WIDTH);
                             self.draw_scenario_selection(ui);
                             ui.add_space(Self::DEFAULT_SPACE_Y);
+                            self.draw_game_preset(ui);
+                            ui.add_space(Self::DEFAULT_SPACE_Y);
                             self.draw_start_button(app_event_callback, ui);
                         },
                     );
@@ -326,6 +334,7 @@ impl InitViewState {
 
                     self.draw_game_deck_settings(ui);
                     self.draw_scenario_selection(ui);
+                    self.draw_game_preset(ui);
                     self.draw_start_button(app_event_callback, ui);
                 },
             );
