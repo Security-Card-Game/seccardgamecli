@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use uuid::Uuid;
 
 use crate::world::actions::action_error::{ActionError, ActionResult};
@@ -35,7 +33,7 @@ fn draw_card(deck: Deck) -> ActionResult<CardAndNewDeck> {
             total: deck.total,
         };
         Ok(CardAndNewDeck {
-            drawn_card: Rc::new(drawn_card[0].clone()),
+            drawn_card: drawn_card[0].clone(),
             new_deck,
         })
     };
@@ -58,6 +56,7 @@ fn add_drawn_card_to_board(board: Board, card: CardRc) -> ActionResult<Board> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
     use fake::Fake;
     use crate::cards::types::card_model::Card;
     use crate::cards::types::event::EventCard;
@@ -73,8 +72,8 @@ mod tests {
     #[test]
     fn draw_card_from_deck() {
         let next_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
-        let remaining_card = Card::from(FakeEventCard.fake::<EventCard>());
-        let cards = vec![next_card.clone(), remaining_card.clone()];
+        let remaining_card: CardRc = Card::from(FakeEventCard.fake::<EventCard>()).into();
+        let cards = vec![next_card.clone().into(), remaining_card.clone()];
 
         let deck = Deck::new(cards);
 
@@ -96,7 +95,7 @@ mod tests {
         let next_card = Card::from(FakeOopsieCard.fake::<OopsieCard>());
         let cards = vec![next_card.clone()];
 
-        let deck = Deck::new(cards);
+        let deck = Deck::new(cards.iter().map(|c| Rc::new(c.clone()) ).collect());
 
         let CardAndNewDeck {
             drawn_card: _,
@@ -140,7 +139,7 @@ mod tests {
         let remaining_card = Card::from(FakeEventCard.fake::<EventCard>());
         let cards = vec![next_card.clone(), remaining_card.clone()];
 
-        let deck = Deck::new(cards);
+        let deck = Deck::new(cards.iter().map(|c| Rc::new(c.clone()) ).collect());
         let board = Board::empty();
 
         let (_, board_after_draw) = draw_card_and_place_on_board(deck, board).unwrap();

@@ -6,21 +6,24 @@ use uuid::Uuid;
 use crate::cards::properties::duration::Duration;
 use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;
-use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::actions::action_error::ActionError::WrongCardType;
+use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::board::Board;
 use crate::world::deck::CardRc;
 
 /*
 Decreased the duration of all AttackCards with a limited duration. Removes the cards from the board
-if the hit zero duration.
+if they hit zero duration.
 */
 pub fn update_attack_cards(board: Board) -> Board {
     let mut open_cards = HashMap::new();
+    let drawn_card_id = board.drawn_card.clone().map(|card| card.id);
     for (key, card) in board.open_cards.iter() {
         let card_to_insert = match &**card {
-            Card::Attack(ac) => update_attack_card(card, ac),
-            Card::Event(_) | Card::Oopsie(_) | Card::Lucky(_) | Card::Evaluation(_) => Some(card.clone()),
+            Card::Attack(ac) => handle_attack_card(drawn_card_id, key, card, ac),
+            Card::Event(_) | Card::Oopsie(_) | Card::Lucky(_) | Card::Evaluation(_) => {
+                Some(card.clone())
+            }
         };
 
         match card_to_insert {
@@ -37,7 +40,18 @@ pub fn update_attack_cards(board: Board) -> Board {
     }
 }
 
-fn update_attack_card(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
+fn handle_attack_card(drawn_card_id: Option<Uuid>, key: &Uuid, card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
+    match drawn_card_id {
+        None => Some(card.clone()), // if no card was drawn nothing should change
+        Some(id) => if key == &id {
+            Some(card.clone())
+        } else {
+            decrease_duration(card, ac)
+        }
+    }
+}
+
+fn decrease_duration(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
     let new_duration = ac.duration.decrease();
     if let Some(value) = new_duration.value() {
         if *value == 0 {
@@ -68,7 +82,9 @@ fn update_attack_card(card: &CardRc, ac: &AttackCard) -> Option<Rc<Card>> {
 pub fn manually_close_attack_card(board: Board, card_id: &Uuid) -> ActionResult<Board> {
     if let Some(card) = board.open_cards.get(card_id) {
         match &**card {
-            Card::Oopsie(_) | Card::Lucky(_) | Card::Event(_) | Card::Evaluation(_)=> Err(WrongCardType(board.clone())),
+            Card::Oopsie(_) | Card::Lucky(_) | Card::Event(_) | Card::Evaluation(_) => {
+                Err(WrongCardType(board.clone()))
+            }
             Card::Attack(ac) => close_attack_card(&ac.duration.clone(), board, card_id),
         }
     } else {
@@ -98,6 +114,7 @@ fn close_attack_card(duration: &Duration, board: Board, id: &Uuid) -> ActionResu
     }
 }
 
+#[allow(non_snake_case)]
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
@@ -107,21 +124,21 @@ mod tests {
     use uuid::Uuid;
 
     use crate::cards::properties::duration::Duration;
-    use crate::cards::types::attack::AttackCard;
     use crate::cards::types::attack::tests::FakeAttackCard;
+    use crate::cards::types::attack::AttackCard;
     use crate::cards::types::card_model::Card;
-    use crate::cards::types::event::EventCard;
-    use crate::cards::types::event::tests::FakeEventCard;
-    use crate::cards::types::lucky::LuckyCard;
-    use crate::cards::types::lucky::tests::FakeLuckyCard;
-    use crate::cards::types::oopsie::OopsieCard;
-    use crate::cards::types::oopsie::tests::FakeOopsieCard;
-    use crate::cards::types::evaluation::EvaluationCard;
     use crate::cards::types::evaluation::tests::FakeEvaluationCard;
+    use crate::cards::types::evaluation::EvaluationCard;
+    use crate::cards::types::event::tests::FakeEventCard;
+    use crate::cards::types::event::EventCard;
+    use crate::cards::types::lucky::tests::FakeLuckyCard;
+    use crate::cards::types::lucky::LuckyCard;
+    use crate::cards::types::oopsie::tests::FakeOopsieCard;
+    use crate::cards::types::oopsie::OopsieCard;
     use crate::world::actions::action_error::ActionError;
     use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
+    use crate::world::board::tests::{generate_board_with_freshly_drawn_card, generate_board_with_open_card, remove_card_from_open_cards};
     use crate::world::board::Board;
-    use crate::world::board::tests::generate_board_with_open_card;
 
     #[test]
     fn update_attack_cards_reduces_attack_duration() {
@@ -140,9 +157,31 @@ mod tests {
 
         let updated_card = board_after_update.open_cards.get(&card_id).unwrap();
 
-        assert!(!Rc::ptr_eq(&card_rc, updated_card));
         assert_eq!(&**updated_card, &Card::from(expected_attack));
+        assert!(!Rc::ptr_eq(&card_rc, updated_card));
     }
+
+    #[test]
+    fn update_attack_cards_does_not_reduce_attack_duration_when_card_is_freshly_drawn() {
+        let attack = AttackCard {
+            duration: Duration::new(Some(5)),
+            ..FakeAttackCard.fake()
+        };
+        let expected_attack = AttackCard {
+            duration: Duration::new(Some(5)),
+            ..attack.clone()
+        };
+
+        let (card_id, board, card_rc) = generate_board_with_freshly_drawn_card(Card::from(attack));
+
+        let board_after_update = update_attack_cards(board);
+
+        let updated_card = board_after_update.open_cards.get(&card_id).unwrap();
+
+        assert_eq!(&**updated_card, &Card::from(expected_attack));
+        assert!(Rc::ptr_eq(&card_rc, updated_card)); // card reference is not changed
+    }
+
 
     #[test]
     fn update_attack_cards_removes_attack_when_duration_is_0() {
@@ -150,11 +189,11 @@ mod tests {
             duration: Duration::new(Some(1)),
             ..FakeAttackCard.fake()
         };
-        let (_, board, _) = generate_board_with_open_card(Card::from(attack));
+        let (id, board, _) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
-        assert!(board_after_update.open_cards.is_empty());
+        assert!(!board_after_update.open_cards.contains_key(&id));
     }
 
     #[test]
@@ -164,11 +203,11 @@ mod tests {
             ..FakeAttackCard.fake()
         };
 
-        let (_, board, _card_rc) = generate_board_with_open_card(Card::from(attack));
+        let (id, board, _card_rc) = generate_board_with_open_card(Card::from(attack));
 
         let board_after_update = update_attack_cards(board);
 
-        assert!(board_after_update.open_cards.is_empty());
+        assert!(!board_after_update.open_cards.contains_key(&id));
     }
 
     #[test]
@@ -211,7 +250,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board { ..Board::empty() };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let err_result = manually_close_attack_card(board, &card_id).unwrap_err();
 
@@ -227,7 +266,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board { ..Board::empty() };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let err_result = manually_close_attack_card(board, &card_id).unwrap_err();
 
@@ -243,7 +282,7 @@ mod tests {
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
 
-        let expected_board = Board { ..Board::empty() };
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let result = manually_close_attack_card(board, &card_id).unwrap();
 
@@ -258,7 +297,8 @@ mod tests {
         };
 
         let (card_id, board, _) = generate_board_with_open_card(Card::from(attack));
-        let expected_board = Board { ..Board::empty() };
+
+        let expected_board = create_board_with_card_removed(&card_id, &board);
 
         let result = manually_close_attack_card(board, &card_id).unwrap();
 
@@ -293,5 +333,14 @@ mod tests {
         let result = manually_close_attack_card(board, &Uuid::new_v4()).unwrap_err();
 
         assert_eq!(result, ActionError::InvalidState(expected_board));
+    }
+
+    fn create_board_with_card_removed(card_id: &Uuid, board: &Board) -> Board {
+        let expected_board = Board {
+            drawn_card: board.drawn_card.clone(),
+            open_cards: remove_card_from_open_cards(&board, &card_id),
+            ..Board::empty()
+        };
+        expected_board
     }
 }
