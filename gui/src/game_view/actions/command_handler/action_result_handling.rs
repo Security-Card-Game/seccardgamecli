@@ -1,10 +1,10 @@
 /// # Game Action Result handling
 /// In here the current game action status is read and the UI messages are updated accordingly.
-use crate::{Message, SecCardGameApp};
 use game_lib::world::game::GameActionResult;
+use crate::game_view::state::{GameViewState, Message};
 
-impl SecCardGameApp {
-    pub(super) fn process_game_action_status(&mut self) {
+impl GameViewState {
+    pub(crate) fn process_game_action_status(&mut self) {
         match &self.game.action_status {
             GameActionResult::OopsieFixed(res) => {
                 self.input.message =

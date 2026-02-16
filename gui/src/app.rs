@@ -1,76 +1,95 @@
-use egui::{Context, Ui};
-use std::collections::HashMap;
-use uuid::Uuid;
-
-use game_lib::world::board::Board;
-use game_lib::world::deck::{CardRc, Deck};
-use game_lib::world::game::{Game, GameStatus};
-use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
-use game_lib::world::resources::Resources;
-use super::{Input, Message, SecCardGameApp};
-use crate::actions::command_handler::CommandHandler;
-use crate::card_window::card_view_model::CardContent;
-use crate::card_window::card_window::display_card;
+use super::{AppEvent, GameGoals, GameViewState, SecCardGameApp};
+use crate::init_view::state::InitViewState;
+use egui::Context;
+use game_lib::cards::game_variants::scenario::Scenario;
+use game_lib::world::deck::Deck;
+use game_lib::world::game::{Game, GameInitSettings};
+use game_setup::config::config::Config;
+use game_setup::creation::create::create_deck;
+use std::rc::Rc;
 
 impl SecCardGameApp {
-    fn init(deck: Deck) -> Self {
-        let game = Game::create(deck, Resources::new(5), ResourceFixMultiplier::default());
-        let initial_gain = game.resource_gain.value().clone();
-        let initial_multiplier = game.fix_multiplier.value().clone();
+    fn init(config: Config) -> Self {
         Self {
-            game,
-            input: Input {
-                next_res: initial_gain.to_string(),
-                dec_reputation: "0".to_string(),
-                inc_reputation: "0".to_string(),
-                pay_res: "0".to_string(),
-                message: Message::None,
-                multiplier: initial_multiplier.to_string(),
-            },
-            command: None
+            active_view: Box::new(InitViewState::new(&config)),
+            last_event: None,
+            config,
+        }
+    }
+    /// Called once before the first frame.
+    pub fn new_with_deck(cc: &eframe::CreationContext<'_>, deck: Deck, config: Config) -> Self {
+        cc.egui_ctx.set_pixels_per_point(1.4);
+        Self {
+            active_view: Self::create_game_view_state(
+                deck,
+                GameInitSettings::default(),
+                GameGoals::default(),
+                None,
+            ),
+            last_event: None,
+            config,
         }
     }
 
-    fn update_cards(&mut self, ctx: &Context, ui: &mut Ui) {
-        match &self.game.status {
-            GameStatus::Start(board)
-            | GameStatus::InProgress(board)
-            | GameStatus::Finished(board) => {
-                let cloned_board = board.clone();
-                self.display_cards(&cloned_board, ctx, ui);
+    pub fn new(cc: &eframe::CreationContext<'_>, config: Config) -> Self {
+        cc.egui_ctx.set_pixels_per_point(1.4);
+        SecCardGameApp::init(config)
+    }
+
+    fn create_game_view_state(
+        deck: Deck,
+        settings: GameInitSettings,
+        goals: GameGoals,
+        scenario: Option<Rc<Scenario>>,
+    ) -> Box<GameViewState> {
+        let game = Game::create(deck, settings);
+        Box::new(GameViewState::new(game, goals, scenario.clone()))
+    }
+}
+
+impl eframe::App for SecCardGameApp {
+    /// Called each time the UI needs repainting, which may be many times per second.
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        self.handle_app_event();
+
+        self.create_menu_bar(ctx);
+
+        let mut event_publisher = |event| self.last_event = Some(event);
+        self.active_view.draw_ui(&mut event_publisher, ctx);
+    }
+}
+
+impl SecCardGameApp {
+    fn handle_app_event(&mut self) {
+        if let Some(app_event) = &self.last_event {
+            match app_event {
+                AppEvent::StartGame(data) => {
+                    let deck = create_deck(&data.deck_composition, data.grace_rounds, &self.config);
+                    self.active_view = Self::create_game_view_state(
+                        deck,
+                        data.game_init_settings,
+                        data.game_goals,
+                        data.scenario.clone(),
+                    );
+                }
+                AppEvent::NewGame => {
+                    self.active_view = Box::new(InitViewState::new(&self.config));
+                }
             }
-        }
+            self.last_event = None;
+        };
     }
 
-    fn display_cards(&mut self,
-                     board: &Board,
-                     ctx: &Context,
-                     ui: &mut Ui
-    ) {
-        for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
-            let card_to_display = CardContent::from_card(
-                &card.0,
-                card.1.clone(),
-                self.game.is_card_activated(&card.0),
-                self.game.fix_multiplier.clone(),
-            );
-            let mut set_command = |cmd| self.command = Some(cmd);
-            display_card(
-                &card_to_display,
-                &mut set_command,
-                ctx,
-                ui,
-            );
-        }
-    }
-
-    fn create_menu_bar(ctx: &Context) {
+    fn create_menu_bar(&mut self, ctx: &Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
                 if !is_web {
                     ui.menu_button("File", |ui| {
+                        if ui.button("New game").clicked() {
+                            self.last_event = Some(AppEvent::new_game());
+                        }
                         if ui.button("Quit").clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
@@ -82,30 +101,6 @@ impl SecCardGameApp {
                 ui.add_space(16.0);
                 egui::gui_zoom::zoom_menu_buttons(ui);
             });
-        });
-    }
-
-}
-
-impl SecCardGameApp {
-    /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, deck: Deck) -> Self {
-        SecCardGameApp::init(deck)
-    }
-}
-
-impl eframe::App for SecCardGameApp {
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-        self.process_command();
-
-        Self::create_menu_bar(ctx);
-
-        self.create_side_panel(ctx);
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            self.update_cards(ctx, ui);
         });
     }
 }

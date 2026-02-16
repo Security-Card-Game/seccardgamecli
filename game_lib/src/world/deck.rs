@@ -4,6 +4,7 @@ use log::warn;
 use rand::prelude::{SliceRandom, ThreadRng};
 use std::rc::Rc;
 use rand::thread_rng;
+use crate::cards::game_variants::scenario::Scenario;
 
 /// This represents the current deck of cards. It also keeps count of the already played cards and the
 /// remaining cards. This file also contains all the methods needed to create a new Deck. E.g shuffling the cards
@@ -40,6 +41,7 @@ pub struct PreparedDeck {
     evaluation: Vec<EvaluationCard>,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct DeckComposition {
     pub events: usize,
     pub attacks: usize,
@@ -56,18 +58,22 @@ pub trait DeckRepository {
     fn get_attack_cards(&self) -> Vec<CardRc>;
 }
 
+pub trait GameVariantsRepository {
+    fn get_scenarios(&self) -> Vec<Rc<Scenario>>;
+}
+
 /// Defines a trait for deck preparation.
 pub trait DeckPreparation {
     /// Assembles a `PreparedDeck` by pulling the specified number of cards from a `DeckRepository`
     /// based on the given `DeckComposition`.
-    fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck;
+    fn prepare<T: DeckRepository>(composition: &DeckComposition, access: T) -> PreparedDeck;
 
     /// Shuffles the deck and inserts attack cards only after a grace period of cards/turns
     fn shuffle(&self, grace_period: usize) -> Deck;
 }
 
 impl DeckPreparation for PreparedDeck {
-    fn prepare<T: DeckRepository>(composition: DeckComposition, access: T) -> PreparedDeck {
+    fn prepare<T: DeckRepository>(composition: &DeckComposition, access: T) -> PreparedDeck {
         dbg!("Creating a new deck");
         let mut cards: Vec<CardRc> = vec![];
 

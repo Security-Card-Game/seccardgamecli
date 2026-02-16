@@ -1,1 +1,1 @@
-pub(crate) mod components;
+pub(crate) mod label_with_input;

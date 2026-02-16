@@ -2,10 +2,10 @@ use egui::Ui;
 
 use game_lib::world::game::GameStatus;
 
-use crate::{Message, SecCardGameApp};
-use crate::actions::command::Command;
+use crate::game_view::actions::command::Command;
+use crate::game_view::state::{GameViewState, Message};
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn next_round_controls(&mut self, ui: &mut Ui) {
         ui.add_space(5.0);
         ui.label("Next round");

@@ -16,10 +16,10 @@ use game_lib::cards::types::oopsie::OopsieCard;
 use game_lib::world::resources::Resources;
 use log::error;
 use game_lib::world::part_of_hundred::PartOfHundred;
+use game_setup::config::config::Config;
 use crate::cards::stats::print_stats;
 use crate::cli::cli_result::ErrorKind::FileSystemError;
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::cli::config::Config;
 use crate::cli::prompts::prompt;
 
 fn write_card_to_file(card: &Card, cfg: &Config) -> CliResult<()> {

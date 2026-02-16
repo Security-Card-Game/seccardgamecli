@@ -13,7 +13,7 @@ use crate::cards::types::oopsie::OopsieCard;
 use crate::errors::{ErrorKind, GameLibError, GameLibResult};
 use crate::file::cards::get_card_directory;
 use crate::file::general::get_files_in_directory_with_filter;
-use crate::world::deck::{CardRc, DeckRepository};
+use crate::world::deck::{CardRc, DeckRepository, GameVariantsRepository};
 
 pub struct DeckLoader {
     base_path: String,
@@ -37,6 +37,14 @@ impl DeckRepository for DeckLoader {
     }
 }
 
+impl GameVariantsRepository for DeckLoader {
+    fn get_scenarios(&self) -> Vec<Rc<crate::cards::game_variants::scenario::Scenario>> {
+        let path = PathBuf::from(&self.base_path).join("scenarios");
+        let scenarios_path = path.to_str().expect("Scenarios path");
+        Self::load_cards(scenarios_path).unwrap_or_default()
+    }
+}
+
 impl DeckLoader {
     pub fn create(base_path: &str) -> Self {
         DeckLoader {
@@ -44,7 +52,7 @@ impl DeckLoader {
         }
     }
 
-    fn read_all_cards(&self, card_type: &Card) -> Vec<CardRc> {
+    fn read_all_cards(&self, card_type: &Card) -> Vec<Rc<Card>> {
         let path = PathBuf::from(&self.base_path).join(get_card_directory(card_type));
         let cards_path = path.to_str().expect("Card path");
         match Self::load_cards(cards_path) {
@@ -60,10 +68,12 @@ impl DeckLoader {
         }
     }
 
-    fn deserialize_card(file: OsString) -> GameLibResult<Card> {
+    fn deserialize_card<T>(file: OsString) -> GameLibResult<T> 
+    where T: serde::de::DeserializeOwned
+    {
         match fs::read_to_string(file) {
             Ok(content) => {
-                let card = serde_json::from_str::<Card>(content.as_str()).unwrap();
+                let card = serde_json::from_str::<T>(content.as_str()).unwrap();
                 Ok(card)
             }
             Err(err) => Err(GameLibError::create_with_original(
@@ -74,12 +84,13 @@ impl DeckLoader {
         }
     }
 
-    fn load_cards(cards_path: &str) -> GameLibResult<Vec<CardRc>> {
+    fn load_cards<T>(cards_path: &str) -> GameLibResult<Vec<Rc<T>>> 
+    where T: serde::de::DeserializeOwned {
         let files = get_files_in_directory_with_filter(cards_path, ".json").map_err(|e| {
             GameLibError::create_with_original(ErrorKind::IO, "Could not read cards", e.to_string())
         })?;
 
-        let mut cards = vec![];
+        let mut cards : Vec<Rc<T>> = vec![];
         for file in files {
             let card = Self::deserialize_card(file)?;
             cards.push(Rc::new(card))

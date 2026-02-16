@@ -1,15 +1,14 @@
+use crate::game_view::actions::command::Command;
+use crate::GameViewState;
 use egui::{RichText, Ui};
-
 use game_lib::cards::properties::cost_modifier::CostModifier;
 use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
-use crate::actions::command::Command;
-use crate::SecCardGameApp;
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn resource_control(&mut self, ui: &mut Ui) {
-        ui.label("Resources");
+        ui.label(RichText::new("Resources").strong());
         ui.add_space(5.0);
         match &self.game.status.clone() {
             GameStatus::Start(board) | GameStatus::InProgress(board) => {

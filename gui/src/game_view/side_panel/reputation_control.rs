@@ -1,13 +1,13 @@
 use egui::{RichText, Ui};
 
+use crate::game_view::actions::command::Command;
+use crate::GameViewState;
 use game_lib::world::board::Board;
 use game_lib::world::game::GameStatus;
-use crate::actions::command::Command;
-use crate::SecCardGameApp;
 
-impl SecCardGameApp {
+impl GameViewState {
     pub(crate) fn reputation_control(&mut self, ui: &mut Ui) {
-        ui.label("Reputation");
+        ui.label(RichText::new("Reputation").strong());
         ui.add_space(5.0);
         match &self.game.status.clone() {
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
@@ -35,7 +35,6 @@ impl SecCardGameApp {
             "Decrease",
             |value| Command::DecreaseReputation(value),
         );
-
     }
 }
 

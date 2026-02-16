@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/seccardgame/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/game_lib/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/game_setup/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

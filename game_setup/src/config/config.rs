@@ -9,15 +9,15 @@ use serde::{Deserialize, Serialize};
 
 use game_lib::file::general::ensure_directory_exists;
 
-use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::cli::cli_result::ErrorKind::{FileSystemError, GameCloneError};
+use crate::results::{ErrorKind, GameSetupError, GameSetupResult};
+use crate::results::ErrorKind::{FileSystemError, GameCloneError};
 
 pub struct CfgInit {
     pub game_path: String,
     pub config_path: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub game_path: String,
 }
@@ -25,14 +25,14 @@ pub struct Config {
 const GAME_REPO: &str = "https://github.com/Security-Card-Game/securityDeckGame.git";
 const DEFAULT_CFG: &str = "seccard_cfg.json";
 
-pub fn init(init: CfgInit) -> CliResult<()> {
+pub fn init(init: CfgInit) -> GameSetupResult<()> {
     init_impl(init, clone_game, create_config)
 }
 
-fn init_impl<F, G>(init: CfgInit, clone_game: F, create_config: G) -> CliResult<()>
+fn init_impl<F, G>(init: CfgInit, clone_game: F, create_config: G) -> GameSetupResult<()>
 where
-    F: Fn(&str) -> Result<(), CliError>,
-    G: Fn(Config, &str) -> Result<(), CliError>,
+    F: Fn(&str) -> Result<(), Box<GameSetupError>>,
+    G: Fn(Config, &str) -> Result<(), Box<GameSetupError>>,
 {
     clone_game(init.game_path.as_str())?;
     create_config(
@@ -56,7 +56,7 @@ impl Config {
     }
 }
 
-fn create_config(cfg: Config, path_to_config: &str) -> CliResult<()> {
+fn create_config(cfg: Config, path_to_config: &str) -> GameSetupResult<()> {
     let path = Path::new(path_to_config);
     let mut path_to_write = path.to_path_buf();
     if path.is_dir() {
@@ -66,11 +66,11 @@ fn create_config(cfg: Config, path_to_config: &str) -> CliResult<()> {
             match ensure_directory_exists(dir.to_str().unwrap().trim()) {
                 Ok(_) => (),
                 Err(e) => {
-                    return Err(CliError {
+                    return Err(Box::new(GameSetupError {
                         kind: FileSystemError,
                         message: format!("Could not create directory {}", path.to_str().unwrap()),
                         original_message: Some(e.to_string()),
-                    })
+                    }))
                 }
             }
         }
@@ -83,50 +83,50 @@ fn create_config(cfg: Config, path_to_config: &str) -> CliResult<()> {
             }
             Err(e) => Err(e),
         },
-        Err(_) => Err(CliError {
+        Err(_) => Err(Box::new(GameSetupError {
             kind: ErrorKind::ConfigError,
             message: "Could not serialize config!".to_string(),
             original_message: None,
-        }),
+        })),
     }
 }
 
-fn write_config(json: String, path: PathBuf) -> CliResult<()> {
-    let mut file = File::create(path).map_err(|err| CliError {
+fn write_config(json: String, path: PathBuf) -> GameSetupResult<()> {
+    let mut file = File::create(path).map_err(|err| GameSetupError {
         kind: FileSystemError,
         message: "Could not crate config file!".to_string(),
         original_message: Some(err.to_string()),
     })?;
     match file.write_all(json.as_bytes()) {
         Ok(_) => Ok(()),
-        Err(e) => Err(CliError {
+        Err(e) => Err(Box::new(GameSetupError {
             kind: FileSystemError,
             message: "Could not write config file!".to_string(),
             original_message: Some(e.to_string()),
-        }),
+        })),
     }
 }
 
-fn clone_game(path: &str) -> CliResult<()> {
+fn clone_game(path: &str) -> GameSetupResult<()> {
     match ensure_directory_exists(path) {
         Ok(_) => (),
         Err(e) => {
-            return Err(CliError {
+            return Err(Box::new(GameSetupError {
                 kind: FileSystemError,
                 message: format!("Could not create directory {}", path),
                 original_message: Some(e.to_string()),
-            })
+            }))
         }
     };
     info!("Cloning game repository...");
     match Repository::clone(GAME_REPO, path) {
         Ok(_) => (),
         Err(e) => {
-            return Err(CliError {
+            return Err(Box::new(GameSetupError {
                 kind: GameCloneError,
                 message: "Failed to clone game".to_string(),
                 original_message: Some(e.to_string()),
-            })
+            }))
         }
     };
     info!("Downloaded game into {}", path);
@@ -136,9 +136,7 @@ fn clone_game(path: &str) -> CliResult<()> {
 #[cfg(test)]
 mod tests {
     use tempfile::tempdir;
-
-    use crate::cli::cli_result::ErrorKind::ConfigError;
-
+    use crate::results::ErrorKind::{ConfigError, GameCloneError};
     use super::*;
 
     #[test]
@@ -163,8 +161,8 @@ mod tests {
 
     #[test]
     fn test_init_impl_ok() {
-        let clone_game = |_: &str| -> CliResult<()> { Ok(()) };
-        let create_config = |_: Config, _: &str| -> CliResult<()> { Ok(()) };
+        let clone_game = |_: &str| -> GameSetupResult<()> { Ok(()) };
+        let create_config = |_: Config, _: &str| -> GameSetupResult<()> { Ok(()) };
         let cfg_init = CfgInit {
             game_path: "".to_string(),
             config_path: "".to_string(),
@@ -177,9 +175,9 @@ mod tests {
     #[test]
     fn test_init_impl_clone_err() {
         testing_logger::setup();
-        let error_to_return = CliError::new(GameCloneError, "message", Some("reason".to_string()));
-        let clone_game = |_: &str| -> CliResult<()> { Err(error_to_return.clone()) };
-        let create_config = |_: Config, _: &str| -> CliResult<()> { Ok(()) };
+        let error_to_return = Box::new(GameSetupError::new(GameCloneError, "message", Some("reason".to_string())));
+        let clone_game = |_: &str| -> GameSetupResult<()> { Err(error_to_return.clone()) };
+        let create_config = |_: Config, _: &str| -> GameSetupResult<()> { Ok(()) };
         let cfg_init = CfgInit {
             game_path: "".to_string(),
             config_path: "".to_string(),
@@ -192,10 +190,10 @@ mod tests {
 
     #[test]
     fn test_init_impl_config_err() {
-        let error_to_return = CliError::new(ConfigError, "message", Some("reason".to_string()));
+        let error_to_return = Box::new(GameSetupError::new(ConfigError, "message", Some("reason".to_string())));
 
-        let clone_game = |_: &str| -> CliResult<()> { Ok(()) };
-        let create_config = |_: Config, _: &str| -> CliResult<()> { Err(error_to_return.clone()) };
+        let clone_game = |_: &str| -> GameSetupResult<()> { Ok(()) };
+        let create_config = |_: Config, _: &str| -> GameSetupResult<()> { Err(error_to_return.clone()) };
         let cfg_init = CfgInit {
             game_path: "".to_string(),
             config_path: "".to_string(),

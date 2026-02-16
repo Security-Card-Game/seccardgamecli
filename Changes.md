@@ -2,7 +2,10 @@
 
 ## upcoming
 
+## 0.8.0
+
 * [BUG] does not reduce attack duration directly when it is drawn
+* [FEATURE] add support for scenario cards, add game setup screen
 
 ## 0.7.1
 

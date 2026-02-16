@@ -6,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::cards::serialization::helper::Number;
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 
-#[derive(Clone, Debug, PartialOrd, PartialEq, Default)]
+#[derive(Clone, Debug, PartialOrd, PartialEq, Default, Copy)]
 pub struct Resources(usize);
 
 impl Resources {

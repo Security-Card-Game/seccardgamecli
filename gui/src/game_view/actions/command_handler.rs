@@ -1,3 +1,4 @@
+use crate::game_view::actions::command::Command;
 /// # Command Handler to handle Game Actions
 /// ## Concept
 /// The GUI state (SecCardGameApp) contains a shareable, mutable reference containing a command
@@ -7,15 +8,15 @@
 /// to various methods which in turn mutate the GUI state (e.g. remove a card from the board). Once
 /// this is done, the command is set to none and the update cycle is completed.
 
-use crate::{Message, SecCardGameApp};
-use crate::actions::command::Command;
+use crate::{GameViewState};
+use crate::game_view::state::Message;
 
 pub(crate) trait CommandHandler {
     fn process_command(&mut self);
 }
 
 
-impl CommandHandler for SecCardGameApp {
+impl CommandHandler for GameViewState {
 
     fn process_command(&mut self) {
         if let Some(cmd) = &self.command.clone() {
@@ -27,7 +28,7 @@ pub mod card;
 pub mod control_panel;
 pub mod action_result_handling;
 
-impl SecCardGameApp {
+impl GameViewState {
     fn handle_command(&mut self, msg: &Command) {
         self.input.message = Message::None;
 

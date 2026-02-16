@@ -5,11 +5,9 @@ use dialoguer::Input;
 use log::info;
 
 use game_lib::file::cards::write_data_to_file;
-use game_lib::file::repository::DeckLoader;
-use game_lib::world::deck::{CardRc, Deck, DeckComposition, DeckPreparation, PreparedDeck};
-
+use game_lib::world::deck::{CardRc, Deck, DeckComposition};
+use game_setup::config::config::Config;
 use crate::cli::cli_result::{CliError, CliResult, ErrorKind};
-use crate::cli::config::Config;
 
 fn get_number_of_cards(prompt: &str, default: u8) -> u8 {
     Input::new()
@@ -33,6 +31,7 @@ pub fn create_deck(config: &Config) -> Deck {
     let eval_prompt = format!("Enter number of evaluation cards (max {}). The deck will be split into n + 1 parts and all parts except the first will contain an evaluation card. 0 disables them.", curent_card_count - 1);
     let evaluation_cards = get_number_of_cards(eval_prompt.as_str(), 0);
 
+
     let deck_composition = DeckComposition {
         events: event_card_count as usize,
         attacks: attack_card_count as usize,
@@ -41,12 +40,7 @@ pub fn create_deck(config: &Config) -> Deck {
         evaluation: evaluation_cards as usize,
     };
 
-    let prepared_deck = PreparedDeck::prepare(
-        deck_composition,
-        DeckLoader::create(config.game_path.as_str()),
-    );
-
-    prepared_deck.shuffle(grace_period as usize)
+    game_setup::creation::create::create_deck(&deck_composition, grace_period, config)
 }
 
 pub fn create_deck_and_write_to_disk(deck_path: String, config: &Config) -> CliResult<()> {
