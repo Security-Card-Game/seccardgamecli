@@ -20,7 +20,7 @@ Run `seccardgame` with the `init` command by executing `seccardgame init`. This 
 
 Be aware, this is a CLI and need to be run in a terminal. It will create a config file and clone the cards into a folder.
 
-We alreday have an [open issue](https://github.com/Security-Card-Game/seccardgamecli/issues/61) to remove the init step which may open the venue to have a binary which opens the UI direclty when double clicked. Oh, and if you happen to run into overflow errors when creating a game, pick less cards. We have also an [open issue](https://github.com/Security-Card-Game/seccardgamecli/issues/60) to fix this.
+We already have an [open issue](https://github.com/Security-Card-Game/seccardgamecli/issues/61) to remove the init step which may open the venue to have a binary which opens the UI directly when double clicked. Oh, and if you happen to run into overflow errors when creating a game, pick less cards. We have also an [open issue](https://github.com/Security-Card-Game/seccardgamecli/issues/60) to fix this.
 
 On the left side panel you can enter the resources you will gain every turn and also start a
 new turn with the `Draw card` button. Also, your available resources are displayed there. To pay
