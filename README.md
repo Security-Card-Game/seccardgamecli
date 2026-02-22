@@ -6,8 +6,8 @@ This Tool supports:
 
 * card creation
 * checkout the card repository
-* create a deck while specifying how many cards to use in total and how many cards from which type
-* a simple GUI to show the drawn cards - you will still need a dice and keep track of resources ;)
+* create a deck while specifying how many cards to use in total and how many cards from which type (via CLI and UI)
+* a UI to play the game, enforcing some rules but not all - after all we experiment with the mechanics
 
 See [Project](PROJECT.md) form some details on structure and history.
 
@@ -16,8 +16,11 @@ See [Project](PROJECT.md) form some details on structure and history.
 Important, this game runs locally on your computer. If you want to play
 together, share your screen!
 
-Run `seccardgame` with the `init` command by executing `seccardgame init`. Then start a game with `seccradgame game play`. This will ask you about the deck composition
-and then opens the UI. You can find binaries under releases. Be aware, this is a CLI and need to be run in a terminal. It will create a config file and clone the cards into a folder.
+Run `seccardgame` with the `init` command by executing `seccardgame init`. This will create a config file and download the cards from the other repository. Then start a game with `seccradgame game ui`. This opens the UI in a start screen where you can edit the deck composition, define parameters to start games with or select from pre-defined scenarios. You can find binaries under releases. 
+
+Be aware, this is a CLI and need to be run in a terminal. It will create a config file and clone the cards into a folder.
+
+We alreday have an [open issue](https://github.com/Security-Card-Game/seccardgamecli/issues/61) to remove the init step which may open the venue to have a binary which opens the UI direclty when double clicked. Oh, and if you happen to run into overflow errors when creating a game, pick less cards. We have also an [open issue](https://github.com/Security-Card-Game/seccardgamecli/issues/60) to fix this.
 
 On the left side panel you can enter the resources you will gain every turn and also start a
 new turn with the `Draw card` button. Also, your available resources are displayed there. To pay
