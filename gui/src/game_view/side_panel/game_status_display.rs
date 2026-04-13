@@ -1,4 +1,3 @@
-use crate::{Message, SecCardGameApp};
 use eframe::epaint::Color32;
 use egui::{RichText, Ui};
 use crate::game_view::state::{GameViewState, Message};

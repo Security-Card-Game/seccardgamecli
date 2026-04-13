@@ -20,15 +20,15 @@ mod path_tests {
     use crate::world::board::Board;
     use crate::world::deck::Deck;
     use crate::world::game::{Game, GameStatus};
-    use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
     use fake::Fake;
 
     mod attack_highlighting {
-        use std::collections::HashMap;
-        use uuid::Uuid;
-        use crate::cards::types::card_model::CardTrait;
         use super::*;
+        use crate::cards::types::card_model::CardTrait;
+        use crate::world::game::GameInitSettings;
+        use std::rc::Rc;
+        use uuid::Uuid;
 
         const ATTACK_CARD_TITLE: &str = "Attack card";
         const OOPSIE_CARD_TITLE: &str = "Oopsie card";
@@ -59,14 +59,19 @@ mod path_tests {
             };
 
             let deck = Deck::new(vec![
-                Card::from(oopies_card.clone()),
-                Card::from(attack_card.clone()),
-                Card::from(EventCard {
+                Rc::new (Card::from(oopies_card.clone())),
+                Rc::new (Card::from(attack_card.clone())),
+                Rc::new (Card::from(EventCard {
                     ..FakeEventCard.fake()
-                }),
+                })),
             ]);
 
-            Game::create(deck, Resources::new(1000), ResourceFixMultiplier::new(2))
+            let init_settings = GameInitSettings{
+                    resources: Resources::new(100),
+                    ..GameInitSettings::default()
+            };
+
+            Game::create(deck, init_settings)
         }
 
         #[test]
