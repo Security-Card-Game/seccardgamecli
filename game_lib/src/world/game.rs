@@ -342,7 +342,7 @@ impl Game {
                             );
                             match result {
                                 Ok((b, r)) => Game {
-                                    status: GameStatus::InProgress(b),
+                                    status: GameStatus::InProgress(calculate_board(b, &self.deck)),
                                     action_status: OopsieFixed(r),
                                     ..self.clone()
                                 },
@@ -497,6 +497,7 @@ mod tests {
                 drawn_card: None,
                 open_cards: HashMap::new(),
                 cards_to_use: HashSet::new(),
+                active_incidents: Vec::new(),
                 cost_modifier: None,
                 turns_remaining: test_deck.start_deck.total,
             }),
