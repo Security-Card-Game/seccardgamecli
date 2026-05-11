@@ -71,10 +71,16 @@ impl DeckLoader {
     fn deserialize_card<T>(file: OsString) -> GameLibResult<T> 
     where T: serde::de::DeserializeOwned
     {
-        match fs::read_to_string(file) {
+        match fs::read_to_string(file.clone()) {
             Ok(content) => {
-                let card = serde_json::from_str::<T>(content.as_str()).unwrap();
-                Ok(card)
+                let card = serde_json::from_str::<T>(content.as_str()).map_err(|err| {
+                    let msg = format!("Failed to deserialize {}", file.to_string_lossy());
+                    GameLibError::create_with_original(ErrorKind::IO, msg.as_str(), err.to_string())
+                });
+                match card {
+                    Ok(card) => Ok(card),
+                    Err(e) => Err(e)
+                }
             }
             Err(err) => Err(GameLibError::create_with_original(
                 ErrorKind::IO,
@@ -92,8 +98,11 @@ impl DeckLoader {
 
         let mut cards : Vec<Rc<T>> = vec![];
         for file in files {
-            let card = Self::deserialize_card(file)?;
-            cards.push(Rc::new(card))
+            let card: Option<T> = Self::deserialize_card(file.clone()).ok();
+            match card {
+                None => error!("Could not deserialize card: {:?}", file),
+                Some(c) => cards.push(Rc::new(c))
+            };
         }
         Ok(cards)
     }
