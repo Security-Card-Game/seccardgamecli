@@ -2,6 +2,10 @@
 
 ## upcoming
 
+## 0.9.0
+
+* [FEATURE] Detect incidents automatically
+
 ## 0.8.0
 
 * [BUG] does not reduce attack duration directly when it is drawn
