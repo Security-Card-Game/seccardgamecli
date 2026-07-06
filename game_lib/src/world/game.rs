@@ -381,6 +381,17 @@ impl Game {
         }
     }
 
+    /// Method to check if a card is affected by an attack. The card itself is not modified, therefore there is no
+    /// way to get this information directly form the card. We need to ask the board.
+    pub fn is_card_affected_attack(&self, card_id: &Uuid) -> bool {
+        match &self.status {
+            GameStatus::Start(b) | GameStatus::InProgress(b) | GameStatus::Finished(b) => {
+                let affected_oopises = b.active_incidents.iter().map(|i| i.oopsie_card_id).collect::<Vec<Uuid>>();
+                affected_oopises.contains(&card_id)
+            }
+        }
+    }
+
     /// Method to get the cards played and cards total.
     pub fn get_card_count(&self) -> CardCount {
         CardCount {

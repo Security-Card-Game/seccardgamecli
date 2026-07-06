@@ -85,6 +85,7 @@ impl GameViewState {
                 &card.0,
                 card.1.clone(),
                 self.game.is_card_activated(&card.0),
+                self.game.is_card_affected_attack(&card.0),
                 self.game.fix_multiplier.clone(),
             );
             let mut set_command = |cmd| self.command = Some(cmd);

@@ -32,6 +32,7 @@ pub struct CardContent {
     pub can_be_closed: bool,
     pub card_marker: CardMarker,
     pub close_label: String,
+    pub is_incident_target: bool
 }
 
 #[derive(Clone, Debug)]
@@ -52,6 +53,7 @@ impl CardContent {
         can_be_closed: bool,
         multiplier: ResourceFixMultiplier,
         close_label: String,
+        is_targeted: bool
     ) -> CardContent {
         let actual_costs = match fix_cost {
             None => None,
@@ -81,7 +83,8 @@ impl CardContent {
             can_be_activated: Self::can_effect_be_activated(&card.effect()),
             can_be_closed,
             card_marker: CardMarker::None,
-            close_label,       
+            close_label,
+            is_incident_target: is_targeted,
         }
     }
 
@@ -89,6 +92,7 @@ impl CardContent {
         id: &Uuid,
         card: CardRc,
         is_active: bool,
+        is_targeted: bool,
         multiplier: ResourceFixMultiplier,
     ) -> CardContent {
         let mut card_view_model = match &*card {
@@ -104,6 +108,8 @@ impl CardContent {
         } else {
             CardMarker::None
         };
+        
+        card_view_model.is_incident_target = is_targeted;
 
         card_view_model
     }
@@ -125,6 +131,7 @@ impl CardContent {
             can_be_closed,
             multiplier,
             "X".to_string(),
+            false,
         )
     }
 
@@ -203,6 +210,7 @@ impl CardContent {
             true,
             multiplier,
             "X".to_string(),       
+            false,
         )
     }
 
@@ -223,6 +231,7 @@ impl CardContent {
             true,
             multiplier,
             "Fix".to_string(),      
+            false,
         )
     }
 
@@ -242,7 +251,8 @@ impl CardContent {
             None,
             can_be_closed,
             multiplier,
-            "X".to_string(),      
+            "X".to_string(),
+            false,
         )
     }
 
@@ -263,6 +273,7 @@ impl CardContent {
             can_be_closed,
             multiplier,
             "X".to_string(),     
+            false,
         )
     }
 }

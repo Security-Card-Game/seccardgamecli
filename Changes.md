@@ -3,6 +3,7 @@
 ## upcoming
 
 * [REMOVAL] Remove Intel Max Release
+* [FEATURE] Highlight oopsie cards when affected by attack
 
 ## 0.9.0
 

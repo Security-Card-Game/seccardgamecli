@@ -1,7 +1,7 @@
 use crate::game_view::actions::command::Command;
 use crate::game_view::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
-use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
+use egui::{Color32, Context, Frame, Label, Order, Pos2, RichText, Style, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;
 use rand::Rng;
 
@@ -24,6 +24,19 @@ where
     create_window(window, command_callback, ctx, ui)
 }
 
+fn create_style(is_incident_target: bool) -> Style {
+    let mut style = Style::default();
+
+    if (is_incident_target) {
+        let mut stroke = style.visuals.window_stroke;
+        stroke.width = stroke.width + 2.0;
+        stroke.color = Color32::LIGHT_RED;
+        style.visuals.window_stroke = stroke;
+    }
+
+    style
+}
+
 fn create_window<F>(data: CardWindow, command_callback: &mut F, ctx: &Context, ui: &mut Ui)
 where
     F: FnMut(Command),
@@ -34,14 +47,24 @@ where
     let offset_x = rng.gen_range(-20.0..20.0);
     let offset_y = rng.gen_range(-20.0..20.0);
     let new_pos = Pos2::new(area.x / 3.0 + offset_x, area.y / 3.0 + offset_y);
-    Window::new(card.id.to_string())
+    let style = create_style(data.content.is_incident_target);
+
+    let generic_card_window = Window::new(card.id.to_string())
         .title_bar(false)
         .resizable(false)
         .collapsible(false)
         .default_pos(new_pos)
         .max_size(data.max_size)
         .min_size(data.min_size)
-        .show(ctx, |ui| create_card_window(command_callback, card, ui));
+        .frame(Frame::window(&style));
+
+    let customized_card_window = if (data.content.is_incident_target) {
+        generic_card_window.order(Order::Foreground)
+    } else {
+        generic_card_window
+    };
+
+    customized_card_window.show(ctx, |ui| create_card_window(command_callback, card, ui));
 }
 
 fn create_card_window<F>(cmd_callback: &mut F, card: &CardContent, ui: &mut Ui)
