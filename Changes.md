@@ -2,6 +2,8 @@
 
 ## upcoming
 
+* [REMOVAL] Remove Intel Max Release
+
 ## 0.9.0
 
 * [FEATURE] Detect incidents automatically
