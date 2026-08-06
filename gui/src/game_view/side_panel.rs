@@ -1,5 +1,5 @@
 use crate::GameViewState;
-use egui::{Context, RichText, Ui};
+use egui::{RichText, Ui};
 
 mod game_status_display;
 mod next_round_control;
@@ -8,12 +8,12 @@ mod resource_control;
 mod tweak_control;
 
 impl GameViewState {
-    pub(crate) fn create_side_panel(&mut self, ctx: &Context) {
-        egui::SidePanel::left("control_panel")
+    pub(crate) fn create_side_panel(&mut self, ui: &mut Ui) {
+        egui::Panel::left("control_panel")
             .resizable(false)
             .show_separator_line(true)
-            .max_width(150.0)
-            .show(ctx, |ui| {
+            .max_size(150.0)
+            .show(ui, |ui| {
                 self.next_round_controls(ui);
 
                 ui.add_space(15.0);

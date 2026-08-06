@@ -1,5 +1,5 @@
 use crate::game_view::state::GameViewState;
-use egui::Context;
+use egui::Ui;
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::world::deck::DeckComposition;
 use game_lib::world::game::GameInitSettings;
@@ -13,7 +13,7 @@ mod init_view;
 pub mod start;
 
 trait ViewState {
-    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context);
+    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui);
 }
 
 #[derive(Debug, Clone)]

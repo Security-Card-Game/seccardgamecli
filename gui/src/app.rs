@@ -1,6 +1,7 @@
 use super::{AppEvent, GameGoals, GameViewState, SecCardGameApp};
 use crate::init_view::state::InitViewState;
-use egui::Context;
+use eframe::Frame;
+use egui::Ui;
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::world::deck::Deck;
 use game_lib::world::game::{Game, GameInitSettings};
@@ -49,13 +50,13 @@ impl SecCardGameApp {
 
 impl eframe::App for SecCardGameApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut Frame) {
         self.handle_app_event();
 
-        self.create_menu_bar(ctx);
+        self.create_menu_bar(ui);
 
         let mut event_publisher = |event| self.last_event = Some(event);
-        self.active_view.draw_ui(&mut event_publisher, ctx);
+        self.active_view.draw_ui(&mut event_publisher, ui);
     }
 }
 
@@ -80,8 +81,8 @@ impl SecCardGameApp {
         };
     }
 
-    fn create_menu_bar(&mut self, ctx: &Context) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+    fn create_menu_bar(&mut self, ui: &mut Ui) {
+        egui::Panel::top("top_panel").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
@@ -91,7 +92,7 @@ impl SecCardGameApp {
                             self.last_event = Some(AppEvent::new_game());
                         }
                         if ui.button("Quit").clicked() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                     });
                     ui.add_space(16.0);
