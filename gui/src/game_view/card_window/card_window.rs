@@ -3,7 +3,7 @@ use crate::game_view::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
 use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;
-use rand::Rng;
+use rand::RngExt;
 
 pub struct CardWindow<'a> {
     max_size: Vec2,
@@ -30,9 +30,9 @@ where
 {
     let card = data.content;
     let area = ui.available_size();
-    let mut rng = rand::thread_rng();
-    let offset_x = rng.gen_range(-20.0..20.0);
-    let offset_y = rng.gen_range(-20.0..20.0);
+    let mut rng = rand::rng();
+    let offset_x = rng.random_range(-20.0..20.0);
+    let offset_y = rng.random_range(-20.0..20.0);
     let new_pos = Pos2::new(area.x / 3.0 + offset_x, area.y / 3.0 + offset_y);
     Window::new(card.id.to_string())
         .title_bar(false)

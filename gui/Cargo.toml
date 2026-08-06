@@ -9,17 +9,14 @@ edition = "2021"
 game_lib = { path = "../game_lib" }
 game_setup = { path = "../game_setup" }
 
-uuid = { version = "1.10.0" , features = [
+uuid = { version = "1.24.0" , features = [
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
 
 
-egui = "0.28.1"
-eframe = { version = "0.28.1", default-features = false, features = [
-    "default_fonts", # Embed the default egui fonts.
-    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
-] }
+egui = "0.33.3"
+eframe = { version = "0.33.3" }
 
-rand = "0.8.5"
+rand = "0.10.2"

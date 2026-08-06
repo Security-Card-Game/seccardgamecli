@@ -45,7 +45,7 @@ impl<'de> Deserialize<'de> for Target {
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;
-    use rand::Rng;
+    use rand::{Rng, RngExt};
 
     use super::*;
 
@@ -60,7 +60,7 @@ pub(crate) mod tests {
     pub struct FakeTarget;
     impl Dummy<FakeTarget> for Target {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeTarget, rng: &mut R) -> Self {
-            let target = TEST_TARGETS[rng.gen_range(0..TEST_TARGETS.len())];
+            let target = TEST_TARGETS[rng.random_range(0..TEST_TARGETS.len())];
             Target(target.to_string())
         }
     }

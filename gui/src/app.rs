@@ -82,7 +82,7 @@ impl SecCardGameApp {
 
     fn create_menu_bar(&mut self, ctx: &Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
                 if !is_web {
@@ -97,7 +97,7 @@ impl SecCardGameApp {
                     ui.add_space(16.0);
                 }
 
-                egui::widgets::global_dark_light_mode_buttons(ui);
+                egui::widgets::global_theme_preference_buttons(ui);
                 ui.add_space(16.0);
                 egui::gui_zoom::zoom_menu_buttons(ui);
             });
