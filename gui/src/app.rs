@@ -1,7 +1,7 @@
 use super::{AppEvent, GameGoals, GameViewState, SecCardGameApp};
 use crate::init_view::state::InitViewState;
 use eframe::Frame;
-use egui::Ui;
+use egui::{Context, Ui};
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::world::deck::Deck;
 use game_lib::world::game::{Game, GameInitSettings};
@@ -49,14 +49,18 @@ impl SecCardGameApp {
 }
 
 impl eframe::App for SecCardGameApp {
+    /// Called before UI is drawn and also if window is hidden. Allows clear split for logic and drawing functions.
+    fn logic(&mut self, _ctx: &Context, _frame: &mut Frame) {
+        self.handle_app_event();
+        self.active_view.logic()
+    }
+
     /// Called each time the UI needs repainting, which may be many times per second.
     fn ui(&mut self, ui: &mut Ui, _frame: &mut Frame) {
-        self.handle_app_event();
-
         self.create_menu_bar(ui);
 
         let mut event_publisher = |event| self.last_event = Some(event);
-        self.active_view.draw_ui(&mut event_publisher, ui);
+        self.active_view.ui(&mut event_publisher, ui);
     }
 }
 

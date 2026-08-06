@@ -39,8 +39,11 @@ pub(crate) struct GameViewState {
 }
 
 impl ViewState for GameViewState {
-    fn draw_ui(&mut self, _app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
-        self.process_command();
+    fn logic(&mut self) {
+        self.process_command()
+    }
+
+    fn ui(&mut self, _app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
         self.create_side_panel(ui);
         egui::CentralPanel::default().show(ui, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's

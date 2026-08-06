@@ -450,7 +450,8 @@ impl InitViewState {
     }
 }
 impl ViewState for InitViewState {
-    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
+
+    fn ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
         egui::CentralPanel::default().show(ui, |ui| {
             let needs_single_col = ui.available_width() < Self::CONTENT_MAX_WIDTH;
             ScrollArea::vertical().show(ui, |ui| {
