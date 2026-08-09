@@ -5,7 +5,6 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+*'
-  workflow_dispatch:
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
@@ -42,7 +41,7 @@ jobs:
           - stable
           
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache cargo & target directories
         uses: Swatinem/rust-cache@v2
       - name: Build binary
@@ -72,14 +71,14 @@ jobs:
           fi
           cd -        
       - name: Publish release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seccardgamecli-${{ matrix.platform.os_name }}
           path: "seccardgamecli-*"        
       - name: Generate SHA-256
         run: shasum -a 256 ${{ matrix.platform.name }}        
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           files: "seccardgamecli-*"
