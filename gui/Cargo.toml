@@ -16,7 +16,7 @@ uuid = { version = "1.24.0" , features = [
 ] }
 
 
-egui = "0.36.0"
-eframe = { version = "0.36.0" }
+egui = "0.36.1"
+eframe = { version = "0.36.1" }
 
 rand = "0.10.2"
