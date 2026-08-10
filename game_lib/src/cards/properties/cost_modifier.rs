@@ -60,7 +60,7 @@ impl Add for CostModifier {
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;
-    use rand::Rng;
+    use rand::{Rng, RngExt};
 
     use super::*;
 
@@ -68,11 +68,11 @@ pub(crate) mod tests {
 
     impl Dummy<FakeCostModifier> for CostModifier {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeCostModifier, rng: &mut R) -> Self {
-            return if rng.gen_bool(1.0 / 2.0) {
-                CostModifier::Decrease(Resources::new(rng.gen_range(1..10)))
+            if rng.random_bool(1.0 / 2.0) {
+                CostModifier::Decrease(Resources::new(rng.random_range(1..10)))
             } else {
-                CostModifier::Increase(Resources::new(rng.gen_range(1..10)))
-            };
+                CostModifier::Increase(Resources::new(rng.random_range(1..10)))
+            }
         }
     }
 

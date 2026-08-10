@@ -1,9 +1,9 @@
 use crate::game_view::actions::command::Command;
 use crate::game_view::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
-use egui::{Context, Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
+use egui::{Label, Pos2, RichText, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;
-use rand::Rng;
+use rand::RngExt;
 
 pub struct CardWindow<'a> {
     max_size: Vec2,
@@ -11,7 +11,7 @@ pub struct CardWindow<'a> {
     content: &'a CardContent,
 }
 
-pub fn display_card<F>(card: &CardContent, command_callback: &mut F, ctx: &Context, ui: &mut Ui)
+pub fn display_card<F>(card: &CardContent, command_callback: &mut F, ui: &mut Ui)
 where
     F: FnMut(Command),
 {
@@ -21,18 +21,18 @@ where
         content: card,
     };
 
-    create_window(window, command_callback, ctx, ui)
+    create_window(window, command_callback, ui)
 }
 
-fn create_window<F>(data: CardWindow, command_callback: &mut F, ctx: &Context, ui: &mut Ui)
+fn create_window<F>(data: CardWindow, command_callback: &mut F, ui: &mut Ui)
 where
     F: FnMut(Command),
 {
     let card = data.content;
     let area = ui.available_size();
-    let mut rng = rand::thread_rng();
-    let offset_x = rng.gen_range(-20.0..20.0);
-    let offset_y = rng.gen_range(-20.0..20.0);
+    let mut rng = rand::rng();
+    let offset_x = rng.random_range(-20.0..20.0);
+    let offset_y = rng.random_range(-20.0..20.0);
     let new_pos = Pos2::new(area.x / 3.0 + offset_x, area.y / 3.0 + offset_y);
     Window::new(card.id.to_string())
         .title_bar(false)
@@ -41,7 +41,7 @@ where
         .default_pos(new_pos)
         .max_size(data.max_size)
         .min_size(data.min_size)
-        .show(ctx, |ui| create_card_window(command_callback, card, ui));
+        .show(ui, |ui| create_card_window(command_callback, card, ui));
 }
 
 fn create_card_window<F>(cmd_callback: &mut F, card: &CardContent, ui: &mut Ui)

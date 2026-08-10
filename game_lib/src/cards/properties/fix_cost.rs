@@ -64,7 +64,7 @@ impl Mul<&ResourceFixMultiplier> for FixCost {
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;
-    use rand::Rng;
+    use rand::{Rng, RngExt};
 
     use super::*;
 
@@ -73,8 +73,8 @@ pub(crate) mod tests {
     impl Dummy<FakeFixCost> for FixCost {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeFixCost, rng: &mut R) -> Self {
             FixCost::from_resources(
-                Resources::new(rng.gen_range(1..10)),
-                Resources::new(rng.gen_range(11..20)),
+                Resources::new(rng.random_range(1..10)),
+                Resources::new(rng.random_range(11..20)),
             )
             .unwrap()
         }

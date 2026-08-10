@@ -27,7 +27,7 @@ pub(crate) mod tests {
     use crate::cards::properties::cost_modifier::tests::FakeCostModifier;
     use crate::cards::properties::target::tests::FakeTarget;
     use fake::{Dummy, Fake};
-    use rand::Rng;
+    use rand::{Rng, RngExt};
 
     use super::*;
 
@@ -39,7 +39,7 @@ pub(crate) mod tests {
             let target = FakeTarget.fake();
             let modifier = FakeCostModifier.fake();
             // this might not be optimal but it is quick
-            match rng.gen_range(0..7) {
+            match rng.random_range(0..7) {
                 0 => Immediate(description),
                 1 => AttackSurface(description, vec![target]),
                 2 => Incident(description, vec![target], FakeFixedIncidentImpact.fake()),
