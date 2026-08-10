@@ -47,7 +47,7 @@ where
     let offset_x = rng.gen_range(-20.0..20.0);
     let offset_y = rng.gen_range(-20.0..20.0);
     let new_pos = Pos2::new(area.x / 3.0 + offset_x, area.y / 3.0 + offset_y);
-    let style = create_style(data.content.is_incident_target);
+    let style = create_style(data.content.is_incident_target, ui);
 
     let generic_card_window = Window::new(card.id.to_string())
         .title_bar(false)
@@ -58,7 +58,7 @@ where
         .min_size(data.min_size)
         .frame(Frame::window(&style));
 
-    let customized_card_window = if (data.content.is_incident_target) {
+    let customized_card_window = if (card.is_incident_target) {
         generic_card_window.order(Order::Foreground)
     } else {
         generic_card_window
