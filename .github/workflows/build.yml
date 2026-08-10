@@ -55,3 +55,9 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           args: "--locked --release"
         if: ${{ !matrix.platform.skip_tests }}
+      - name: Store binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: seccardgamecli-${{ matrix.platform.os_name }}
+          path: "seccardgamecli-*"
+          retention-days: 7
