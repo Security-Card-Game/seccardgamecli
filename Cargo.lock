@@ -1464,7 +1464,7 @@ dependencies = [
 
 [[package]]
 name = "game_ui"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "eframe",
  "egui",
