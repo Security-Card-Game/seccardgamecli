@@ -1,7 +1,7 @@
 use crate::game_view::actions::command::Command;
 use crate::game_view::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
-use egui::{Color32, Context, Frame, Label, Order, Pos2, RichText, Style, Ui, Vec2, WidgetText, Window};
+use egui::{Color32, Context, Frame, Label, Order, Pos2, RichText, Rounding, Style, TextBuffer, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;
 use rand::Rng;
 
@@ -24,8 +24,8 @@ where
     create_window(window, command_callback, ctx, ui)
 }
 
-fn create_style(is_incident_target: bool) -> Style {
-    let mut style = Style::default();
+fn create_style(is_incident_target: bool, ui: &mut Ui) -> Style {
+    let mut style = ui.style_mut().clone();
 
     if (is_incident_target) {
         let mut stroke = style.visuals.window_stroke;
@@ -175,7 +175,14 @@ where
             card.light_color
         };
 
-        let header = RichText::new(&card.label).color(header_color).heading();
+        let title = if (card.is_incident_target) {
+          "[INCIDENT]\n".to_owned() + &card.label
+        } else {
+            card.label.to_owned()
+        };
+
+        let header = RichText::new(title).color(header_color).heading();
+
         card_label(header, ui);
         let available = ui.available_rect_before_wrap().width();
         ui.add_space(available + 20.0);
