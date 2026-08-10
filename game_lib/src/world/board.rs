@@ -3,8 +3,6 @@ use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
-use crate::cards::types::attack::AttackCard;
-use crate::cards::types::oopsie::OopsieCard;
 use crate::world::deck::{CardRc, Deck};
 use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
@@ -70,14 +68,14 @@ impl Board {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use fake::Fake;
     use std::collections::HashMap;
     use std::rc::Rc;
-    use fake::Fake;
     use uuid::Uuid;
 
     use crate::cards::types::card_model::Card;
-    use crate::cards::types::event::EventCard;
     use crate::cards::types::event::tests::FakeNoOpEventCard;
+    use crate::cards::types::event::EventCard;
     use crate::world::board::{Board, CardRcWithId};
 
     /*

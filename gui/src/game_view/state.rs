@@ -3,7 +3,7 @@ use crate::game_view::actions::command_handler::CommandHandler;
 use crate::game_view::card_window::card_view_model::CardContent;
 use crate::game_view::card_window::card_window::display_card;
 use crate::{AppEvent, GameGoals, ViewState};
-use egui::{Context, Ui};
+use egui::Ui;
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::world::board::Board;
 use game_lib::world::deck::CardRc;
@@ -39,12 +39,15 @@ pub(crate) struct GameViewState {
 }
 
 impl ViewState for GameViewState {
-    fn draw_ui(&mut self, _app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context) {
-        self.process_command();
-        self.create_side_panel(ctx);
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn logic(&mut self) {
+        self.process_command()
+    }
+
+    fn ui(&mut self, _app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
+        self.create_side_panel(ui);
+        egui::CentralPanel::default().show(ui, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            self.update_cards(ctx, ui);
+            self.update_cards(ui);
         });
     }
 }
@@ -68,18 +71,18 @@ impl GameViewState {
             scenario,
         }
     }
-    fn update_cards(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn update_cards(&mut self, ui: &mut Ui) {
         match &self.game.status {
             GameStatus::Start(board)
             | GameStatus::InProgress(board)
             | GameStatus::Finished(board) => {
                 let cloned_board = board.clone();
-                self.display_cards(&cloned_board, ctx, ui);
+                self.display_cards(&cloned_board, ui);
             }
         }
     }
 
-    fn display_cards(&mut self, board: &Board, ctx: &Context, ui: &mut Ui) {
+    fn display_cards(&mut self, board: &Board, ui: &mut Ui) {
         for card in <HashMap<Uuid, CardRc> as Clone>::clone(&board.open_cards).into_iter() {
             let card_to_display = CardContent::from_card(
                 &card.0,
@@ -89,7 +92,7 @@ impl GameViewState {
                 self.game.fix_multiplier.clone(),
             );
             let mut set_command = |cmd| self.command = Some(cmd);
-            display_card(&card_to_display, &mut set_command, ctx, ui);
+            display_card(&card_to_display, &mut set_command, ui);
         }
     }
 }

@@ -11,7 +11,6 @@ use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::properties::effect::Effect;
-use crate::cards::properties::target::Target;
 use crate::cards::types::card_model::Card;
 use crate::world::board::{Board, Incident};
 use crate::world::deck::{CardRc, Deck};

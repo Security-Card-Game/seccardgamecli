@@ -1,7 +1,7 @@
 use crate::components::label_with_input::{LabelWithInputComponent, LabelWithInputLayoutOptions};
 use crate::{AppEvent, GameGoals, StartGameData, ViewState};
 use eframe::emath::Align;
-use egui::{ComboBox, Context, Layout, RichText, ScrollArea, Ui, Vec2};
+use egui::{ComboBox, Layout, RichText, ScrollArea, Ui, Vec2};
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::cards::properties::description::Description;
 use game_lib::file::repository::DeckLoader;
@@ -450,8 +450,9 @@ impl InitViewState {
     }
 }
 impl ViewState for InitViewState {
-    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+
+    fn ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
+        egui::CentralPanel::default().show(ui, |ui| {
             let needs_single_col = ui.available_width() < Self::CONTENT_MAX_WIDTH;
             ScrollArea::vertical().show(ui, |ui| {
                 ui.add_space(Self::MARGIN_TB);

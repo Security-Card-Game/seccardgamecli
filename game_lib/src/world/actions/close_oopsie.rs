@@ -7,7 +7,7 @@ decreased resources and all used cards and cards with Effect:OnNextFix closed.
  */
 use std::collections::HashSet;
 
-use rand::{Rng, thread_rng};
+use rand::{rng, RngExt};
 use uuid::Uuid;
 
 use crate::cards::properties::effect::Effect;
@@ -90,11 +90,11 @@ fn apply_fix_modifier(board: &&Board, base_fix_cost: &Resources) -> Resources {
 }
 
 fn roll_dice(fix_cost: &FixCost) -> Resources {
-    let mut rng = thread_rng();
+    let mut rng = rng();
     if fix_cost.min == fix_cost.max {
         fix_cost.min.clone()
     } else {
-        let cost = rng.gen_range(*fix_cost.min.value()..*fix_cost.max.value());
+        let cost = rng.random_range(*fix_cost.min.value()..*fix_cost.max.value());
         Resources::new(cost)
     }
 }

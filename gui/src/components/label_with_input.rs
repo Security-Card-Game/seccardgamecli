@@ -15,7 +15,7 @@ pub(crate) struct LabelWithInputLayoutOptions {
 impl Default for LabelWithInputLayoutOptions {
     fn default() -> Self {
         Self {
-            input_width: 20.0,
+            input_width: 25.0,
             max_width: 200.0,
         }
     }

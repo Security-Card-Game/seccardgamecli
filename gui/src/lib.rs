@@ -1,5 +1,5 @@
 use crate::game_view::state::GameViewState;
-use egui::Context;
+use egui::Ui;
 use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::world::deck::DeckComposition;
 use game_lib::world::game::GameInitSettings;
@@ -12,8 +12,19 @@ mod game_view;
 mod init_view;
 pub mod start;
 
+/// A 'screen' of the game. E.g. setup screen and play screen.
 trait ViewState {
-    fn draw_ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ctx: &Context);
+   
+    /// Mimics [`eframe::App::logic`] and is called from that function.
+    /// Cannot call UI and is not allowed to draw Ui elements.
+    /// Is also called if Ui is hidden.
+    fn logic(&mut self)  { 
+        // nothing to do 
+    }
+
+    /// Mimics [`eframe::App::ui`] and is called from that function.
+    /// Should not contain logic but draws the Ui.
+    fn ui(&mut self, app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui);
 }
 
 #[derive(Debug, Clone)]

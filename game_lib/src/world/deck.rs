@@ -3,7 +3,7 @@ use crate::cards::types::evaluation::EvaluationCard;
 use log::warn;
 use rand::prelude::{SliceRandom, ThreadRng};
 use std::rc::Rc;
-use rand::thread_rng;
+use rand::rng;
 use crate::cards::game_variants::scenario::Scenario;
 
 /// This represents the current deck of cards. It also keeps count of the already played cards and the
@@ -113,7 +113,7 @@ impl DeckPreparation for PreparedDeck {
     }
 
     fn shuffle(&self, grace_period: usize) -> Deck {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let total = self.cards.len() + self.attacks.len();
 
         let attack_graces = if grace_period >= total {
@@ -228,7 +228,7 @@ fn draw(count: usize, cards: Vec<CardRc>, category: &CardCategory) -> Result<Vec
     let mut cards_to_draw_from: Vec<CardRc> = vec![];
     while cards_to_draw_from.len() < count {
         let mut shuffled = cards_to_use.clone();
-        shuffled.shuffle(&mut thread_rng());
+        shuffled.shuffle(&mut rng());
         cards_to_draw_from.extend(shuffled);
     }
 

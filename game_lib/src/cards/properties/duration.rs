@@ -49,7 +49,7 @@ impl Duration {
 #[cfg(test)]
 pub(crate) mod tests {
     use fake::Dummy;
-    use rand::Rng;
+    use rand::{Rng, RngExt};
 
     use super::*;
 
@@ -57,13 +57,13 @@ pub(crate) mod tests {
 
     impl Dummy<FakeDuration> for Duration {
         fn dummy_with_rng<R: Rng + ?Sized>(_: &FakeDuration, rng: &mut R) -> Self {
-            let type_id = rng.gen_range(0..3);
-            return match type_id {
+            let type_id = rng.random_range(0..3);
+            match type_id {
                 0 => Duration::None,
                 1 => Duration::UntilClosed,
-                2 => Duration::Rounds(rng.gen_range(1..100)),
+                2 => Duration::Rounds(rng.random_range(1..100)),
                 _ => panic!("only three types 0 - 2 supported!"),
-            };
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ pub(crate) mod tests {
     use crate::cards::properties::incident_impact::{IncidentImpact, PartOfHundred};
     use crate::world::resources::Resources;
     use fake::Dummy;
-    use rand::Rng;
+    use rand::{Rng, RngExt};
 
 
     pub struct FakePartOfRevenueIncidentImpact;
@@ -32,7 +32,7 @@ pub(crate) mod tests {
         fn dummy_with_rng<R: Rng + ?Sized>(_config: &FakePartOfRevenueIncidentImpact, rng: &mut R) -> Self {
             PartOfRevenue(
                 PartOfHundred {
-                    value: rng.gen()
+                    value: rng.random_range(0..100)
                 }
             )
         }
@@ -41,7 +41,7 @@ pub(crate) mod tests {
     impl Dummy<FakeFixedIncidentImpact> for IncidentImpact {
         fn dummy_with_rng<R: Rng + ?Sized>(_config: &FakeFixedIncidentImpact, rng: &mut R) -> Self {
             Fixed(
-                Resources::new(rng.gen())
+                Resources::new(rng.random_range(0..100))
             )
         }
     }

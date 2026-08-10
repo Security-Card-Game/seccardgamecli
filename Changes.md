@@ -2,6 +2,12 @@
 
 ## upcoming
 
+## 0.9.2
+
+* [DEPENDENCIES] Update dependencies, most notable to egui 0.36.0
+
+## 0.9.1
+
 * [REMOVAL] Remove Intel Max Release
 * [FEATURE] Highlight oopsie cards when affected by attack
 

@@ -15,7 +15,7 @@ impl GameViewState {
         F: FnOnce(T) -> Command,
     {
         ui.horizontal(|ui| {
-            ui.add(egui::TextEdit::singleline(backing_field(self)).desired_width(20.0));
+            ui.add(egui::TextEdit::singleline(backing_field(self)).desired_width(25.0));
             ui.add_space(5.0);
 
             if ui.button(button_label).clicked() {
