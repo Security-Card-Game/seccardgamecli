@@ -1,7 +1,7 @@
 use crate::game_view::actions::command::Command;
 use crate::game_view::card_window::card_view_model::{CardContent, CardMarker};
 use eframe::epaint::FontFamily;
-use egui::{Color32, Context, Frame, Label, Order, Pos2, RichText, Rounding, Style, TextBuffer, Ui, Vec2, WidgetText, Window};
+use egui::{Color32, Frame, Label, Order, Pos2, RichText, Style, Ui, Vec2, WidgetText, Window};
 use game_lib::cards::properties::incident_impact::IncidentImpact;
 use rand::RngExt;
 
@@ -27,7 +27,7 @@ where
 fn create_style(is_incident_target: bool, ui: &mut Ui) -> Style {
     let mut style = ui.style_mut().clone();
 
-    if (is_incident_target) {
+    if is_incident_target {
         let mut stroke = style.visuals.window_stroke;
         stroke.width = stroke.width + 2.0;
         stroke.color = Color32::LIGHT_RED;
@@ -58,7 +58,7 @@ where
         .min_size(data.min_size)
         .frame(Frame::window(&style));
 
-    let customized_card_window = if (card.is_incident_target) {
+    let customized_card_window = if card.is_incident_target {
         generic_card_window.order(Order::Foreground)
     } else {
         generic_card_window
@@ -175,7 +175,7 @@ where
             card.light_color
         };
 
-        let title = if (card.is_incident_target) {
+        let title = if card.is_incident_target {
           "[INCIDENT]\n".to_owned() + &card.label
         } else {
             card.label.to_owned()
