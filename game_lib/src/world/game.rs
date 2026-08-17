@@ -63,13 +63,15 @@ pub struct Game {
 pub struct ReputationSettings {
     pub initial_reputation: Reputation,
     pub incident_penalty: Reputation,
+    pub incident_penalty_stacked: bool
 }
 
 impl Default for ReputationSettings {
     fn default() -> Self {
         ReputationSettings {
             initial_reputation: Reputation::start_value(),
-            incident_penalty: Reputation::default_incident_penalty()
+            incident_penalty: Reputation::default_incident_penalty(),
+            incident_penalty_stacked: false
         }
     }
 }
@@ -96,6 +98,7 @@ impl Default for GameInitSettings {
             reputation: ReputationSettings {
                 initial_reputation: Reputation::start_value(),
                 incident_penalty: Reputation::default_incident_penalty(),
+                incident_penalty_stacked: false
             },
         }
     }
@@ -541,10 +544,7 @@ mod tests {
                 resources: Resources::new(0),
                 resource_gain: Resources::new(10),
                 fix_multiplier: ResourceFixMultiplier::new(2),
-                reputation: ReputationSettings {
-                    initial_reputation: Reputation::start_value(),
-                    incident_penalty: Reputation::default_incident_penalty(),
-                },
+                reputation: ReputationSettings::default(),
             },
         );
 

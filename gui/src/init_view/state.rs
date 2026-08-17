@@ -167,6 +167,7 @@ impl Into<GameInitSettings> for &GamePreset {
             reputation: ReputationSettings {
                 initial_reputation: Reputation::new(reputation),
                 incident_penalty: Reputation::new(incident_penalty),
+                ..ReputationSettings::default()
             }
         }
     }

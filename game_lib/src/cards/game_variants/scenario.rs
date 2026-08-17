@@ -36,7 +36,8 @@ impl Into<GameInitSettings> for Preset {
             resources: self.resources,
             reputation: ReputationSettings {
                 initial_reputation: self.reputation,
-                incident_penalty: Reputation::default_incident_penalty()
+                incident_penalty: Reputation::default_incident_penalty(),
+                incident_penalty_stacked: false
             },
             resource_gain: self.resource_gain,
             fix_multiplier: self.multiplier,

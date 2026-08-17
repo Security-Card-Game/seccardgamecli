@@ -5,7 +5,7 @@ It has to be called when
 - Any card is closed
 - Any card is applied
  */
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
@@ -45,6 +45,18 @@ fn calculate_reputation_decrease(
     current_incidents: &Vec<Incident>,
     reputation_settings: &ReputationSettings,
 ) -> Reputation {
+    if reputation_settings.incident_penalty_stacked {
+        calculate_stacked_reputation_decrease(previous_incidents, current_incidents, reputation_settings)
+    } else {
+        calculate_non_stacked_reputation_decrease(previous_incidents, current_incidents, reputation_settings)
+    }
+}
+
+fn calculate_non_stacked_reputation_decrease(
+    previous_incidents: &Vec<Incident>,
+    current_incidents: &Vec<Incident>,
+    reputation_settings: &ReputationSettings,
+) -> Reputation {
     let previous = previous_incidents
         .iter()
         .map(|i| i.attack_card_id)
@@ -54,8 +66,40 @@ fn calculate_reputation_decrease(
         .map(|i| i.attack_card_id)
         .collect::<HashSet<_>>();
 
+    // get values in current but not in previous
     let new_incidents_count = current.difference(&previous).count() as u8;
     Reputation::new(new_incidents_count * reputation_settings.incident_penalty.value())
+}
+
+fn calculate_stacked_reputation_decrease(
+    previous_incidents: &Vec<Incident>,
+    current_incidents: &Vec<Incident>,
+    reputation_settings: &ReputationSettings,
+) -> Reputation {
+    let previous = group_oopsies_by_incident(previous_incidents);
+    let current = group_oopsies_by_incident(current_incidents);
+
+    let mut count: u8 = 0;
+
+    for incident in current {
+        let old_incident_oopsies = previous.get(&incident.0);
+        count += if let Some(old_oopsies) = old_incident_oopsies.map(|i| HashSet::from_iter(i.iter().cloned())) {
+            let current_oopsies: HashSet<Uuid> = HashSet::from_iter(incident.1.iter().cloned());
+            current_oopsies.difference(&old_oopsies).count() as u8
+        } else {
+            incident.1.len() as u8
+        }
+    };
+
+    Reputation::new(count * reputation_settings.incident_penalty.value())
+}
+
+fn group_oopsies_by_incident(incidents: &Vec<Incident>) -> HashMap<Uuid, Vec<Uuid>> {
+    let mut groups: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    for incident in incidents {
+        groups.entry(incident.attack_card_id).or_default().push(incident.oopsie_card_id);
+    }
+    groups
 }
 
 fn determine_active_incidents(board: &Board) -> Vec<Incident> {
@@ -538,195 +582,445 @@ mod tests {
         use crate::world::game::ReputationSettings;
         use crate::world::reputation::Reputation;
         use uuid::Uuid;
+        mod non_stacking {
+            use super::*;
+            #[test]
+            fn no_incidents_no_decrease() {
+                let settings = ReputationSettings::default();
+                let previous_incidents = Vec::new();
+                let current_incidents = Vec::new();
+                let expected_decrease = Reputation::new(0);
 
-        #[test]
-        fn no_incidents_no_decrease() {
-            let settings = ReputationSettings::default();
-            let previous_incidents = Vec::new();
-            let current_incidents = Vec::new();
-            let expected_decrease = Reputation::new(0);
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
 
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
 
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
-
-        #[test]
-        fn one_new_incidents_one_time_decrease() {
-            let settings = ReputationSettings::default();
-            let previous_incidents = Vec::new();
-            let current_incidents = vec![Incident {
-                attack_card_id: Uuid::new_v4(),
-                attack_title: "Attack Title".to_string(),
-                oopsie_card_id: Uuid::new_v4(),
-                oopsie_title: "Oopsie Title".to_string(),
-            }];
-            let expected_decrease = settings.incident_penalty;
-
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
-
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
-
-        #[test]
-        fn one_new_incidents_multiple_oopsies_one_time_decrease() {
-            let settings = ReputationSettings::default();
-            let previous_incidents = Vec::new();
-            let attack_id = Uuid::new_v4();
-            let current_incidents = vec![
-                Incident {
-                attack_card_id: attack_id,
-                attack_title: "Attack Title".to_string(),
-                oopsie_card_id: Uuid::new_v4(),
-                oopsie_title: "Oopsie Title".to_string(),
-            },
-                Incident {
-                    attack_card_id: attack_id,
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: Uuid::new_v4(),
-                    oopsie_title: "Another Oopsie Title".to_string(),
-                },
-            ];
-            let expected_decrease = settings.incident_penalty;
-
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
-
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
-
-        #[test]
-        fn two_new_incidents_multiple_oopsies_one_time_decrease() {
-            let settings = ReputationSettings::default();
-            let previous_incidents = Vec::new();
-            let current_incidents = vec![
-                Incident {
+            #[test]
+            fn one_new_incidents_one_time_decrease() {
+                let settings = ReputationSettings::default();
+                let previous_incidents = Vec::new();
+                let current_incidents = vec![Incident {
                     attack_card_id: Uuid::new_v4(),
                     attack_title: "Attack Title".to_string(),
                     oopsie_card_id: Uuid::new_v4(),
                     oopsie_title: "Oopsie Title".to_string(),
-                },
-                Incident {
-                    attack_card_id: Uuid::new_v4(),
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: Uuid::new_v4(),
-                    oopsie_title: "Another Oopsie Title".to_string(),
-                },
-            ];
-            let expected_decrease = settings.incident_penalty.multiply(2);
+                }];
+                let expected_decrease = settings.incident_penalty;
 
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
 
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
 
-        #[test]
-        fn decrease_overflows_reputation_max() {
-            let settings = ReputationSettings {
-                incident_penalty: Reputation::new(99),
-                ..ReputationSettings::default()
-            };
-            let previous_incidents = Vec::new();
-            let current_incidents = vec![
-                Incident {
-                    attack_card_id: Uuid::new_v4(),
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: Uuid::new_v4(),
-                    oopsie_title: "Oopsie Title".to_string(),
-                },
-                Incident {
-                    attack_card_id: Uuid::new_v4(),
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: Uuid::new_v4(),
-                    oopsie_title: "Another Oopsie Title".to_string(),
-                },
-            ];
-            let expected_decrease = Reputation::new(100);
+            #[test]
+            fn one_new_incidents_multiple_oopsies_one_time_decrease() {
+                let settings = ReputationSettings::default();
+                let previous_incidents = Vec::new();
+                let attack_id = Uuid::new_v4();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: attack_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: attack_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Another Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = settings.incident_penalty;
 
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
 
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
 
-        #[test]
-        fn two_incidents_with_same_oopsie_reduces_twice() {
-            let settings = ReputationSettings::default();
-            let previous_incidents = Vec::new();
-            let oopsie_id = Uuid::new_v4();
-            let current_incidents = vec![
-                Incident {
-                    attack_card_id: Uuid::new_v4(),
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: oopsie_id,
-                    oopsie_title: "Oopsie Title".to_string(),
-                },
-                Incident {
-                    attack_card_id: Uuid::new_v4(),
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: oopsie_id,
-                    oopsie_title: "Oopsie Title".to_string(),
-                },
-            ];
-            let expected_decrease = settings.incident_penalty.multiply(2);
+            #[test]
+            fn two_new_incidents_different_oopsies_two_times_decrease() {
+                let settings = ReputationSettings::default();
+                let previous_incidents = Vec::new();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Another Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = settings.incident_penalty.multiply(2);
 
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
 
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
 
-        #[test]
-        fn no_new_incident_no_decrease() {
-            let settings = ReputationSettings::default();
-            let previous_incidents = vec![
-                Incident {
-                    attack_card_id: Uuid::new_v4(),
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: Uuid::new_v4(),
-                    oopsie_title: "Oopsie Title".to_string(),
-                },
-            ];
-            let current_incidents = previous_incidents.clone();
-            let expected_decrease = Reputation::new(0);
+            #[test]
+            fn decrease_overflows_reputation_max() {
+                let settings = ReputationSettings {
+                    incident_penalty: Reputation::new(99),
+                    ..ReputationSettings::default()
+                };
+                let previous_incidents = Vec::new();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Another Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = Reputation::new(100);
 
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
 
-            assert_eq!(reputation_decrease, expected_decrease);
-        }
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
 
-        #[test]
-        fn no_new_incident_but_additions_oopsie_no_decrease() {
-            let settings = ReputationSettings::default();
-            let attack_card_id =Uuid::new_v4();
+            #[test]
+            fn two_incidents_with_same_oopsie_reduces_twice() {
+                let settings = ReputationSettings::default();
+                let previous_incidents = Vec::new();
+                let oopsie_id = Uuid::new_v4();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: oopsie_id,
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: oopsie_id,
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = settings.incident_penalty.multiply(2);
 
-            let previous_incidents = vec![
-                Incident {
-                    attack_card_id,
-                    attack_title: "Attack Title".to_string(),
-                    oopsie_card_id: Uuid::new_v4(),
-                    oopsie_title: "Oopsie Title".to_string(),
-                },
-            ];
-            let mut current_incidents = previous_incidents.clone();
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn no_new_incident_no_decrease() {
+                let settings = ReputationSettings::default();
+                let previous_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let current_incidents = previous_incidents.clone();
+                let expected_decrease = Reputation::new(0);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn no_new_incident_but_additions_oopsie_no_decrease() {
+                let settings = ReputationSettings::default();
+                let attack_card_id = Uuid::new_v4();
+
+                let previous_incidents = vec![
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let mut current_incidents = previous_incidents.clone();
                 current_incidents.append(&mut vec![
-                Incident {
-                    attack_card_id,
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    }]
+                );
+                let expected_decrease = Reputation::new(0);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+        }
+
+        mod stacking {
+            use super::*;
+
+            fn stacked_default_settings() -> ReputationSettings {
+                ReputationSettings {
+                    incident_penalty_stacked: true,
+                        ..ReputationSettings::default()
+                }
+            }
+            #[test]
+            fn no_incidents_no_decrease() {
+                let settings = stacked_default_settings();
+                let previous_incidents = Vec::new();
+                let current_incidents = Vec::new();
+                let expected_decrease = Reputation::new(0);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn one_new_incidents_with_one_oopsie_one_time_decrease() {
+                let settings = stacked_default_settings();
+                let previous_incidents = Vec::new();
+                let current_incidents = vec![Incident {
+                    attack_card_id: Uuid::new_v4(),
                     attack_title: "Attack Title".to_string(),
                     oopsie_card_id: Uuid::new_v4(),
                     oopsie_title: "Oopsie Title".to_string(),
-                }]
-            );
-            let expected_decrease = Reputation::new(0);
+                }];
+                let expected_decrease = settings.incident_penalty;
 
-            let reputation_decrease =
-                calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
 
-            assert_eq!(reputation_decrease, expected_decrease);
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn one_new_incidents_with_two_oopsies_two_time_decrease() {
+                let settings = stacked_default_settings();
+                let previous_incidents = Vec::new();
+                let attack_id = Uuid::new_v4();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: attack_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: attack_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Another Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = settings.incident_penalty.multiply(2);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn two_new_incidents_different_oopsies_two_times_decrease() {
+                let settings = stacked_default_settings();
+                let previous_incidents = Vec::new();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Another Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = settings.incident_penalty.multiply(2);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn decrease_overflows_reputation_max() {
+                let settings = ReputationSettings {
+                    incident_penalty: Reputation::new(99),
+                    ..stacked_default_settings()
+                };
+                let previous_incidents = Vec::new();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Another Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = Reputation::new(100);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn two_incidents_with_same_oopsie_reduces_twice() {
+                let settings = stacked_default_settings();
+                let previous_incidents = Vec::new();
+                let oopsie_id = Uuid::new_v4();
+                let current_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: oopsie_id,
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: oopsie_id,
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let expected_decrease = settings.incident_penalty.multiply(2);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn no_new_incident_no_decrease() {
+                let settings = stacked_default_settings();
+                let previous_incidents = vec![
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let current_incidents = previous_incidents.clone();
+                let expected_decrease = Reputation::new(0);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn no_new_incident_but_additional_oopsies_additional_decrease() {
+                let settings = stacked_default_settings();
+                let attack_card_id = Uuid::new_v4();
+
+                let previous_incidents = vec![
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let mut current_incidents = previous_incidents.clone();
+                current_incidents.append(&mut vec![
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    }]
+                );
+                let expected_decrease = settings.incident_penalty.multiply(2);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
+
+            #[test]
+            fn new_incident_and_additional_oopsie_multiple_time_decrease() {
+                let settings = stacked_default_settings();
+                let attack_card_id = Uuid::new_v4();
+                let oopsie_card_id = Uuid::new_v4();
+                let previous_incidents = vec![
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                ];
+                let mut current_incidents = previous_incidents.clone();
+                current_incidents.append(&mut vec![
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: Uuid::new_v4(),
+                        oopsie_title: "Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id,
+                        attack_title: "Attack Title".to_string(),
+                        oopsie_card_id: oopsie_card_id.clone(),
+                        oopsie_title: "Shared Oopsie Title".to_string(),
+                    },
+                    Incident {
+                        attack_card_id: Uuid::new_v4(),
+                        attack_title: "New Attack Title".to_string(),
+                        oopsie_card_id: oopsie_card_id.clone(),
+                        oopsie_title: "Shared Oopsie Title".to_string(),
+                    }]
+                );
+                let expected_decrease = settings.incident_penalty.multiply(3);
+
+                let reputation_decrease =
+                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+
+                assert_eq!(reputation_decrease, expected_decrease);
+            }
         }
     }
 }
