@@ -130,6 +130,7 @@ mod tests {
     use crate::world::board::Board;
     use crate::world::board::tests::{generate_board_with_open_card, remove_card_from_open_cards};
     use crate::world::deck::Deck;
+    use crate::world::game::ReputationSettings;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
 
@@ -297,6 +298,7 @@ mod tests {
                 played_cards: 10,
                 total: 10,
             },
+            &ReputationSettings::default(),
         );
 
         let expected_board = Board {
@@ -362,6 +364,7 @@ mod tests {
                 played_cards: 10,
                 total: 10,
             },
+            &ReputationSettings::default(),
         );
 
         dbg!("open cards: {}", prepared_board.clone().open_cards);

@@ -13,10 +13,11 @@ use crate::cards::properties::effect::Effect;
 use crate::cards::types::card_model::Card;
 use crate::world::board::{Board, Incident};
 use crate::world::deck::{CardRc, Deck};
+use crate::world::game::ReputationSettings;
 use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
 
-pub(crate) fn calculate_board(board: Board, deck: &Deck) -> Board {
+pub(crate) fn calculate_board(board: Board, deck: &Deck, reputation_settings: &ReputationSettings) -> Board {
     let remaining_rounds = calculate_remaining_rounds(deck);
     let fix_modifier = calculate_cost_modifier(&board);
     let active_incidents = determine_active_incidents(&board);
@@ -326,7 +327,7 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = calculate_board(board, &deck);
+        let new_board = calculate_board(board, &deck, &ReputationSettings::default());
 
         assert_eq!(new_board, expected_board)
     }
@@ -505,7 +506,7 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = calculate_board(board, &deck);
+        let new_board = calculate_board(board, &deck, &ReputationSettings::default());
 
         assert_eq!(new_board, expected_board)
     }

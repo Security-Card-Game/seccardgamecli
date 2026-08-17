@@ -43,6 +43,7 @@ struct ScenarioSettings {
 struct GamePreset {
     initial_resources: LabelWithInputComponent,
     initial_reputation: LabelWithInputComponent,
+    incident_reputation_penalty: LabelWithInputComponent,
     initial_resource_gain: LabelWithInputComponent,
     initial_fix_multiplier: LabelWithInputComponent,
 }
@@ -65,7 +66,15 @@ impl Default for GamePreset {
                 ),
                 value: default.reputation.initial_reputation.value().to_string(),
             },
-            initial_resource_gain: LabelWithInputComponent {
+            incident_reputation_penalty: LabelWithInputComponent {
+            label: "Incident: Reputation loss".to_string(),
+            description: Some(
+                "The amount of reputation lost when an incident occurs [0 - 100]"
+                    .to_string(),
+            ),
+            value: default.reputation.incident_penalty.value().to_string(),
+        },
+        initial_resource_gain: LabelWithInputComponent {
                 label: "Initial resource gain".to_string(),
                 description: Some("The number of resources you gain per turn.".to_string()),
                 value: default.resource_gain.value().to_string(),
@@ -347,6 +356,9 @@ impl InitViewState {
             .draw_component(0, ui, control_layout_options);
         self.game_preset
             .initial_reputation
+            .draw_component(0, ui, control_layout_options);
+        self.game_preset
+            .incident_reputation_penalty
             .draw_component(0, ui, control_layout_options);
         self.game_preset
             .initial_fix_multiplier
