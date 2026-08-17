@@ -141,7 +141,7 @@ mod path_tests {
         use crate::cards::types::oopsie::OopsieCard;
         use crate::cards::types::oopsie::tests::FakeOopsieCard;
         use crate::world::deck::Deck;
-        use crate::world::game::{Game, GameInitSettings};
+        use crate::world::game::{Game, GameInitSettings, ReputationSettings};
         use crate::world::game_path_test::path_tests::get_board_from_game;
         use crate::world::reputation::Reputation;
         use crate::world::resources::Resources;
@@ -221,6 +221,20 @@ mod path_tests {
             Game::create(deck, init_settings)
         }
 
+        fn create_game_with_incident_penalty(deck: Deck, incident_penalty: Reputation) -> Game {
+            let init_settings = GameInitSettings{
+                resources: Resources::new(100),
+                reputation: ReputationSettings {
+                    incident_penalty,
+                    ..ReputationSettings::default()
+                },
+                ..GameInitSettings::default()
+            };
+
+            Game::create(deck, init_settings)
+        }
+
+
         #[test]
         fn no_incident_no_change() {
             let available_cards = available_cards();
@@ -232,7 +246,7 @@ mod path_tests {
             let attack_drawn = oopsie_drawn.next_round();
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
-            assert_eq!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation)
+            assert_eq!(initial_reputation, attack_reputation, "Attack was expected to become an incident and reduce reputation, before attack was {}, after attack was {}", initial_reputation, attack_reputation)
         }
 
         #[test]
@@ -247,7 +261,7 @@ mod path_tests {
             let oopsie_drawn = attack_closed.next_round();
             let attack_reputation = get_board_from_game(&oopsie_drawn).current_reputation.clone();
 
-            assert_eq!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation)
+            assert_eq!(initial_reputation, attack_reputation, "Attack was expected to become an incident and reduce reputation, before attack was {}, after attack was {}", initial_reputation, attack_reputation)
         }
 
 
@@ -262,7 +276,7 @@ mod path_tests {
             let attack_drawn = oopsie_drawn.next_round();
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
-            assert_ne!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
+            assert_ne!(initial_reputation, attack_reputation, "Attack was expected to become an incident and reduce reputation, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
             let expected_reputation = &initial_reputation - &Reputation::new(5);
             assert_eq!(attack_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
@@ -278,45 +292,26 @@ mod path_tests {
             let attack_drawn = oopsie_drawn.next_round();
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
-            assert_ne!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
+            assert_ne!(initial_reputation, attack_reputation, "Attack was expected to become an incident and reduce reputation, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
             let expected_reputation = &initial_reputation - &Reputation::new(5);
             assert_eq!(attack_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
 
         #[test]
-        fn ongoing_incident_reputation_decrease_is_only_applied_once() {
+        fn reputation_settings_incident_penalty_is_used() {
             let available_cards = available_cards();
-            let deck = create_deck(vec!(available_cards.network_oopsie_1, available_cards.network_attack, available_cards.network_oopsie_2));
-            let game = create_game(deck);
+            let custom_penalty = Reputation::new(15);
+
+            let deck = create_deck(vec!(available_cards.network_attack, available_cards.network_oopsie_1));
+            let game = create_game_with_incident_penalty(deck, custom_penalty.clone());
             let oopsie_drawn = game.next_round();
             let initial_reputation = get_board_from_game(&oopsie_drawn).current_reputation.clone();
 
             let attack_drawn = oopsie_drawn.next_round();
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
-            let oopsie2_drawn = attack_drawn.next_round();
-            let oopsie2_reputation = get_board_from_game(&oopsie2_drawn).current_reputation.clone();
-
-            assert_eq!(attack_reputation, oopsie2_reputation, "Incident leads only to one time reputation decrease, before second oopsie was {}, after second oopsie was {}", attack_reputation, oopsie2_reputation);
-            let expected_reputation = &initial_reputation - &Reputation::new(5);
-            assert_eq!(oopsie2_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
-        }
-
-        #[test]
-        fn incident_multiple_targets_reputation_decreases_once() {
-            let available_cards = available_cards();
-            let deck = create_deck(vec!(available_cards.network_oopsie_1, available_cards.network_oopsie_2, available_cards.network_attack));
-            let game = create_game(deck);
-            let oopsie_draw = game.next_round();
-            let initial_reputation = get_board_from_game(&oopsie_draw).current_reputation.clone();
-
-            let oopise2_drawn = oopsie_draw.next_round();
-
-            let attack_drawn = oopise2_drawn.next_round();
-            let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
-
-            assert_ne!(attack_reputation, initial_reputation, "Incident leads to one time reputation decrease, before incident was {}, after incident was {}", initial_reputation, attack_reputation);
-            let expected_reputation = &initial_reputation - &Reputation::new(5);
+            assert_ne!(initial_reputation, attack_reputation, "Attack was expected to become an incident and reduce reputation, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
+            let expected_reputation = &initial_reputation - &custom_penalty;
             assert_eq!(attack_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
     }

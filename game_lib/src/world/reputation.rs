@@ -21,11 +21,11 @@ impl Reputation {
     pub fn start_value() -> Self {
         Reputation(50)
     }
-    
+
     pub fn default_incident_penalty() -> Self {
         Reputation(5)
     }
-    
+
     pub fn value(&self) -> &u8 {
         &self.0
     }
@@ -91,6 +91,12 @@ impl Display for Reputation {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    impl Reputation {
+        pub(crate) fn multiply(&self, rhs: u8) -> Reputation {
+            Reputation(self.0 * rhs)
+        }
+    }
 
     #[test]
     pub fn create_reputation_max_value() {
