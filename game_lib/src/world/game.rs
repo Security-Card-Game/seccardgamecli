@@ -59,11 +59,17 @@ pub struct Game {
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
+pub struct ReputationSettings {
+    pub initial_reputation: Reputation,
+    pub incident_penalty: Reputation,
+}
+
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct GameInitSettings {
     pub resource_gain: Resources,
     pub resources: Resources,
     pub fix_multiplier: ResourceFixMultiplier,
-    pub reputation: Reputation,
+    pub reputation: ReputationSettings,
 }
 
 pub struct CardCount {
@@ -77,11 +83,13 @@ impl Default for GameInitSettings {
             resource_gain: Resources::new(5),
             resources: Resources::default(),
             fix_multiplier: ResourceFixMultiplier::default(),
-            reputation: Reputation::start_value(),
+            reputation: ReputationSettings {
+                initial_reputation: Reputation::start_value(),
+                incident_penalty: Reputation::default_incident_penalty(),
+            },
         }
     }
 }
-
 
 /// This defines the API on how to interact with the Game. It will in turn use corresponding
 /// actions from the actions module, combines them when needed. Every interaction return a new Game
@@ -165,11 +173,7 @@ impl Game {
 
     /// Creates a new game with the given Deck, initial resource gain and fix multiplier.
     /// Use this to start.
-    pub fn create(
-        deck: Deck,
-        init_settings: GameInitSettings,
-    ) -> Self {
-        
+    pub fn create(deck: Deck, init_settings: GameInitSettings) -> Self {
         let board = Board::init(&deck, init_settings.resources, init_settings.reputation);
         let status = GameStatus::Start(calculate_board(board, &deck));
 
@@ -297,7 +301,6 @@ impl Game {
         }
     }
 
-
     /// Try anc closes an Oopsie card. Will roll a dice to calculate the costs.
     fn handle_non_oopsie_close(&self, result: ActionResult<Board>) -> Self {
         match result {
@@ -386,7 +389,11 @@ impl Game {
     pub fn is_card_affected_attack(&self, card_id: &Uuid) -> bool {
         match &self.status {
             GameStatus::Start(b) | GameStatus::InProgress(b) | GameStatus::Finished(b) => {
-                let affected_oopises = b.active_incidents.iter().map(|i| i.oopsie_card_id).collect::<Vec<Uuid>>();
+                let affected_oopises = b
+                    .active_incidents
+                    .iter()
+                    .map(|i| i.oopsie_card_id)
+                    .collect::<Vec<Uuid>>();
                 affected_oopises.contains(&card_id)
             }
         }
@@ -435,7 +442,9 @@ mod tests {
     use crate::cards::types::oopsie::OopsieCard;
     use crate::world::board::Board;
     use crate::world::deck::{CardRc, Deck};
-    use crate::world::game::{Game, GameActionResult, GameInitSettings, GameStatus};
+    use crate::world::game::{
+        Game, GameActionResult, GameInitSettings, GameStatus, ReputationSettings,
+    };
     use crate::world::reputation::Reputation;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
@@ -490,10 +499,7 @@ mod tests {
                 played_cards: 0,
                 total: cards.len(),
             };
-            TestDeck {
-                cards,
-                start_deck,
-            }
+            TestDeck { cards, start_deck }
         }
     }
 
@@ -523,8 +529,11 @@ mod tests {
                 resources: Resources::new(0),
                 resource_gain: Resources::new(10),
                 fix_multiplier: ResourceFixMultiplier::new(2),
-                reputation: Reputation::start_value(),
-            }
+                reputation: ReputationSettings {
+                    initial_reputation: Reputation::start_value(),
+                    incident_penalty: Reputation::default_incident_penalty(),
+                },
+            },
         );
 
         assert_eq!(sut, expectation);
@@ -540,7 +549,7 @@ mod tests {
                 resource_gain: resource_gain.clone(),
                 fix_multiplier: ResourceFixMultiplier::new(2),
                 ..GameInitSettings::default()
-            }
+            },
         );
 
         let game_after_round_1 = sut.next_round();
@@ -583,7 +592,7 @@ mod tests {
                 resource_gain: resource_gain.clone(),
                 fix_multiplier: ResourceFixMultiplier::new(2),
                 ..GameInitSettings::default()
-            }
+            },
         );
 
         let game_after_round_1 = sut.next_round();
@@ -639,7 +648,7 @@ mod tests {
                 resource_gain: resource_gain.clone(),
                 fix_multiplier: ResourceFixMultiplier::new(2),
                 ..GameInitSettings::default()
-            }
+            },
         );
 
         let game_after_round_1 = sut.next_round();

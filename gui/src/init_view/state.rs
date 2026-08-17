@@ -6,7 +6,7 @@ use game_lib::cards::game_variants::scenario::Scenario;
 use game_lib::cards::properties::description::Description;
 use game_lib::file::repository::DeckLoader;
 use game_lib::world::deck::{DeckComposition, GameVariantsRepository};
-use game_lib::world::game::GameInitSettings;
+use game_lib::world::game::{GameInitSettings, ReputationSettings};
 use game_lib::world::reputation::Reputation;
 use game_lib::world::resource_fix_multiplier::ResourceFixMultiplier;
 use game_lib::world::resources::Resources;
@@ -63,7 +63,7 @@ impl Default for GamePreset {
                     "The number of reputation points you start the game with. [0 - 100]"
                         .to_string(),
                 ),
-                value: default.reputation.value().to_string(),
+                value: default.reputation.initial_reputation.value().to_string(),
             },
             initial_resource_gain: LabelWithInputComponent {
                 label: "Initial resource gain".to_string(),
@@ -154,7 +154,10 @@ impl Into<GameInitSettings> for &GamePreset {
             resource_gain: Resources::new((&self.initial_resource_gain).into()),
             resources: Resources::new((&self.initial_resources).into()),
             fix_multiplier: ResourceFixMultiplier::new((&self.initial_fix_multiplier).into()),
-            reputation: Reputation::new(reputation.min(100).into()),
+            reputation: ReputationSettings {
+                initial_reputation: Reputation::new(reputation),
+                incident_penalty: Reputation::default_incident_penalty()
+            }
         }
     }
 }
