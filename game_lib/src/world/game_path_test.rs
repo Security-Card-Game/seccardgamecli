@@ -236,6 +236,22 @@ mod path_tests {
         }
 
         #[test]
+        fn attack_ended_no_incident_no_change() {
+            let available_cards = available_cards();
+            let deck = create_deck(vec!(available_cards.network_attack, available_cards.network_oopsie_1));
+            let game = create_game(deck);
+            let attack_drawn = game.next_round();
+            let initial_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
+            let attack_closed = attack_drawn.close_card(&get_board_from_game(&attack_drawn).drawn_card.unwrap().id);
+
+            let oopsie_drawn = attack_closed.next_round();
+            let attack_reputation = get_board_from_game(&oopsie_drawn).current_reputation.clone();
+
+            assert_eq!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation)
+        }
+
+
+        #[test]
         fn incident_reputation_decreases() {
             let available_cards = available_cards();
             let deck = create_deck(vec!(available_cards.network_oopsie_1, available_cards.network_attack));
@@ -247,7 +263,7 @@ mod path_tests {
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
             assert_ne!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
-            let expected_reputation = &attack_reputation - &Reputation::new(5);
+            let expected_reputation = &initial_reputation - &Reputation::new(5);
             assert_eq!(attack_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
 
@@ -263,7 +279,7 @@ mod path_tests {
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
             assert_ne!(initial_reputation, attack_reputation, "Attack did not became an incident, before attack was {}, after attack was {}", initial_reputation, attack_reputation);
-            let expected_reputation = &attack_reputation - &Reputation::new(5);
+            let expected_reputation = &initial_reputation - &Reputation::new(5);
             assert_eq!(attack_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
 
@@ -273,6 +289,7 @@ mod path_tests {
             let deck = create_deck(vec!(available_cards.network_oopsie_1, available_cards.network_attack, available_cards.network_oopsie_2));
             let game = create_game(deck);
             let oopsie_drawn = game.next_round();
+            let initial_reputation = get_board_from_game(&oopsie_drawn).current_reputation.clone();
 
             let attack_drawn = oopsie_drawn.next_round();
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
@@ -281,7 +298,7 @@ mod path_tests {
             let oopsie2_reputation = get_board_from_game(&oopsie2_drawn).current_reputation.clone();
 
             assert_eq!(attack_reputation, oopsie2_reputation, "Incident leads only to one time reputation decrease, before second oopsie was {}, after second oopsie was {}", attack_reputation, oopsie2_reputation);
-            let expected_reputation = &attack_reputation - &Reputation::new(5);
+            let expected_reputation = &initial_reputation - &Reputation::new(5);
             assert_eq!(oopsie2_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
 
@@ -299,7 +316,7 @@ mod path_tests {
             let attack_reputation = get_board_from_game(&attack_drawn).current_reputation.clone();
 
             assert_ne!(attack_reputation, initial_reputation, "Incident leads to one time reputation decrease, before incident was {}, after incident was {}", initial_reputation, attack_reputation);
-            let expected_reputation = &attack_reputation - &Reputation::new(5);
+            let expected_reputation = &initial_reputation - &Reputation::new(5);
             assert_eq!(attack_reputation, expected_reputation, "Expected reputation to decrease to {}, was {}", expected_reputation, attack_reputation)
         }
     }

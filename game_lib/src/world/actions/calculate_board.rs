@@ -6,7 +6,6 @@ It has to be called when
 - Any card is applied
  */
 use std::collections::HashSet;
-
 use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
@@ -14,18 +13,31 @@ use crate::cards::properties::effect::Effect;
 use crate::cards::types::card_model::Card;
 use crate::world::board::{Board, Incident};
 use crate::world::deck::{CardRc, Deck};
+use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
 
 pub(crate) fn calculate_board(board: Board, deck: &Deck) -> Board {
     let remaining_rounds = calculate_remaining_rounds(deck);
     let fix_modifier = calculate_cost_modifier(&board);
     let active_incidents = determine_active_incidents(&board);
+    let reputation_decrease = determine_reputation_decrease(&board.active_incidents, &active_incidents);
+
     Board {
         turns_remaining: remaining_rounds,
         cost_modifier: fix_modifier,
         active_incidents,
+        current_reputation: &board.current_reputation - &reputation_decrease,
         ..board
     }
+}
+
+fn determine_reputation_decrease(previous_incidents: &Vec<Incident>, current_incidents: &Vec<Incident>) -> Reputation {
+    let previous = previous_incidents.iter().map(|i| i.attack_card_id).collect::<HashSet<_>>();
+    let current = current_incidents.iter().map(|i| i.attack_card_id).collect::<HashSet<_>>();
+
+    let new_incidents = current.difference(&previous).collect::<Vec<_>>();
+
+    Reputation::new((new_incidents.len() * 5) as u8)
 }
 
 fn determine_active_incidents(board: &Board) -> Vec<Incident> {
