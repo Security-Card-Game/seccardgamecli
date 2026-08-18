@@ -6,7 +6,7 @@ use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::types::card_model::Card;
 use crate::world::actions::action_error::{ActionError, ActionResult};
 use crate::world::actions::add_reputation::add_reputation;
-use crate::world::actions::calculate_board::{calculate_board, progress_board_to_next_turn};
+use crate::world::actions::calculate_board::{update_board_state, progress_board_to_next_turn};
 use crate::world::actions::close_attack::{manually_close_attack_card, update_attack_cards};
 use crate::world::actions::close_evaluation::close_evaluation_card;
 use crate::world::actions::close_event::close_event_card;
@@ -135,7 +135,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match activate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &None)),
+                        status: GameStatus::InProgress(update_board_state(new_board, &self.deck, &None)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -158,7 +158,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match deactivate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &None)),
+                        status: GameStatus::InProgress(update_board_state(new_board, &self.deck, &None)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -258,7 +258,7 @@ impl Game {
                     Err(e) => handle_action_error(board, &self.deck, &self.reputation_settings, e),
                 };
                 Game {
-                    status: GameStatus::InProgress(calculate_board(b, &self.deck, &None)),
+                    status: GameStatus::InProgress(update_board_state(b, &self.deck, &None)),
                     action_status: res,
                     ..self.clone()
                 }
@@ -276,7 +276,7 @@ impl Game {
             GameStatus::InProgress(b) => {
                 let new_board = add_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &None)),
+                    status: GameStatus::InProgress(update_board_state(new_board, &self.deck, &None)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -284,7 +284,7 @@ impl Game {
             GameStatus::Start(b) => {
                 let new_board = add_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::Start(calculate_board(new_board, &self.deck, &None)),
+                    status: GameStatus::Start(update_board_state(new_board, &self.deck, &None)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -302,7 +302,7 @@ impl Game {
             GameStatus::InProgress(b) => {
                 let new_board = subtract_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &None)),
+                    status: GameStatus::InProgress(update_board_state(new_board, &self.deck, &None)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -310,7 +310,7 @@ impl Game {
             GameStatus::Start(b) => {
                 let new_board = subtract_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::Start(calculate_board(new_board, &self.deck, &None)),
+                    status: GameStatus::Start(update_board_state(new_board, &self.deck, &None)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -326,14 +326,14 @@ impl Game {
     fn handle_non_oopsie_close(&self, result: ActionResult<Board>) -> Self {
         match result {
             Ok(b) => Game {
-                status: GameStatus::InProgress(calculate_board(b, &self.deck, &None)),
+                status: GameStatus::InProgress(update_board_state(b, &self.deck, &None)),
                 action_status: GameActionResult::Success,
                 ..self.clone()
             },
             Err(err) => {
                 let (b, r) = handle_action_error(self.get_board(), &self.deck, &self.reputation_settings, err);
                 Game {
-                    status: GameStatus::InProgress(calculate_board(b, &self.deck, &None)),
+                    status: GameStatus::InProgress(update_board_state(b, &self.deck, &None)),
                     action_status: r,
                     ..self.clone()
                 }
@@ -366,7 +366,7 @@ impl Game {
                             );
                             match result {
                                 Ok((b, r)) => Game {
-                                    status: GameStatus::InProgress(calculate_board(b, &self.deck, &None)),
+                                    status: GameStatus::InProgress(update_board_state(b, &self.deck, &None)),
                                     action_status: OopsieFixed(r),
                                     ..self.clone()
                                 },
@@ -434,7 +434,7 @@ fn handle_action_error(board: &Board, deck: &Deck, reputation_settings: &Reputat
         ActionError::AttackForceClosed(b) => (b.clone(), GameActionResult::AttackForceClosed),
         ActionError::NoCardsLeft => (board.clone(), InvalidAction),
         ActionError::WrongCardType(b) | ActionError::InvalidState(b) => {
-            (calculate_board(b, deck, &None), InvalidAction)
+            (update_board_state(b, deck, &None), InvalidAction)
         }
         ActionError::NotEnoughResources(_, _) => {
             (board.clone(), GameActionResult::NotEnoughResources)

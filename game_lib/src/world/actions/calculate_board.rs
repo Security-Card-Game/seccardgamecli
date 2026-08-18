@@ -28,7 +28,7 @@ pub(crate) fn progress_board_to_next_turn(
     force_set_resource_gain: &Option<Resources>,
 ) -> Board {
     let previous_active_incidents = &board.active_incidents.clone();
-    let update_board = calculate_board(board, deck, force_set_resource_gain);
+    let update_board = update_board_state(board, deck, force_set_resource_gain);
     let active_incidents = determine_active_incidents(&update_board);
     let reputation_decrease = calculate_reputation_decrease(
         &previous_active_incidents,
@@ -50,7 +50,10 @@ pub(crate) fn progress_board_to_next_turn(
     }
 }
 
-pub(crate) fn calculate_board(
+/// Updates the state of the game board by recalculating key properties such as remaining rounds,
+/// cost modifiers, active incidents, and resource gains based on the current game state or provided overrides.
+/// Does **not** update open_cards!
+pub(crate) fn update_board_state(
     board: Board,
     deck: &Deck,
     force_set_resource_gain: &Option<Resources>,
