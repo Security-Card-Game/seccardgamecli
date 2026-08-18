@@ -10,6 +10,10 @@ impl GameViewState {
     pub(crate) fn resource_control(&mut self, ui: &mut Ui) {
         ui.label(RichText::new("Resources").strong());
         ui.add_space(5.0);
+        ui.label(RichText::new("Resources per round"));
+        ui.label(RichText::new(self.game.get_resource_gain().to_string()).strong());
+        ui.add_space(5.0);
+
         match &self.game.status.clone() {
             GameStatus::Start(board) | GameStatus::InProgress(board) => {
                 self.resource_control_game_in_progress(ui, board);

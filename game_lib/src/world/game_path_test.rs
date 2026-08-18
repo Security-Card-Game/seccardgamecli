@@ -4,6 +4,7 @@ This file contains longer tests for game mechanics.
 
 #[cfg(test)]
 mod path_tests {
+    use std::rc::Rc;
     use crate::cards::properties::duration::Duration;
     use crate::cards::properties::effect::Effect;
     use crate::cards::properties::effect_description::EffectDescription;
@@ -13,7 +14,7 @@ mod path_tests {
     use crate::cards::types::attack::tests::FakeAttackCard;
     use crate::cards::types::attack::AttackCard;
     use crate::cards::types::card_model::{Card, CardTrait};
-    use crate::cards::types::event::tests::FakeEventCard;
+    use crate::cards::types::event::tests::{FakeEventCard, FakeNoOpEventCard};
     use crate::cards::types::event::EventCard;
     use crate::cards::types::oopsie::tests::FakeOopsieCard;
     use crate::cards::types::oopsie::OopsieCard;
@@ -24,38 +25,89 @@ mod path_tests {
     use fake::Fake;
     use uuid::Uuid;
 
+    const NETWORK_ATTACK_CARD_TITLE: &str = "Attack card";
+    const NETWORK_OOPSIE_CARD_TITLE_1: &str = "Network Oopsie card 1";
+    const NETWORK_OOPSIE_CARD_TITLE_2: &str = "Network Oopsie card 2";
+    const MISSING_ATTACK_CARD_TITLE: &str = "Mising attack card";
+
+    struct AvailableCards {
+        network_oopsie_1: Card,
+        network_oopsie_2: Card,
+        network_attack: Card,
+        missing_attack: Card,
+        no_op_cards: Vec<Card>,
+    }
+
+    fn available_cards() -> AvailableCards {
+        let network_oopsie_1 = OopsieCard {
+            title: Title::new(NETWORK_OOPSIE_CARD_TITLE_1),
+            effect: Effect::AttackSurface(
+                EffectDescription::new("Attack surface"),
+                vec![Target::new("network")],
+            ),
+            ..FakeOopsieCard.fake()
+        };
+
+        let network_oopsie_2 = OopsieCard {
+            title: Title::new(NETWORK_OOPSIE_CARD_TITLE_2),
+            effect: Effect::AttackSurface(
+                EffectDescription::new("Attack surface"),
+                vec![Target::new("network")],
+            ),
+            ..FakeOopsieCard.fake()
+        };
+
+        let network_attack = AttackCard {
+            title: Title::new(NETWORK_ATTACK_CARD_TITLE),
+            effect: Effect::Incident(
+                EffectDescription::new("Attack surface"),
+                vec![Target::new("network")],
+                IncidentImpact::Fixed(Resources::new(10)),
+            ),
+            duration: Duration::new(Some(5)),
+            ..FakeAttackCard.fake()
+        };
+
+        let missing_attack = AttackCard {
+            title: Title::new(MISSING_ATTACK_CARD_TITLE),
+            effect: Effect::Incident(
+                EffectDescription::new("Attack surface"),
+                vec![Target::new("none")],
+                IncidentImpact::Fixed(Resources::new(10)),
+            ),
+            duration: Duration::new(Some(5)),
+            ..FakeAttackCard.fake()
+        };
+
+        let no_op_cards = (1..20).into_iter()
+            .map(|_| Card::from(FakeNoOpEventCard.fake::<EventCard>())).collect();
+
+        AvailableCards {
+            network_oopsie_1: Card::from(network_oopsie_1),
+            network_oopsie_2: Card::from(network_oopsie_2),
+            network_attack: Card::from(network_attack),
+            missing_attack: Card::from(missing_attack),
+            no_op_cards
+        }
+    }
+
+    fn create_deck(cards: Vec<Card>) -> Deck {
+        Deck::new(cards.iter().map(|c| Rc::new(c.clone())).collect())
+    }
+
+
     mod attack_highlighting {
         use super::*;
         use crate::world::game::GameInitSettings;
         use std::rc::Rc;
-
-        const ATTACK_CARD_TITLE: &str = "Attack card";
-        const OOPSIE_CARD_TITLE: &str = "Oopsie card";
-
         /*
         Creates a game with three cards: Oopsie, Attack, and Event
         The Oopsie and Attack cards have matching targets.
          */
         fn create_game() -> Game {
-            let oopies_card = OopsieCard {
-                title: Title::new(OOPSIE_CARD_TITLE),
-                effect: Effect::AttackSurface(
-                    EffectDescription::new("Attack surface"),
-                    vec![Target::new("network")],
-                ),
-                ..FakeOopsieCard.fake()
-            };
-
-            let attack_card = AttackCard {
-                title: Title::new(ATTACK_CARD_TITLE),
-                effect: Effect::Incident(
-                    EffectDescription::new("Attack surface"),
-                    vec![Target::new("network")],
-                    IncidentImpact::Fixed(Resources::new(10)),
-                ),
-                duration: Duration::new(Some(5)),
-                ..FakeAttackCard.fake()
-            };
+            let available_cards = available_cards();
+            let oopies_card = available_cards.network_oopsie_1;
+            let attack_card = available_cards.network_attack;
 
             let deck = Deck::new(vec![
                 Rc::new(Card::from(oopies_card.clone())),
@@ -91,8 +143,8 @@ mod path_tests {
             );
 
             let active_incident = board_with_attack_and_oopsie.active_incidents[0].clone();
-            assert_eq!(active_incident.attack_title, ATTACK_CARD_TITLE);
-            assert_eq!(active_incident.oopsie_title, OOPSIE_CARD_TITLE);
+            assert_eq!(active_incident.attack_title, NETWORK_ATTACK_CARD_TITLE);
+            assert_eq!(active_incident.oopsie_title, NETWORK_OOPSIE_CARD_TITLE_1);
         }
 
         #[test]
@@ -108,7 +160,7 @@ mod path_tests {
             );
 
             let attack_card_id =
-                find_card_id_by_title(&board_with_active_incident, ATTACK_CARD_TITLE);
+                find_card_id_by_title(&board_with_active_incident, NETWORK_ATTACK_CARD_TITLE);
 
             let closed_attack = active_incident.close_card(attack_card_id);
             let board_after_closed_attack = get_board_from_game(&closed_attack);
@@ -132,7 +184,7 @@ mod path_tests {
             );
 
             let oopsie_card_id =
-                find_card_id_by_title(&board_with_active_incident, OOPSIE_CARD_TITLE);
+                find_card_id_by_title(&board_with_active_incident, NETWORK_OOPSIE_CARD_TITLE_1);
 
             let closed_oopsie = active_incident.close_card(oopsie_card_id);
             let board_after_closed_oopsie = get_board_from_game(&closed_oopsie);
@@ -145,98 +197,16 @@ mod path_tests {
     }
 
     mod reputation {
-        use crate::cards::properties::duration::Duration;
-        use crate::cards::properties::effect::Effect;
-        use crate::cards::properties::effect_description::EffectDescription;
-        use crate::cards::properties::incident_impact::IncidentImpact;
-        use crate::cards::properties::target::Target;
-        use crate::cards::properties::title::Title;
-        use crate::cards::types::attack::tests::FakeAttackCard;
-        use crate::cards::types::attack::AttackCard;
+        use super::*;
         use crate::cards::types::card_model::Card;
-        use crate::cards::types::oopsie::tests::FakeOopsieCard;
-        use crate::cards::types::oopsie::OopsieCard;
         use crate::world::deck::Deck;
         use crate::world::game::{Game, GameInitSettings, ReputationSettings};
         use crate::world::game_path_test::path_tests::get_board_from_game;
         use crate::world::reputation::Reputation;
         use crate::world::resources::Resources;
-        use fake::Fake;
-        use std::rc::Rc;
-        use crate::cards::types::event::EventCard;
-        use crate::cards::types::event::tests::FakeNoOpEventCard;
-
-        const NETWORK_ATTACK_CARD_TITLE: &str = "Attack card";
-        const NETWORK_OOPSIE_CARD_TITLE_1: &str = "Network Oopsie card 1";
-        const NETWORK_OOPSIE_CARD_TITLE_2: &str = "Network Oopsie card 2";
-        const MISSING_ATTACK_CARD_TITLE: &str = "Mising attack card";
-
-        struct AvailableCards {
-            network_oopsie_1: Card,
-            network_oopsie_2: Card,
-            network_attack: Card,
-            missing_attack: Card,
-            no_op_cards: Vec<Card>,
-        }
-
-        fn available_cards() -> AvailableCards {
-            let network_oopsie_1 = OopsieCard {
-                title: Title::new(NETWORK_OOPSIE_CARD_TITLE_1),
-                effect: Effect::AttackSurface(
-                    EffectDescription::new("Attack surface"),
-                    vec![Target::new("network")],
-                ),
-                ..FakeOopsieCard.fake()
-            };
-
-            let network_oopsie_2 = OopsieCard {
-                title: Title::new(NETWORK_OOPSIE_CARD_TITLE_2),
-                effect: Effect::AttackSurface(
-                    EffectDescription::new("Attack surface"),
-                    vec![Target::new("network")],
-                ),
-                ..FakeOopsieCard.fake()
-            };
-
-            let network_attack = AttackCard {
-                title: Title::new(NETWORK_ATTACK_CARD_TITLE),
-                effect: Effect::Incident(
-                    EffectDescription::new("Attack surface"),
-                    vec![Target::new("network")],
-                    IncidentImpact::Fixed(Resources::new(10)),
-                ),
-                duration: Duration::new(Some(5)),
-                ..FakeAttackCard.fake()
-            };
-
-            let missing_attack = AttackCard {
-                title: Title::new(MISSING_ATTACK_CARD_TITLE),
-                effect: Effect::Incident(
-                    EffectDescription::new("Attack surface"),
-                    vec![Target::new("none")],
-                    IncidentImpact::Fixed(Resources::new(10)),
-                ),
-                duration: Duration::new(Some(5)),
-                ..FakeAttackCard.fake()
-            };
-
-            let no_op_cards = (1..20).into_iter()
-                .map(|_| Card::from(FakeNoOpEventCard.fake::<EventCard>())).collect();
-
-            AvailableCards {
-                network_oopsie_1: Card::from(network_oopsie_1),
-                network_oopsie_2: Card::from(network_oopsie_2),
-                network_attack: Card::from(network_attack),
-                missing_attack: Card::from(missing_attack),
-                no_op_cards
-            }
-        }
-
-        fn create_deck(cards: Vec<Card>) -> Deck {
-            Deck::new(cards.iter().map(|c| Rc::new(c.clone())).collect())
-        }
 
         mod incident_non_stacked {
+            use crate::world::game_path_test::path_tests::{available_cards, create_deck};
             use super::*;
             fn create_game(deck: Deck) -> Game {
                 let init_settings = GameInitSettings {
@@ -610,6 +580,151 @@ mod path_tests {
 
                 assert_eq!(initial_reputation, game_reputation, "No Reputation change expected");
             }
+        }
+    }
+
+    mod resources {
+        use fake::Fake;
+        use crate::cards::properties::duration::Duration;
+        use crate::cards::properties::effect::Effect;
+        use crate::cards::properties::effect_description::EffectDescription;
+        use crate::cards::properties::incident_impact::IncidentImpact;
+        use crate::cards::properties::target::Target;
+        use crate::cards::properties::title::Title;
+        use crate::cards::types::attack::AttackCard;
+        use crate::cards::types::attack::tests::FakeAttackCard;
+        use crate::world::deck::Deck;
+        use crate::world::game::{Game, GameInitSettings};
+        use crate::world::part_of_hundred::PartOfHundred;
+        use crate::world::resources::Resources;
+
+        fn create_fixed_incident_effect(amount: Resources) -> AttackCard {
+            AttackCard {
+                title: Title::new("Fixed Incident"),
+                effect: Effect::Incident(
+                    EffectDescription::new("Fixed Incident"),
+                    vec![Target::new("network")],
+                    IncidentImpact::Fixed(amount),
+                ),
+                duration: Duration::new(Some(5)),
+                ..FakeAttackCard.fake::<AttackCard>()
+            }
+        }
+
+        fn create_relative_incident_effect(part_of_hundred: u8) -> AttackCard {
+            AttackCard {
+                title: Title::new("Relative Incident"),
+                effect: Effect::Incident(
+                    EffectDescription::new("Relative Incident"),
+                    vec![Target::new("network")],
+                    IncidentImpact::PartOfRevenue(PartOfHundred::new(part_of_hundred)),
+                ),
+                duration: Duration::new(Some(5)),
+                ..FakeAttackCard.fake::<AttackCard>()
+            }
+        }
+
+        fn create_game(deck: Deck, resource_gain: Resources) -> Game {
+            let init_settings = GameInitSettings {
+                resource_gain,
+                resources: Resources::new(100),
+                ..GameInitSettings::default()
+            };
+
+            Game::create(deck, init_settings)
+
+        }
+
+        mod incidents {
+            use crate::cards::types::card_model::Card;
+            use super::*;
+            use crate::world::game::GameStatus;
+            use crate::world::game_path_test::path_tests::{available_cards, create_deck};
+            use crate::world::game_path_test::path_tests::resources::create_game;
+            use crate::world::resources::Resources;
+
+            impl GameStatus {
+                fn is_finished(&self) -> bool {
+                    match &self {
+                        GameStatus::Finished(_) => true,
+                        _ => false,
+                    }
+                }
+
+                fn is_not_finished(&self) -> bool {
+                    !self.is_finished()
+                }
+            }
+
+            #[test]
+            fn no_incident_no_changed_resource_gain() {
+                let deck = create_deck(
+                    vec![available_cards().network_oopsie_1, available_cards().missing_attack, available_cards().no_op_cards[0].clone(), available_cards().no_op_cards[1].clone()],
+                );
+                let resource_gain = Resources::new(10);
+
+                let mut game = create_game(deck, resource_gain);
+                while game.status.is_not_finished() {
+                    game = game.next_round();
+                    assert_eq!(game.get_resource_gain(), resource_gain);
+                }
+            }
+
+            #[test]
+            fn incident_changed_resource_gain_and_reverts_when_done() {
+                let fixed_incident_1 = create_fixed_incident_effect(Resources::new(5));
+                let relative_incident_1 = create_relative_incident_effect(50);
+                let fixed_incident_2 = create_fixed_incident_effect(Resources::new(10));
+                let relative_incident_2 = create_relative_incident_effect(75);
+
+                let mut cards = vec![available_cards().network_oopsie_1, Card::from(fixed_incident_1), Card::from(relative_incident_1), Card::from(relative_incident_2), Card::from(fixed_incident_2)];
+                cards.append(&mut available_cards().no_op_cards.clone());
+
+                let deck = create_deck(cards);
+                let initial_resource_gain = Resources::new(20);
+
+                let initial_game = create_game(deck, initial_resource_gain);
+
+                let oopsie_drawn = initial_game.next_round();
+                assert_eq!(oopsie_drawn.get_resource_gain(), initial_resource_gain);
+
+                let incident_1 = oopsie_drawn.next_round();
+                // -5, dur 5
+                assert_eq!(incident_1.get_resource_gain(), Resources::new(15), "Expected fixed effect of -5");
+
+                let incident_2 = incident_1.next_round();
+                // -8
+                assert_eq!(incident_2.get_resource_gain(), Resources::new(7), "Expected relative effect of 50% of 7.5 -> rounded to 8");
+
+                let incident_3 = incident_2.next_round();
+                // -5
+                assert_eq!(incident_3.get_resource_gain(), Resources::new(2), "75% of 7 = 5.25 -> 2");
+
+                let incident_4 = incident_3.next_round();
+                // -2
+                assert_eq!(incident_4.get_resource_gain(), Resources::new(0), "No negative gain");
+
+                let no_change = incident_4.next_round();
+                assert_eq!(no_change.get_resource_gain(), Resources::new(0));
+
+                let incident_1_over = no_change.next_round();
+                // +5
+                assert_eq!(incident_1_over.get_resource_gain(), Resources::new(5));
+
+                let incident_2_over = incident_1_over.next_round();
+                // +8
+                assert_eq!(incident_2_over.get_resource_gain(), Resources::new(13));
+
+                let incident_3_over = incident_2_over.next_round();
+                // +5
+                assert_eq!(incident_3_over.get_resource_gain(), Resources::new(18));
+
+                let incident_4_over = incident_3_over.next_round();
+                // +2
+                assert_eq!(incident_4_over.get_resource_gain(), Resources::new(20));
+            }
+
+
         }
     }
 

@@ -1,3 +1,5 @@
+extern crate core;
+
 pub mod cards;
 pub mod errors;
 pub mod file;

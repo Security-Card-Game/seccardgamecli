@@ -40,7 +40,7 @@ pub(crate) struct GameViewState {
 
 impl ViewState for GameViewState {
     fn logic(&mut self) {
-        self.process_command()
+        self.process_command();
     }
 
     fn ui(&mut self, _app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {
@@ -54,7 +54,7 @@ impl ViewState for GameViewState {
 
 impl GameViewState {
     pub fn new(game: Game, game_goals: GameGoals, scenario: Option<Rc<Scenario>>) -> Self {
-        let initial_gain = game.resource_gain.value().clone();
+        let initial_gain = game.get_resource_gain().value().clone();
         let initial_multiplier = game.fix_multiplier.value().clone();
         GameViewState {
             game,

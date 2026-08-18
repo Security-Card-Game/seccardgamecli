@@ -28,9 +28,17 @@ pub struct Board {
     pub open_cards: HashMap<Uuid, CardRc>,
     pub cards_to_use: HashSet<Uuid>,
     pub active_incidents: Vec<Incident>,
+    pub active_incident_resource_effects: Vec<ResourceEffect>,
     pub incident_free_turns: usize,
     pub cost_modifier: Option<CostModifier>,
     pub turns_remaining: usize,
+    pub resource_gain: Resources
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResourceEffect {
+    pub attack_card_id: Uuid,
+    pub effect: Resources
 }
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct Incident {
@@ -41,10 +49,12 @@ pub struct Incident {
 }
 
 impl Board {
-    pub fn init(deck: &Deck, start_resources: Resources, reputation_settings: ReputationSettings) -> Self {
+    pub fn init(deck: &Deck, start_resources: Resources, resource_gain: Resources, reputation_settings: ReputationSettings) -> Self {
         Board {
             current_resources: start_resources,
             current_reputation: reputation_settings.initial_reputation,
+            resource_gain,
+            active_incident_resource_effects: Vec::new(),
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
@@ -59,6 +69,8 @@ impl Board {
         Board {
             current_resources: Resources::new(0),
             current_reputation: Reputation::start_value(),
+            resource_gain: Resources::new(0),
+            active_incident_resource_effects: Vec::new(),
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
