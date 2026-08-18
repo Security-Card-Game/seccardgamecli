@@ -125,7 +125,7 @@ mod tests {
     use crate::cards::types::evaluation::EvaluationCard;
     use crate::cards::types::evaluation::tests::FakeEvaluationCard;
     use crate::world::actions::action_error::ActionError;
-    use crate::world::actions::calculate_board::calculate_board;
+    use crate::world::actions::calculate_board::update_board_state;
     use crate::world::actions::close_oopsie::try_and_pay_for_oopsie_fix;
     use crate::world::board::Board;
     use crate::world::board::tests::{generate_board_with_open_card, remove_card_from_open_cards};
@@ -286,7 +286,7 @@ mod tests {
             (lucky_id, lucky_rc),
         ];
 
-        let prepared_board = calculate_board(
+        let prepared_board = update_board_state(
             Board {
                 open_cards: open_cards.into_iter().collect(),
                 cards_to_use: vec![lucky_id].into_iter().collect(),
@@ -298,7 +298,7 @@ mod tests {
                 played_cards: 10,
                 total: 10,
             },
-            &ReputationSettings::default(),
+            &None
         );
 
         let expected_board = Board {
@@ -352,7 +352,7 @@ mod tests {
             (lucky_id, lucky_rc),
         ];
 
-        let prepared_board = calculate_board(
+        let prepared_board = update_board_state(
             Board {
                 open_cards: open_cards.into_iter().collect(),
                 cards_to_use: vec![lucky_id].into_iter().collect(),
@@ -364,7 +364,7 @@ mod tests {
                 played_cards: 10,
                 total: 10,
             },
-            &ReputationSettings::default(),
+            &None,
         );
 
         dbg!("open cards: {}", prepared_board.clone().open_cards);

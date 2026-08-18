@@ -21,7 +21,7 @@ impl GameViewState {
 
     pub(crate) fn handle_set_resource_gain(&mut self, res: usize) {
         self.game = self.game.set_resource_gain(Resources::new(res));
-        self.input.next_res = res.to_string();
+        self.input.next_res = self.game.get_resource_gain().value().to_string();
     }
 
     pub(crate) fn handle_increase_reputation(&mut self, rep: u8) {
