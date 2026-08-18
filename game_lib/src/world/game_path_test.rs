@@ -675,7 +675,7 @@ mod path_tests {
                 let fixed_incident_1 = create_fixed_incident_effect(Resources::new(5));
                 let relative_incident_1 = create_relative_incident_effect(50);
                 let fixed_incident_2 = create_fixed_incident_effect(Resources::new(10));
-                let relative_incident_2 = create_relative_incident_effect(50);
+                let relative_incident_2 = create_relative_incident_effect(75);
 
                 let mut cards = vec![available_cards().network_oopsie_1, Card::from(fixed_incident_1), Card::from(relative_incident_1), Card::from(relative_incident_2), Card::from(fixed_incident_2)];
                 cards.append(&mut available_cards().no_op_cards.clone());

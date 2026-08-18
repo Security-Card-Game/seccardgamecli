@@ -5,13 +5,17 @@ It has to be called when
 - Any card is closed
 - Any card is applied
  */
+use std::cmp::min;
 use std::collections::{HashMap, HashSet};
+use log::warn;
 use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::properties::effect::Effect;
+use crate::cards::properties::incident_impact::IncidentImpact;
+use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;
-use crate::world::board::{Board, Incident};
+use crate::world::board::{Board, Incident, ResourceEffect};
 use crate::world::deck::{CardRc, Deck};
 use crate::world::game::ReputationSettings;
 use crate::world::reputation::Reputation;
@@ -56,15 +60,86 @@ pub(crate) fn calculate_board(
     let active_incidents = determine_active_incidents(&board);
 
     let resource_gain = if let Some(manual_gain) = force_set_resource_gain {
-        manual_gain
+        (manual_gain, board.active_incident_resource_effects)
     } else {
-        &board.resource_gain
+        let previous_active_incidents = &board.active_incidents.iter().map(|i| i.attack_card_id).collect::<Vec<_>>();
+        let current_active_incidents = &active_incidents.iter().map(|i| i.attack_card_id).collect::<Vec<_>>();
+
+        let new_incidents = current_active_incidents.iter().filter(|i| !previous_active_incidents.contains(i)).collect::<Vec<_>>();
+        if (new_incidents.len() > 1) {
+            warn!("More then one new incident?");
+        }
+
+        let finished_incidents = previous_active_incidents.iter().filter(|i| !current_active_incidents.contains(i)).collect::<Vec<_>>();
+
+        let open_cards = board.open_cards.clone();
+        let mut new_effects = board.active_incident_resource_effects.clone();
+        let mut amount_to_reduce = Resources::new(0);
+        for incident in new_incidents {
+            let effect = if let Some(card) = open_cards.get(incident) {
+                match &**card {
+                    Card::Attack(a) => {
+                        match &a.effect {
+                            Effect::Incident(_, _, e) => {
+                                match e {
+                                    IncidentImpact::PartOfRevenue(p) => {
+                                       let calculated = board.resource_gain.value().clone() as f32 * (p.value as f32) / 100f32;
+                                        let effect = min(board.resource_gain, Resources::new(calculated.round() as usize));
+                                        Some(ResourceEffect {
+                                            attack_card_id: incident.clone(),
+                                            effect,
+                                        })
+                                    }
+                                    IncidentImpact::Fixed(f) => {
+                                        Some(ResourceEffect {
+                                            attack_card_id: incident.clone(),
+                                            effect: min(board.resource_gain, f.clone())
+                                        })
+                                    }
+                                }
+                            },
+                            _ => {
+                                warn!("No incident effect!");
+                                None
+                            }
+                        }
+                    }
+                    _ => {
+                            warn!("No attack card!");
+                            None
+                        }
+                }
+            } else {
+                None
+            };
+            if let Some(e) = effect {
+                amount_to_reduce = amount_to_reduce + e.effect;
+                new_effects.push(e)
+
+            };
+        }
+
+        let mut amount_to_increase = Resources::new(0);
+
+        for resolved_incident in finished_incidents {
+            let idx_resolved_effect = new_effects.iter().position(|x| &x.attack_card_id == resolved_incident);
+            if let Some(idx) = idx_resolved_effect {
+                let effect = new_effects.remove(idx);
+                amount_to_increase = amount_to_increase + effect.effect;
+            } else {
+                warn!("No effect found for resolved incident {}", resolved_incident);
+            }
+
+        }
+
+        (&(&board.resource_gain - &amount_to_reduce + amount_to_increase), new_effects)
     };
 
     Board {
         turns_remaining: remaining_rounds,
         cost_modifier: fix_modifier,
-        resource_gain: resource_gain.clone(),
+        resource_gain: resource_gain.0.clone(),
+        active_incident_resource_effects: resource_gain.1,
         active_incidents,
         ..board
     }
