@@ -41,7 +41,6 @@ pub(crate) struct GameViewState {
 impl ViewState for GameViewState {
     fn logic(&mut self) {
         self.process_command();
-        self.input.next_res = self.game.get_resource_gain().value().to_string();
     }
 
     fn ui(&mut self, _app_event_callback: &mut dyn FnMut(AppEvent), ui: &mut Ui) {

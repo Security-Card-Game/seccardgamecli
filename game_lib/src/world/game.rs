@@ -54,7 +54,6 @@ pub struct Game {
     /// this property contains the result of the last action performed by the player. Use this to know what happened.
     pub action_status: GameActionResult,
     pub fix_multiplier: ResourceFixMultiplier,
-    update_resource_gain: Option<Resources>,
     reputation_settings: ReputationSettings
 }
 
@@ -203,7 +202,6 @@ impl Game {
             action_status: GameActionResult::Success,
             fix_multiplier: init_settings.fix_multiplier,
             reputation_settings: init_settings.reputation.clone(),
-            update_resource_gain: None,
         }
     }
 
@@ -214,7 +212,7 @@ impl Game {
             draw_card_and_place_on_board(self.deck.clone(), self.get_board().clone())
         {
             let updated_attacks_board = update_attack_cards(board);
-            let new_board = progress_board_to_next_turn(updated_attacks_board, &new_deck, &self.reputation_settings, &self.update_resource_gain);
+            let new_board = progress_board_to_next_turn(updated_attacks_board, &new_deck, &self.reputation_settings, &None);
 
             let status = if new_board.turns_remaining == 0 {
                 GameStatus::Finished(new_board)
@@ -224,7 +222,6 @@ impl Game {
             Game {
                 action_status: GameActionResult::Success,
                 deck: new_deck,
-                update_resource_gain: None,
                 status,
                 ..self.clone()
             }
@@ -239,8 +236,12 @@ impl Game {
     /// Manually set the resource gain for the next round.
     pub fn set_resource_gain(&self, new_gain: Resources) -> Self {
         match &self.status {
-            GameStatus::Start(_) | GameStatus::InProgress(_) => Game {
-                update_resource_gain: Some(new_gain),
+            GameStatus::Start(b) => Game {
+                status: GameStatus::Start(update_board_state(b.clone(), &self.deck, &Some(new_gain))),
+                ..self.clone()
+            },
+            GameStatus::InProgress(b) => Game {
+                status: GameStatus::InProgress(update_board_state(b.clone(), &self.deck, &Some(new_gain))),
                 ..self.clone()
             },
             GameStatus::Finished(_) => Game { ..self.clone() },
@@ -255,7 +256,7 @@ impl Game {
 
                 let (b, res) = match new_board {
                     Ok(b) => (b, GameActionResult::Success),
-                    Err(e) => handle_action_error(board, &self.deck, &self.reputation_settings, e),
+                    Err(e) => handle_action_error(board, &self.deck, e),
                 };
                 Game {
                     status: GameStatus::InProgress(update_board_state(b, &self.deck, &None)),
@@ -331,7 +332,7 @@ impl Game {
                 ..self.clone()
             },
             Err(err) => {
-                let (b, r) = handle_action_error(self.get_board(), &self.deck, &self.reputation_settings, err);
+                let (b, r) = handle_action_error(self.get_board(), &self.deck, err);
                 Game {
                     status: GameStatus::InProgress(update_board_state(b, &self.deck, &None)),
                     action_status: r,
@@ -429,7 +430,7 @@ impl Game {
     }
 }
 
-fn handle_action_error(board: &Board, deck: &Deck, reputation_settings: &ReputationSettings, err: ActionError) -> (Board, GameActionResult) {
+fn handle_action_error(board: &Board, deck: &Deck, err: ActionError) -> (Board, GameActionResult) {
     match err {
         ActionError::AttackForceClosed(b) => (b.clone(), GameActionResult::AttackForceClosed),
         ActionError::NoCardsLeft => (board.clone(), InvalidAction),
@@ -545,7 +546,6 @@ mod tests {
             action_status: GameActionResult::Success,
             fix_multiplier: ResourceFixMultiplier::new(2),
             reputation_settings: ReputationSettings::default(),
-            update_resource_gain: None,
         };
 
         let sut = Game::create(
