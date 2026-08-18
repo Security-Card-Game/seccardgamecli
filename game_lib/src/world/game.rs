@@ -192,7 +192,7 @@ impl Game {
     /// Use this to start.
     pub fn create(deck: Deck, init_settings: GameInitSettings) -> Self {
         let board = Board::init(&deck, init_settings.resources, init_settings.reputation);
-        let status = GameStatus::Start(calculate_board(board, &deck, &init_settings.reputation));
+        let status = GameStatus::Start(board);
 
         Game {
             deck,
