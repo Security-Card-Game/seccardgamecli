@@ -298,7 +298,7 @@ mod tests {
                 played_cards: 10,
                 total: 10,
             },
-            &ReputationSettings::default(),
+            &None
         );
 
         let expected_board = Board {
@@ -364,7 +364,7 @@ mod tests {
                 played_cards: 10,
                 total: 10,
             },
-            &ReputationSettings::default(),
+            &None,
         );
 
         dbg!("open cards: {}", prepared_board.clone().open_cards);

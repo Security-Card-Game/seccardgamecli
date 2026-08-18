@@ -17,33 +17,55 @@ use crate::world::game::ReputationSettings;
 use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
 
-pub(crate) fn calculate_board(
+pub(crate) fn progress_board_to_next_turn(
     board: Board,
     deck: &Deck,
     reputation_settings: &ReputationSettings,
+    force_set_resource_gain: &Option<Resources>,
 ) -> Board {
-    let remaining_rounds = calculate_remaining_rounds(deck);
-    let fix_modifier = calculate_cost_modifier(&board);
-    let active_incidents = determine_active_incidents(&board);
+    let previous_active_incidents = &board.active_incidents.clone();
+    let update_board = calculate_board(board, deck, force_set_resource_gain);
+    let active_incidents = determine_active_incidents(&update_board);
     let reputation_decrease = calculate_reputation_decrease(
-        &board.active_incidents,
+        &previous_active_incidents,
         &active_incidents,
         &reputation_settings,
     );
 
-
     let reputation_gain =
-        calculate_reputation_gain(&board, &active_incidents, &reputation_settings);
+        calculate_reputation_gain(&update_board, &active_incidents, &reputation_settings);
     let current_reputation =
-        board.current_reputation + reputation_gain.bonus + reputation_gain.turn_based
+        update_board.current_reputation + reputation_gain.bonus + reputation_gain.turn_based
             - reputation_decrease;
+
+    Board {
+        incident_free_turns: calculate_incident_free_turns(&update_board, &active_incidents),
+        current_reputation,
+        current_resources: &update_board.current_resources + &update_board.resource_gain,
+        ..update_board
+    }
+}
+
+pub(crate) fn calculate_board(
+    board: Board,
+    deck: &Deck,
+    force_set_resource_gain: &Option<Resources>,
+) -> Board {
+    let remaining_rounds = calculate_remaining_rounds(deck);
+    let fix_modifier = calculate_cost_modifier(&board);
+    let active_incidents = determine_active_incidents(&board);
+
+    let resource_gain = if let Some(manual_gain) = force_set_resource_gain {
+        manual_gain
+    } else {
+        &board.resource_gain
+    };
 
     Board {
         turns_remaining: remaining_rounds,
         cost_modifier: fix_modifier,
-        incident_free_turns: calculate_incident_free_turns(&board, &active_incidents),
+        resource_gain: resource_gain.clone(),
         active_incidents,
-        current_reputation,
         ..board
     }
 }
@@ -467,7 +489,7 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = calculate_board(board, &deck, &ReputationSettings::default());
+        let new_board = progress_board_to_next_turn(board, &deck, &ReputationSettings::default(), &None);
 
         assert_eq!(new_board, expected_board)
     }
@@ -651,7 +673,7 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = calculate_board(board, &deck, &ReputationSettings::default());
+        let new_board = progress_board_to_next_turn(board, &deck, &ReputationSettings::default(), &None);
 
         assert_eq!(new_board, expected_board)
     }

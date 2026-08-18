@@ -54,7 +54,7 @@ impl ViewState for GameViewState {
 
 impl GameViewState {
     pub fn new(game: Game, game_goals: GameGoals, scenario: Option<Rc<Scenario>>) -> Self {
-        let initial_gain = game.resource_gain.value().clone();
+        let initial_gain = game.get_resource_gain().value().clone();
         let initial_multiplier = game.fix_multiplier.value().clone();
         GameViewState {
             game,

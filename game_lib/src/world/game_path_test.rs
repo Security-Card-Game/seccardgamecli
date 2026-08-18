@@ -658,23 +658,20 @@ mod path_tests {
 
             #[test]
             fn no_incident_no_changed_resource_gain() {
-                let cards = available_cards();
                 let deck = create_deck(
                     vec![available_cards().network_oopsie_1, available_cards().missing_attack, available_cards().no_op_cards[0].clone(), available_cards().no_op_cards[1].clone()],
                 );
-                let card_count = deck.total;
                 let resource_gain = Resources::new(10);
 
                 let mut game = create_game(deck, resource_gain);
                 while game.status.is_not_finished() {
                     game = game.next_round();
-                    assert_eq!(game.resource_gain, resource_gain);
+                    assert_eq!(game.get_resource_gain(), resource_gain);
                 }
             }
 
             #[test]
             fn incident_changed_resource_gain_and_reverts_when_done() {
-                let cards = available_cards();
                 let fixed_incident_1 = create_fixed_incident_effect(Resources::new(5));
                 let relative_incident_1 = create_relative_incident_effect(50);
                 let fixed_incident_2 = create_fixed_incident_effect(Resources::new(10));
@@ -689,42 +686,42 @@ mod path_tests {
                 let initial_game = create_game(deck, initial_resource_gain);
 
                 let oopsie_drawn = initial_game.next_round();
-                assert_eq!(oopsie_drawn.resource_gain, initial_resource_gain);
+                assert_eq!(oopsie_drawn.get_resource_gain(), initial_resource_gain);
 
                 let incident_1 = oopsie_drawn.next_round();
                 // -5, dur 5
-                assert_eq!(incident_1.resource_gain, Resources::new(15), "Expected fixed effect of -5");
+                assert_eq!(incident_1.get_resource_gain(), Resources::new(15), "Expected fixed effect of -5");
 
                 let incident_2 = incident_1.next_round();
                 // -8
-                assert_eq!(incident_2.resource_gain, Resources::new(7), "Expected relative effect of 50% of 7.5 -> rounded to 8");
+                assert_eq!(incident_2.get_resource_gain(), Resources::new(7), "Expected relative effect of 50% of 7.5 -> rounded to 8");
 
                 let incident_3 = incident_2.next_round();
                 // -5
-                assert_eq!(incident_3.resource_gain, Resources::new(2), "75% of 7 = 5.25 -> 2");
+                assert_eq!(incident_3.get_resource_gain(), Resources::new(2), "75% of 7 = 5.25 -> 2");
 
                 let incident_4 = incident_3.next_round();
                 // -2
-                assert_eq!(incident_4.resource_gain, Resources::new(0), "No negative gain");
+                assert_eq!(incident_4.get_resource_gain(), Resources::new(0), "No negative gain");
 
                 let no_change = incident_4.next_round();
-                assert_eq!(no_change.resource_gain, Resources::new(0));
+                assert_eq!(no_change.get_resource_gain(), Resources::new(0));
 
                 let incident_1_over = no_change.next_round();
                 // +5
-                assert_eq!(incident_1_over.resource_gain, Resources::new(5));
+                assert_eq!(incident_1_over.get_resource_gain(), Resources::new(5));
 
                 let incident_2_over = incident_1_over.next_round();
                 // +8
-                assert_eq!(incident_2_over.resource_gain, Resources::new(13));
+                assert_eq!(incident_2_over.get_resource_gain(), Resources::new(13));
 
                 let incident_3_over = incident_2_over.next_round();
                 // +5
-                assert_eq!(incident_3_over.resource_gain, Resources::new(18));
+                assert_eq!(incident_3_over.get_resource_gain(), Resources::new(18));
 
                 let incident_4_over = incident_3_over.next_round();
                 // +2
-                assert_eq!(incident_4_over.resource_gain, Resources::new(20));
+                assert_eq!(incident_4_over.get_resource_gain(), Resources::new(20));
             }
 
 
