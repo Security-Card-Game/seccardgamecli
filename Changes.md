@@ -1,6 +1,6 @@
 # Changes
 
-## upcoming
+## 0.10.0
 
 * [FEATURE] on an incident reputation a configurable reputation penalty is applied
 * [FEATURE] add reputation gain when players are incident-free for a given period
