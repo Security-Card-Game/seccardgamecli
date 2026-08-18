@@ -28,10 +28,10 @@ impl GameViewState {
         };
 
         if incidents.is_empty() {
-            create_message(&"No incidents!".to_string(), Color32::GREEN, ui);
+            create_message(&"No incidents!".to_string(), Color32::GREEN, Color32::from_rgb(0, 158, 115), ui);
             return;
         }
-        create_message(&format!("Incidents ({}):", incidents.len()), Color32::RED, ui);
+        create_message(&format!("Incidents ({}):", incidents.len()), Color32::RED, Color32::from_rgb(213, 94, 0), ui);
         for incident in incidents {
             ui.label(format!(
                 "{} -> {}",
@@ -41,15 +41,21 @@ impl GameViewState {
     }
 
     fn display_message(&mut self, ui: &mut Ui) {
+
         match &self.input.message {
-            Message::Success(m) => create_message(m, Color32::GREEN, ui),
-            Message::Failure(m) => create_message(m, Color32::RED, ui),
-            Message::Warning(m) => create_message(m, Color32::GOLD, ui),
+            Message::Success(m) => create_message(m, Color32::GREEN, Color32::from_rgb(0, 158, 115), ui),
+            Message::Failure(m) => create_message(m, Color32::RED, Color32::from_rgb(213,94,0), ui),
+            Message::Warning(m) => create_message(m, Color32::GOLD, Color32::from_rgb(230, 159, 0), ui),
             Message::None => {}
         }
     }
 }
 
-fn create_message(message: &String, color: Color32, ui: &mut Ui) {
+fn create_message(message: &String, color_dark_mode: Color32, color_light_mode: Color32, ui: &mut Ui) {
+    let color = if ui.style().visuals.dark_mode {
+        color_dark_mode
+    } else {
+        color_light_mode
+    };
     ui.label(RichText::new(message).color(color));
 }

@@ -123,7 +123,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::LIGHT_BLUE,
-            Color32::DARK_BLUE,
+            Color32::from_rgb(0, 114, 178),
             Card::Event(card),
             None,
             None,
@@ -202,7 +202,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::LIGHT_RED,
-            Color32::DARK_RED,
+            Color32::from_rgb(204, 121, 167),
             Card::Attack(card),
             None,
             effect,
@@ -223,7 +223,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::YELLOW,
-            Color32::DARK_GRAY,
+            Color32::from_rgb(230,159,0),
             Card::Oopsie(card),
             Some(fix_cost.clone()),
             None,
@@ -244,7 +244,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::GREEN,
-            Color32::DARK_GREEN,
+            Color32::from_rgb(0, 158, 115),
             Card::Lucky(card),
             None,
             None,
@@ -265,7 +265,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::LIGHT_GRAY,
-            Color32::DARK_GRAY,
+            Color32::from_rgb(204,121,167),
             Card::Evaluation(card),
             None,
             None,
