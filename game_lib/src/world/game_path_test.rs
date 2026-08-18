@@ -583,6 +583,154 @@ mod path_tests {
         }
     }
 
+    mod resources {
+        use fake::Fake;
+        use crate::cards::properties::duration::Duration;
+        use crate::cards::properties::effect::Effect;
+        use crate::cards::properties::effect_description::EffectDescription;
+        use crate::cards::properties::incident_impact::IncidentImpact;
+        use crate::cards::properties::target::Target;
+        use crate::cards::properties::title::Title;
+        use crate::cards::types::attack::AttackCard;
+        use crate::cards::types::attack::tests::FakeAttackCard;
+        use crate::world::deck::Deck;
+        use crate::world::game::{Game, GameInitSettings};
+        use crate::world::part_of_hundred::PartOfHundred;
+        use crate::world::resources::Resources;
+
+        fn create_fixed_incident_effect(amount: Resources) -> AttackCard {
+            AttackCard {
+                title: Title::new("Fixed Incident"),
+                effect: Effect::Incident(
+                    EffectDescription::new("Fixed Incident"),
+                    vec![Target::new("network")],
+                    IncidentImpact::Fixed(amount),
+                ),
+                duration: Duration::new(Some(5)),
+                ..FakeAttackCard.fake::<AttackCard>()
+            }
+        }
+
+        fn create_relative_incident_effect(part_of_hundred: u8) -> AttackCard {
+            AttackCard {
+                title: Title::new("Relative Incident"),
+                effect: Effect::Incident(
+                    EffectDescription::new("Relative Incident"),
+                    vec![Target::new("network")],
+                    IncidentImpact::PartOfRevenue(PartOfHundred::new(part_of_hundred)),
+                ),
+                duration: Duration::new(Some(5)),
+                ..FakeAttackCard.fake::<AttackCard>()
+            }
+        }
+
+        fn create_game(deck: Deck, resource_gain: Resources) -> Game {
+            let init_settings = GameInitSettings {
+                resource_gain,
+                resources: Resources::new(100),
+                ..GameInitSettings::default()
+            };
+
+            Game::create(deck, init_settings)
+
+        }
+
+        mod incidents {
+            use crate::cards::types::card_model::Card;
+            use super::*;
+            use crate::world::game::GameStatus;
+            use crate::world::game_path_test::path_tests::{available_cards, create_deck};
+            use crate::world::game_path_test::path_tests::resources::create_game;
+            use crate::world::resources::Resources;
+
+            impl GameStatus {
+                fn is_finished(&self) -> bool {
+                    match &self {
+                        GameStatus::Finished(_) => true,
+                        _ => false,
+                    }
+                }
+
+                fn is_not_finished(&self) -> bool {
+                    !self.is_finished()
+                }
+            }
+
+            #[test]
+            fn no_incident_no_changed_resource_gain() {
+                let cards = available_cards();
+                let deck = create_deck(
+                    vec![available_cards().network_oopsie_1, available_cards().missing_attack, available_cards().no_op_cards[0].clone(), available_cards().no_op_cards[1].clone()],
+                );
+                let card_count = deck.total;
+                let resource_gain = Resources::new(10);
+
+                let mut game = create_game(deck, resource_gain);
+                while game.status.is_not_finished() {
+                    game = game.next_round();
+                    assert_eq!(game.resource_gain, resource_gain);
+                }
+            }
+
+            #[test]
+            fn incident_changed_resource_gain_and_reverts_when_done() {
+                let cards = available_cards();
+                let fixed_incident_1 = create_fixed_incident_effect(Resources::new(5));
+                let relative_incident_1 = create_relative_incident_effect(50);
+                let fixed_incident_2 = create_fixed_incident_effect(Resources::new(10));
+                let relative_incident_2 = create_relative_incident_effect(50);
+
+                let mut cards = vec![available_cards().network_oopsie_1, Card::from(fixed_incident_1), Card::from(relative_incident_1), Card::from(relative_incident_2), Card::from(fixed_incident_2)];
+                cards.append(&mut available_cards().no_op_cards.clone());
+
+                let deck = create_deck(cards);
+                let initial_resource_gain = Resources::new(20);
+
+                let initial_game = create_game(deck, initial_resource_gain);
+
+                let oopsie_drawn = initial_game.next_round();
+                assert_eq!(oopsie_drawn.resource_gain, initial_resource_gain);
+
+                let incident_1 = oopsie_drawn.next_round();
+                // -5, dur 5
+                assert_eq!(incident_1.resource_gain, Resources::new(15), "Expected fixed effect of -5");
+
+                let incident_2 = incident_1.next_round();
+                // -8
+                assert_eq!(incident_2.resource_gain, Resources::new(7), "Expected relative effect of 50% of 7.5 -> rounded to 8");
+
+                let incident_3 = incident_2.next_round();
+                // -5
+                assert_eq!(incident_3.resource_gain, Resources::new(2), "75% of 7 = 5.25 -> 2");
+
+                let incident_4 = incident_3.next_round();
+                // -2
+                assert_eq!(incident_4.resource_gain, Resources::new(0), "No negative gain");
+
+                let no_change = incident_4.next_round();
+                assert_eq!(no_change.resource_gain, Resources::new(0));
+
+                let incident_1_over = no_change.next_round();
+                // +5
+                assert_eq!(incident_1_over.resource_gain, Resources::new(5));
+
+                let incident_2_over = incident_1_over.next_round();
+                // +8
+                assert_eq!(incident_2_over.resource_gain, Resources::new(13));
+
+                let incident_3_over = incident_2_over.next_round();
+                // +5
+                assert_eq!(incident_3_over.resource_gain, Resources::new(18));
+
+                let incident_4_over = incident_3_over.next_round();
+                // +2
+                assert_eq!(incident_4_over.resource_gain, Resources::new(20));
+            }
+
+
+        }
+    }
+
     fn get_board_from_game(game: &Game) -> Board {
         match &game.status {
             GameStatus::InProgress(b) | GameStatus::Start(b) | GameStatus::Finished(b) => b.clone(),
