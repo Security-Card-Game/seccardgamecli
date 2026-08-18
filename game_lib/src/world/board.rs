@@ -28,6 +28,8 @@ pub struct Board {
     pub open_cards: HashMap<Uuid, CardRc>,
     pub cards_to_use: HashSet<Uuid>,
     pub active_incidents: Vec<Incident>,
+    pub incident_free_turns: usize,
+    pub reputation_gain: Reputation,
     pub cost_modifier: Option<CostModifier>,
     pub turns_remaining: usize,
 }
@@ -48,6 +50,8 @@ impl Board {
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
             active_incidents: Vec::new(),
+            incident_free_turns: 0,
+            reputation_gain: Reputation::new(0),
             cost_modifier: None,
             turns_remaining: deck.total,
         }
@@ -61,6 +65,8 @@ impl Board {
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
             active_incidents: Vec::new(),
+            incident_free_turns: 0,
+            reputation_gain: Reputation::new(0),
             cost_modifier: None,
             turns_remaining: 0,
         }
