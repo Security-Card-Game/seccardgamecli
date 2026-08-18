@@ -534,7 +534,6 @@ mod tests {
                 cards_to_use: HashSet::new(),
                 active_incidents: Vec::new(),
                 incident_free_turns: 0,
-                reputation_gain: Reputation::new(0),
                 cost_modifier: None,
                 turns_remaining: test_deck.start_deck.total,
             }),
