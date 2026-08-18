@@ -13,7 +13,6 @@ use uuid::Uuid;
 use crate::cards::properties::cost_modifier::CostModifier;
 use crate::cards::properties::effect::Effect;
 use crate::cards::properties::incident_impact::IncidentImpact;
-use crate::cards::types::attack::AttackCard;
 use crate::cards::types::card_model::Card;
 use crate::world::board::{Board, Incident, ResourceEffect};
 use crate::world::deck::{CardRc, Deck};
@@ -62,11 +61,11 @@ pub(crate) fn calculate_board(
     let resource_gain = if let Some(manual_gain) = force_set_resource_gain {
         (manual_gain, board.active_incident_resource_effects)
     } else {
-        let previous_active_incidents = &board.active_incidents.iter().map(|i| i.attack_card_id).collect::<Vec<_>>();
-        let current_active_incidents = &active_incidents.iter().map(|i| i.attack_card_id).collect::<Vec<_>>();
+        let previous_active_incidents = &board.active_incidents.iter().map(|i| i.attack_card_id).collect::<HashSet<_>>();
+        let current_active_incidents = &active_incidents.iter().map(|i| i.attack_card_id).collect::<HashSet<_>>();
 
         let new_incidents = current_active_incidents.iter().filter(|i| !previous_active_incidents.contains(i)).collect::<Vec<_>>();
-        if (new_incidents.len() > 1) {
+        if new_incidents.len() > 1 {
             warn!("More then one new incident?");
         }
 
@@ -119,18 +118,7 @@ pub(crate) fn calculate_board(
             };
         }
 
-        let mut amount_to_increase = Resources::new(0);
-
-        for resolved_incident in finished_incidents {
-            let idx_resolved_effect = new_effects.iter().position(|x| &x.attack_card_id == resolved_incident);
-            if let Some(idx) = idx_resolved_effect {
-                let effect = new_effects.remove(idx);
-                amount_to_increase = amount_to_increase + effect.effect;
-            } else {
-                warn!("No effect found for resolved incident {}", resolved_incident);
-            }
-
-        }
+        let amount_to_increase = reverse_resolved_incident_effects(finished_incidents, &mut new_effects);
 
         (&(&board.resource_gain - &amount_to_reduce + amount_to_increase), new_effects)
     };
@@ -143,6 +131,20 @@ pub(crate) fn calculate_board(
         active_incidents,
         ..board
     }
+}
+
+fn reverse_resolved_incident_effects(finished_incidents: Vec<&Uuid>, new_effects: &mut Vec<ResourceEffect>) -> Resources {
+    let mut amount_to_increase = Resources::new(0);
+    for resolved_incident in finished_incidents {
+        let idx_resolved_effect = new_effects.iter().position(|x| &x.attack_card_id == resolved_incident);
+        if let Some(idx) = idx_resolved_effect {
+            let effect = new_effects.remove(idx);
+            amount_to_increase = amount_to_increase + effect.effect;
+        } else {
+            warn!("No effect found for resolved incident {}", resolved_incident);
+        }
+    }
+    amount_to_increase
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
