@@ -4,6 +4,8 @@
 
 * [FEATURE] on an incident reputation a configurable reputation penalty is applied
 * [FEATURE] add reputation gain when players are incident-free for a given period
+* [UI] add card type as label
+* [UI] adjust light mode colors
 
 ## 0.9.2
 

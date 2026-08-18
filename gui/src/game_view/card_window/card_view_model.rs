@@ -32,7 +32,8 @@ pub struct CardContent {
     pub can_be_closed: bool,
     pub card_marker: CardMarker,
     pub close_label: String,
-    pub is_incident_target: bool
+    pub is_incident_target: bool,
+    pub card_type: String
 }
 
 #[derive(Clone, Debug)]
@@ -85,6 +86,13 @@ impl CardContent {
             card_marker: CardMarker::None,
             close_label,
             is_incident_target: is_targeted,
+            card_type: match card {
+                Card::Event(_) => "Event".to_string(),
+                Card::Attack(_) => "Attack".to_string(),
+                Card::Oopsie(_) => "Oopsie".to_string(),
+                Card::Lucky(_) => "Lucky".to_string(),
+                Card::Evaluation(_) => "Evaluation".to_string(),
+            }
         }
     }
 
