@@ -63,7 +63,11 @@ pub struct Game {
 pub struct ReputationSettings {
     pub initial_reputation: Reputation,
     pub incident_penalty: Reputation,
-    pub incident_penalty_stacked: bool
+    pub incident_penalty_stacked: bool,
+    pub gain_active: bool,
+    pub gain_incident_free_turns: u8,
+    pub gain_bonus: Reputation,
+    pub gain_turn_based: Reputation,
 }
 
 impl Default for ReputationSettings {
@@ -71,7 +75,11 @@ impl Default for ReputationSettings {
         ReputationSettings {
             initial_reputation: Reputation::start_value(),
             incident_penalty: Reputation::default_incident_penalty(),
-            incident_penalty_stacked: false
+            incident_penalty_stacked: false,
+            gain_active: true,
+            gain_incident_free_turns: 5,
+            gain_bonus: Reputation::new(5),
+            gain_turn_based: Reputation::new(1)
         }
     }
 }
@@ -95,11 +103,7 @@ impl Default for GameInitSettings {
             resource_gain: Resources::new(5),
             resources: Resources::default(),
             fix_multiplier: ResourceFixMultiplier::default(),
-            reputation: ReputationSettings {
-                initial_reputation: Reputation::start_value(),
-                incident_penalty: Reputation::default_incident_penalty(),
-                incident_penalty_stacked: false
-            },
+            reputation: ReputationSettings::default()
         }
     }
 }
