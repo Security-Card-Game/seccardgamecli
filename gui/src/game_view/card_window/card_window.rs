@@ -168,29 +168,34 @@ fn add_header<F>(cmd_callback: &mut F, card: &&CardContent, ui: &mut Ui)
 where
     F: FnMut(Command),
 {
-    ui.horizontal(|ui| {
-        let header_color = if ui.visuals().dark_mode {
-            card.dark_color
-        } else {
-            card.light_color
-        };
+    ui.vertical(|ui| {
+        ui.label(RichText::new(card.card_type.clone()).small_raised());
 
-        let title = if card.is_incident_target {
-          "[INCIDENT]\n".to_owned() + &card.label
-        } else {
-            card.label.to_owned()
-        };
+        ui.horizontal(|ui| {
 
-        let header = RichText::new(title).color(header_color).heading();
+            let header_color = if ui.visuals().dark_mode {
+                card.dark_color
+            } else {
+                card.light_color
+            };
 
-        card_label(header, ui);
-        let available = ui.available_rect_before_wrap().width();
-        ui.add_space(available + 20.0);
-        if card.can_be_closed {
-            if ui.button(card.close_label.clone()).clicked() {
-                cmd_callback(Command::CloseCard(card.id));
+            let title = if card.is_incident_target {
+                "[INCIDENT]\n".to_owned() + &card.label
+            } else {
+                card.label.to_owned()
+            };
+
+            let header = RichText::new(title).color(header_color).heading();
+
+            card_label(header, ui);
+            let available = ui.available_rect_before_wrap().width();
+            ui.add_space(available + 20.0);
+            if card.can_be_closed {
+                if ui.button(card.close_label.clone()).clicked() {
+                    cmd_callback(Command::CloseCard(card.id));
+                }
             }
-        }
+        });
     });
 }
 

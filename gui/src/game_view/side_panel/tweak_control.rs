@@ -6,7 +6,7 @@ impl GameViewState {
     pub(crate) fn tweak_control(&mut self, ui: &mut Ui) {
         ui.label(RichText::new("Tweaks").strong());
         ui.add_space(5.0);
-        ui.label("Override resources gain");
+        ui.label("Set resources per round");
         self.numeric_enter_component(
             ui,
             |game| &mut game.input.next_res,

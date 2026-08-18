@@ -32,7 +32,8 @@ pub struct CardContent {
     pub can_be_closed: bool,
     pub card_marker: CardMarker,
     pub close_label: String,
-    pub is_incident_target: bool
+    pub is_incident_target: bool,
+    pub card_type: String
 }
 
 #[derive(Clone, Debug)]
@@ -85,6 +86,13 @@ impl CardContent {
             card_marker: CardMarker::None,
             close_label,
             is_incident_target: is_targeted,
+            card_type: match card {
+                Card::Event(_) => "Event".to_string(),
+                Card::Attack(_) => "Attack".to_string(),
+                Card::Oopsie(_) => "Oopsie".to_string(),
+                Card::Lucky(_) => "Lucky".to_string(),
+                Card::Evaluation(_) => "Evaluation".to_string(),
+            }
         }
     }
 
@@ -123,7 +131,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::LIGHT_BLUE,
-            Color32::DARK_BLUE,
+            Color32::from_rgb(0, 114, 178),
             Card::Event(card),
             None,
             None,
@@ -202,7 +210,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::LIGHT_RED,
-            Color32::DARK_RED,
+            Color32::from_rgb(204, 121, 167),
             Card::Attack(card),
             None,
             effect,
@@ -223,7 +231,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::YELLOW,
-            Color32::DARK_GRAY,
+            Color32::from_rgb(230,159,0),
             Card::Oopsie(card),
             Some(fix_cost.clone()),
             None,
@@ -244,7 +252,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::GREEN,
-            Color32::DARK_GREEN,
+            Color32::from_rgb(0, 158, 115),
             Card::Lucky(card),
             None,
             None,
@@ -265,7 +273,7 @@ impl CardContent {
         Self::new(
             id.clone(),
             Color32::LIGHT_GRAY,
-            Color32::DARK_GRAY,
+            Color32::from_rgb(204,121,167),
             Card::Evaluation(card),
             None,
             None,
