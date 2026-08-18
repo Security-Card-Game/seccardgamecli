@@ -31,8 +31,9 @@ pub(crate) fn calculate_board(
         &reputation_settings,
     );
 
+
     let reputation_gain =
-        calculate_reputation_gain(&board, &active_incidents, &deck, &reputation_settings);
+        calculate_reputation_gain(&board, &active_incidents, &reputation_settings);
     let current_reputation =
         board.current_reputation + reputation_gain.bonus + reputation_gain.turn_based
             - reputation_decrease;
@@ -40,37 +41,41 @@ pub(crate) fn calculate_board(
     Board {
         turns_remaining: remaining_rounds,
         cost_modifier: fix_modifier,
+        incident_free_turns: calculate_incident_free_turns(&board, &active_incidents),
         active_incidents,
         current_reputation,
-        incident_free_turns: reputation_gain.incident_free_turns,
         ..board
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct ReputationGain {
-    incident_free_turns: usize,
     bonus: Reputation,
     turn_based: Reputation,
 }
 
 fn calculate_reputation_gain(
-    board: &Board,
-    active_incidents: &Vec<Incident>,
-    deck: &Deck,
+    previous_board: &Board,
+    current_incidents: &Vec<Incident>,
     reputation_settings: &ReputationSettings,
 ) -> ReputationGain {
-    let incident_free_turns = calculate_incident_free_turns(board, active_incidents, deck);
+
+    if !(current_incidents.is_empty()) {
+        return ReputationGain {
+            bonus: Reputation::new(0),
+            turn_based: Reputation::new(0)
+        };
+    }
 
     if reputation_settings.gain_active {
         let turn_based =
-            if incident_free_turns > reputation_settings.gain_incident_free_turns as usize {
+            if previous_board.incident_free_turns > reputation_settings.gain_incident_free_turns as usize {
                 reputation_settings.gain_turn_based
             } else {
                 Reputation::new(0)
             };
 
-        let bonus = if incident_free_turns == reputation_settings.gain_incident_free_turns as usize
+        let bonus = if previous_board.incident_free_turns == reputation_settings.gain_incident_free_turns as usize
         {
             reputation_settings.gain_bonus
         } else {
@@ -78,13 +83,11 @@ fn calculate_reputation_gain(
         };
 
         ReputationGain {
-            incident_free_turns,
             bonus,
             turn_based,
         }
     } else {
         ReputationGain {
-            incident_free_turns,
             bonus: Reputation::new(0),
             turn_based: Reputation::new(0),
         }
@@ -94,12 +97,7 @@ fn calculate_reputation_gain(
 fn calculate_incident_free_turns(
     board: &Board,
     active_incidents: &Vec<Incident>,
-    deck: &Deck,
 ) -> usize {
-    if deck.played_cards == 0 {
-        return 0;
-    }
-
     if active_incidents.is_empty() {
         board.incident_free_turns + 1
     } else {
@@ -1147,24 +1145,8 @@ mod tests {
 
     mod incident_free_effects {
         use super::*;
-        use crate::cards::types::card_model::Card;
-        use crate::cards::types::event::tests::FakeNoOpEventCard;
-        use crate::cards::types::event::EventCard;
-        use crate::world::actions::calculate_board::calculate_incident_free_turns;
         use crate::world::board::Board;
-        use crate::world::deck::{CardRc, Deck};
-        use fake::Fake;
         use uuid::Uuid;
-
-        fn create_deck() -> Deck {
-            let mut cards = Vec::new();
-            for _ in 0..20 {
-                cards.push(CardRc::new(Card::from(
-                    FakeNoOpEventCard.fake::<EventCard>(),
-                )))
-            }
-            Deck::new(cards)
-        }
 
         fn create_incident_vec() -> Vec<Incident> {
             vec![Incident {
@@ -1175,72 +1157,11 @@ mod tests {
             }]
         }
 
-        mod incident_free_turns {
-            use super::*;
-            #[test]
-            fn incident_free_rounds_not_increased_when_no_card_is_yet_played() {
-                let deck = create_deck();
-                let board = Board::empty();
-                let incidents = Vec::new();
-
-                let incident_results_current = board.incident_free_turns;
-
-                let result = calculate_incident_free_turns(&board, &incidents, &deck);
-
-                assert_eq!(result, incident_results_current)
-            }
-
-            #[test]
-            fn incident_free_rounds_increase_when_no_incident_present() {
-                let start_deck = create_deck();
-                let deck = Deck {
-                    played_cards: 1,
-                    ..start_deck
-                };
-                let board = Board::empty();
-                let incidents = Vec::new();
-
-                let incident_results_current = board.incident_free_turns;
-
-                let result = calculate_incident_free_turns(&board, &incidents, &deck);
-
-                assert_eq!(result, incident_results_current + 1)
-            }
-
-            #[test]
-            fn incident_free_rounds_reset_to_zero_on_incident() {
-                let start_deck = create_deck();
-                let deck = Deck {
-                    played_cards: 1,
-                    ..start_deck
-                };
-                let start_board = Board::empty();
-                let board = Board {
-                    incident_free_turns: 10,
-                    ..start_board
-                };
-                let incidents = create_incident_vec();
-
-                let result = calculate_incident_free_turns(&board, &incidents, &deck);
-
-                assert_eq!(result, 0)
-            }
-        }
-
         mod reputation_gain {
             use super::*;
 
-            fn create_deck_with_played_cards() -> Deck {
-                let start_deck = create_deck();
-                Deck {
-                    played_cards: 1,
-                    ..start_deck
-                }
-            }
-
             #[test]
             fn no_resource_gain_when_gain_deactive() {
-                let deck = create_deck_with_played_cards();
                 let board_for_bonus = Board {
                     incident_free_turns: ReputationSettings::default().gain_incident_free_turns
                         as usize,
@@ -1260,14 +1181,13 @@ mod tests {
                 let incidents = Vec::new();
 
                 let reputation_gain_bonus =
-                    calculate_reputation_gain(&board_for_bonus, &incidents, &deck, &settings);
+                    calculate_reputation_gain(&board_for_bonus, &incidents, &settings);
                 let reputation_gain_turn =
-                    calculate_reputation_gain(&board_for_turn, &incidents, &deck, &settings);
+                    calculate_reputation_gain(&board_for_turn, &incidents, &settings);
 
                 assert_eq!(
                     reputation_gain_bonus,
                     ReputationGain {
-                        incident_free_turns: board_for_bonus.incident_free_turns + 1,
                         turn_based: Reputation::new(0),
                         bonus: Reputation::new(0)
                     }
@@ -1276,7 +1196,6 @@ mod tests {
                 assert_eq!(
                     reputation_gain_turn,
                     ReputationGain {
-                        incident_free_turns: board_for_turn.incident_free_turns + 1,
                         turn_based: Reputation::new(0),
                         bonus: Reputation::new(0)
                     }
@@ -1285,7 +1204,6 @@ mod tests {
 
             #[test]
             fn no_reputation_bonus_and_no_gain_below_threshold() {
-                let deck = create_deck_with_played_cards();
                 let settings = ReputationSettings::default();
                 let board = Board {
                     incident_free_turns: settings.gain_incident_free_turns as usize - 2,
@@ -1293,39 +1211,35 @@ mod tests {
                 };
                 let incidents = Vec::new();
                 let expected_result = ReputationGain {
-                    incident_free_turns: board.incident_free_turns + 1,
                     bonus: Reputation::new(0),
                     turn_based: Reputation::new(0),
                 };
 
-                let result = calculate_reputation_gain(&board, &incidents, &deck, &settings);
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
 
                 assert_eq!(result, expected_result);
             }
 
             #[test]
             fn reputation_bonus_but_no_gain_at_threshold() {
-                let deck = create_deck_with_played_cards();
                 let settings = ReputationSettings::default();
                 let board = Board {
-                    incident_free_turns: settings.gain_incident_free_turns as usize - 1,
+                    incident_free_turns: settings.gain_incident_free_turns as usize,
                     ..Board::empty()
                 };
                 let incidents = Vec::new();
                 let expected_result = ReputationGain {
-                    incident_free_turns: settings.gain_incident_free_turns as usize,
                     bonus: settings.gain_bonus,
                     turn_based: Reputation::new(0),
                 };
 
-                let result = calculate_reputation_gain(&board, &incidents, &deck, &settings);
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
 
                 assert_eq!(result, expected_result);
             }
 
             #[test]
             fn no_reputation_bonus_but_reputation_gain_above_threshold() {
-                let deck = create_deck_with_played_cards();
                 let settings = ReputationSettings::default();
                 let board = Board {
                     incident_free_turns: settings.gain_incident_free_turns as usize + 1,
@@ -1333,19 +1247,17 @@ mod tests {
                 };
                 let incidents = Vec::new();
                 let expected_result = ReputationGain {
-                    incident_free_turns: board.incident_free_turns + 1,
                     bonus: Reputation::new(0),
                     turn_based: settings.gain_turn_based,
                 };
 
-                let result = calculate_reputation_gain(&board, &incidents, &deck, &settings);
+                let result = calculate_reputation_gain(&board, &incidents,&settings);
 
                 assert_eq!(result, expected_result);
             }
 
             #[test]
             fn no_reputation_bonus_and_gain_on_incident() {
-                let deck = create_deck_with_played_cards();
                 let settings = ReputationSettings::default();
                 let board = Board {
                     incident_free_turns: settings.gain_incident_free_turns as usize + 1,
@@ -1353,12 +1265,11 @@ mod tests {
                 };
                 let incidents = create_incident_vec();
                 let expected_result = ReputationGain {
-                    incident_free_turns: 0,
                     bonus: Reputation::new(0),
                     turn_based: Reputation::new(0),
                 };
 
-                let result = calculate_reputation_gain(&board, &incidents, &deck, &settings);
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
 
                 assert_eq!(result, expected_result);
             }

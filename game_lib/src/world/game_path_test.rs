@@ -511,7 +511,7 @@ mod path_tests {
                 let initial_reputation = initial_board.current_reputation;
 
                 let mut game_before_bonus = initial_game.clone();
-                for _ in 1..default_incident_free_turns() {
+                for _ in 1..=default_incident_free_turns() {
                    game_before_bonus = game_before_bonus.next_round()
                 }
 
@@ -574,13 +574,18 @@ mod path_tests {
 
                 assert_eq!(game_after_incident_reputation, expected_reputation_after_incident, "Incident penalty expected");
 
-                // play n more rounds and check if bonus activates
+                // play n more rounds and check if bonus activates (detects off by one error)
                 let mut game_bonus_gain = game_after_incident.clone();
-                let rounds_to_play: u8 = get_attack_duration(&attack) - 1 + default_incident_free_turns();
+                let rounds_to_play: u8 = get_attack_duration(&attack) + default_incident_free_turns();
                 let expected_reputation_after_bonus =  &expected_reputation_after_incident + &default_reputation_bonus();
-                for _ in 1..=rounds_to_play {
-                    game_bonus_gain = game_bonus_gain.next_round()
+                // draw enough cards to activate bonus in next turn
+                for _ in 1..rounds_to_play {
+                    game_bonus_gain = game_bonus_gain.next_round();
+                    let current_reputation = get_board_from_game(&game_bonus_gain).current_reputation;
+                    assert_eq!(current_reputation, expected_reputation_after_incident);
                 }
+
+                game_bonus_gain = game_bonus_gain.next_round();
                 let game_after_bonus_activates_reputation = get_board_from_game(&game_bonus_gain).current_reputation;
 
                 assert_eq!(game_after_bonus_activates_reputation, expected_reputation_after_bonus, "Bonus expected")
