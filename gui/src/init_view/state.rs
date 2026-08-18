@@ -190,19 +190,18 @@ impl Into<GameGoals> for &GameGoalsControls {
 
 impl Into<GameInitSettings> for &GamePreset {
     fn into(self) -> GameInitSettings {
-        let reputation: u8 = (&self.initial_reputation).into();
-        let incident_penalty: u8 = (&self.incident_reputation_penalty).into();
-        let incident_penalty_stacked = self.incident_penalty_stacked.value;
-
         GameInitSettings {
             resource_gain: Resources::new((&self.initial_resource_gain).into()),
             resources: Resources::new((&self.initial_resources).into()),
             fix_multiplier: ResourceFixMultiplier::new((&self.initial_fix_multiplier).into()),
             reputation: ReputationSettings {
-                initial_reputation: Reputation::new(reputation),
-                incident_penalty: Reputation::new(incident_penalty),
-                incident_penalty_stacked,
-                ..ReputationSettings::default()
+                initial_reputation: Reputation::new((&self.initial_reputation).into()),
+                incident_penalty: Reputation::new((&self.incident_reputation_penalty).into()),
+                incident_penalty_stacked: self.incident_penalty_stacked.value,
+                gain_active: self.reputation_gain_active.value,
+                gain_incident_free_turns: (&self.reputation_gain_incident_free_turns).into(),
+                gain_bonus: Reputation::new((&self.reputation_gain_bonus).into()),
+                gain_turn_based: Reputation::new((&self.reputation_gain_round_based).into())
             }
         }
     }
