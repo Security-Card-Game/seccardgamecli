@@ -46,6 +46,10 @@ struct GamePreset {
     initial_reputation: LabelWithInputComponent,
     incident_reputation_penalty: LabelWithInputComponent,
     incident_penalty_stacked: LabelWithCheckboxComponent,
+    reputation_gain_active: LabelWithCheckboxComponent,
+    reputation_gain_incident_free_turns: LabelWithInputComponent,
+    reputation_gain_bonus: LabelWithInputComponent,
+    reputation_gain_round_based: LabelWithInputComponent,
     initial_resource_gain: LabelWithInputComponent,
     initial_fix_multiplier: LabelWithInputComponent,
 }
@@ -82,6 +86,26 @@ impl Default for GamePreset {
                     "When active, every oopsie which is part of an incident is counted as multiplied, not only incidents alone".to_string()
                 ),
                 value: default.reputation.incident_penalty_stacked
+            },
+            reputation_gain_active: LabelWithCheckboxComponent {
+                label: "Enable automatic reputation gain".to_string(),
+                description: None,
+                value: default.reputation.gain_active
+            },
+            reputation_gain_incident_free_turns: LabelWithInputComponent {
+                label: "Reputation gain: Incident free turns".to_string(),
+                description: Some("After this number of incident free turns, a bonus and round based gain on reputation is granted.".to_string()),
+                value: default.reputation.gain_incident_free_turns.to_string()
+            },
+            reputation_gain_bonus: LabelWithInputComponent {
+                label: "Reputation gain: Bonus after incident free turns".to_string(),
+                description: None,
+                value: default.reputation.gain_bonus.value().to_string()
+            },
+            reputation_gain_round_based: LabelWithInputComponent {
+                label: "Reputation gain: Round based gain".to_string(),
+                description: Some("Will be active after congfigured incident free turns".to_string()),
+                value: default.reputation.gain_turn_based.value().to_string()
             },
             initial_resource_gain: LabelWithInputComponent {
                 label: "Initial resource gain".to_string(),
@@ -166,19 +190,18 @@ impl Into<GameGoals> for &GameGoalsControls {
 
 impl Into<GameInitSettings> for &GamePreset {
     fn into(self) -> GameInitSettings {
-        let reputation: u8 = (&self.initial_reputation).into();
-        let incident_penalty: u8 = (&self.incident_reputation_penalty).into();
-        let incident_penalty_stacked = self.incident_penalty_stacked.value;
-
         GameInitSettings {
             resource_gain: Resources::new((&self.initial_resource_gain).into()),
             resources: Resources::new((&self.initial_resources).into()),
             fix_multiplier: ResourceFixMultiplier::new((&self.initial_fix_multiplier).into()),
             reputation: ReputationSettings {
-                initial_reputation: Reputation::new(reputation),
-                incident_penalty: Reputation::new(incident_penalty),
-                incident_penalty_stacked,
-                ..ReputationSettings::default()
+                initial_reputation: Reputation::new((&self.initial_reputation).into()),
+                incident_penalty: Reputation::new((&self.incident_reputation_penalty).into()),
+                incident_penalty_stacked: self.incident_penalty_stacked.value,
+                gain_active: self.reputation_gain_active.value,
+                gain_incident_free_turns: (&self.reputation_gain_incident_free_turns).into(),
+                gain_bonus: Reputation::new((&self.reputation_gain_bonus).into()),
+                gain_turn_based: Reputation::new((&self.reputation_gain_round_based).into())
             }
         }
     }
@@ -359,13 +382,6 @@ impl InitViewState {
             ..LabelWithInputLayoutOptions::default()
         };
 
-        let checkbox_layout_options = LabelWithCheckboxOptions {
-            max_width: Self::RIGHT_COL_WIDTH,
-            input_width: 50.0,
-            ..LabelWithCheckboxOptions::default()
-        };
-
-
         ui.label(RichText::new("Game Presets").strong());
 
         self.game_preset
@@ -378,14 +394,48 @@ impl InitViewState {
             .initial_reputation
             .draw_component(0, ui, input_layout_options);
         self.game_preset
+            .initial_fix_multiplier
+            .draw_component(0, ui, input_layout_options);
+    }
+
+    fn draw_reputation_modifiers(&mut self, ui: &mut Ui) {
+        let input_layout_options = LabelWithInputLayoutOptions {
+            max_width: Self::RIGHT_COL_WIDTH,
+            input_width: 50.0,
+            ..LabelWithInputLayoutOptions::default()
+        };
+
+        let checkbox_layout_options = LabelWithCheckboxOptions {
+            max_width: Self::RIGHT_COL_WIDTH,
+            input_width: 50.0,
+            ..LabelWithCheckboxOptions::default()
+        };
+
+        ui.label(RichText::new("Reputation Modifiers").strong());
+
+        ui.label(RichText::new("Decrease").underline());
+        self.game_preset
             .incident_reputation_penalty
             .draw_component(0, ui, input_layout_options);
         self.game_preset
             .incident_penalty_stacked
             .draw_component(self.game_preset.incident_penalty_stacked.value, ui, checkbox_layout_options);
-        self.game_preset
-            .initial_fix_multiplier
-            .draw_component(0, ui, input_layout_options);
+
+        ui.label(RichText::new("Increase").underline());
+            self.game_preset
+                .reputation_gain_active
+                .draw_component(self.game_preset.reputation_gain_active.value, ui, checkbox_layout_options);
+        if self.game_preset.reputation_gain_active.value {
+            self.game_preset
+                .reputation_gain_incident_free_turns
+                .draw_component(self.game_preset.reputation_gain_incident_free_turns.value.to_string(), ui, input_layout_options);
+            self.game_preset
+                .reputation_gain_bonus
+                .draw_component(self.game_preset.reputation_gain_bonus.value.to_string(), ui, input_layout_options);
+            self.game_preset
+                .reputation_gain_round_based
+                .draw_component(self.game_preset.reputation_gain_round_based.value.to_string(), ui, input_layout_options);
+        }
     }
 
     fn draw_game_goals(&mut self, ui: &mut Ui) {
@@ -454,6 +504,8 @@ impl InitViewState {
                             self.draw_scenario_selection(ui);
                             ui.add_space(Self::DEFAULT_SPACE_Y);
                             self.draw_game_preset(ui);
+                            ui.add_space(Self::DEFAULT_SPACE_Y);
+                            self.draw_reputation_modifiers(ui);
                             ui.add_space(Self::DEFAULT_SPACE_Y);
                             self.draw_game_goals(ui);
                         },

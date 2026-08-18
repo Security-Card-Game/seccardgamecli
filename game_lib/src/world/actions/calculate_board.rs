@@ -31,12 +31,77 @@ pub(crate) fn calculate_board(
         &reputation_settings,
     );
 
+
+    let reputation_gain =
+        calculate_reputation_gain(&board, &active_incidents, &reputation_settings);
+    let current_reputation =
+        board.current_reputation + reputation_gain.bonus + reputation_gain.turn_based
+            - reputation_decrease;
+
     Board {
         turns_remaining: remaining_rounds,
         cost_modifier: fix_modifier,
+        incident_free_turns: calculate_incident_free_turns(&board, &active_incidents),
         active_incidents,
-        current_reputation: &board.current_reputation - &reputation_decrease,
+        current_reputation,
         ..board
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ReputationGain {
+    bonus: Reputation,
+    turn_based: Reputation,
+}
+
+fn calculate_reputation_gain(
+    previous_board: &Board,
+    current_incidents: &Vec<Incident>,
+    reputation_settings: &ReputationSettings,
+) -> ReputationGain {
+
+    if !(current_incidents.is_empty()) {
+        return ReputationGain {
+            bonus: Reputation::new(0),
+            turn_based: Reputation::new(0)
+        };
+    }
+
+    if reputation_settings.gain_active {
+        let turn_based =
+            if previous_board.incident_free_turns > reputation_settings.gain_incident_free_turns as usize {
+                reputation_settings.gain_turn_based
+            } else {
+                Reputation::new(0)
+            };
+
+        let bonus = if previous_board.incident_free_turns == reputation_settings.gain_incident_free_turns as usize
+        {
+            reputation_settings.gain_bonus
+        } else {
+            Reputation::new(0)
+        };
+
+        ReputationGain {
+            bonus,
+            turn_based,
+        }
+    } else {
+        ReputationGain {
+            bonus: Reputation::new(0),
+            turn_based: Reputation::new(0),
+        }
+    }
+}
+
+fn calculate_incident_free_turns(
+    board: &Board,
+    active_incidents: &Vec<Incident>,
+) -> usize {
+    if active_incidents.is_empty() {
+        board.incident_free_turns + 1
+    } else {
+        0
     }
 }
 
@@ -46,9 +111,17 @@ fn calculate_reputation_decrease(
     reputation_settings: &ReputationSettings,
 ) -> Reputation {
     if reputation_settings.incident_penalty_stacked {
-        calculate_stacked_reputation_decrease(previous_incidents, current_incidents, reputation_settings)
+        calculate_stacked_reputation_decrease(
+            previous_incidents,
+            current_incidents,
+            reputation_settings,
+        )
     } else {
-        calculate_non_stacked_reputation_decrease(previous_incidents, current_incidents, reputation_settings)
+        calculate_non_stacked_reputation_decrease(
+            previous_incidents,
+            current_incidents,
+            reputation_settings,
+        )
     }
 }
 
@@ -83,13 +156,15 @@ fn calculate_stacked_reputation_decrease(
 
     for incident in current {
         let old_incident_oopsies = previous.get(&incident.0);
-        count += if let Some(old_oopsies) = old_incident_oopsies.map(|i| HashSet::from_iter(i.iter().cloned())) {
+        count += if let Some(old_oopsies) =
+            old_incident_oopsies.map(|i| HashSet::from_iter(i.iter().cloned()))
+        {
             let current_oopsies: HashSet<Uuid> = HashSet::from_iter(incident.1.iter().cloned());
             current_oopsies.difference(&old_oopsies).count() as u8
         } else {
             incident.1.len() as u8
         }
-    };
+    }
 
     Reputation::new(count * reputation_settings.incident_penalty.value())
 }
@@ -97,7 +172,10 @@ fn calculate_stacked_reputation_decrease(
 fn group_oopsies_by_incident(incidents: &Vec<Incident>) -> HashMap<Uuid, Vec<Uuid>> {
     let mut groups: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
     for incident in incidents {
-        groups.entry(incident.attack_card_id).or_default().push(incident.oopsie_card_id);
+        groups
+            .entry(incident.attack_card_id)
+            .or_default()
+            .push(incident.oopsie_card_id);
     }
     groups
 }
@@ -384,6 +462,7 @@ mod tests {
 
         let expected_board = Board {
             turns_remaining: 1,
+            incident_free_turns: 1,
             cost_modifier: Some(event_modifier),
             ..board.clone()
         };
@@ -568,6 +647,7 @@ mod tests {
 
         let expected_board = Board {
             turns_remaining: 1,
+            incident_free_turns: 1,
             ..board.clone()
         };
 
@@ -591,8 +671,11 @@ mod tests {
                 let current_incidents = Vec::new();
                 let expected_decrease = Reputation::new(0);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -609,8 +692,11 @@ mod tests {
                 }];
                 let expected_decrease = settings.incident_penalty;
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -636,8 +722,11 @@ mod tests {
                 ];
                 let expected_decrease = settings.incident_penalty;
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -662,8 +751,11 @@ mod tests {
                 ];
                 let expected_decrease = settings.incident_penalty.multiply(2);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -691,8 +783,11 @@ mod tests {
                 ];
                 let expected_decrease = Reputation::new(100);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -718,8 +813,11 @@ mod tests {
                 ];
                 let expected_decrease = settings.incident_penalty.multiply(2);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -727,19 +825,20 @@ mod tests {
             #[test]
             fn no_new_incident_no_decrease() {
                 let settings = ReputationSettings::default();
-                let previous_incidents = vec![
-                    Incident {
-                        attack_card_id: Uuid::new_v4(),
-                        attack_title: "Attack Title".to_string(),
-                        oopsie_card_id: Uuid::new_v4(),
-                        oopsie_title: "Oopsie Title".to_string(),
-                    },
-                ];
+                let previous_incidents = vec![Incident {
+                    attack_card_id: Uuid::new_v4(),
+                    attack_title: "Attack Title".to_string(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: "Oopsie Title".to_string(),
+                }];
                 let current_incidents = previous_incidents.clone();
                 let expected_decrease = Reputation::new(0);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -749,27 +848,26 @@ mod tests {
                 let settings = ReputationSettings::default();
                 let attack_card_id = Uuid::new_v4();
 
-                let previous_incidents = vec![
-                    Incident {
-                        attack_card_id,
-                        attack_title: "Attack Title".to_string(),
-                        oopsie_card_id: Uuid::new_v4(),
-                        oopsie_title: "Oopsie Title".to_string(),
-                    },
-                ];
+                let previous_incidents = vec![Incident {
+                    attack_card_id,
+                    attack_title: "Attack Title".to_string(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: "Oopsie Title".to_string(),
+                }];
                 let mut current_incidents = previous_incidents.clone();
-                current_incidents.append(&mut vec![
-                    Incident {
-                        attack_card_id,
-                        attack_title: "Attack Title".to_string(),
-                        oopsie_card_id: Uuid::new_v4(),
-                        oopsie_title: "Oopsie Title".to_string(),
-                    }]
-                );
+                current_incidents.append(&mut vec![Incident {
+                    attack_card_id,
+                    attack_title: "Attack Title".to_string(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: "Oopsie Title".to_string(),
+                }]);
                 let expected_decrease = Reputation::new(0);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -781,7 +879,7 @@ mod tests {
             fn stacked_default_settings() -> ReputationSettings {
                 ReputationSettings {
                     incident_penalty_stacked: true,
-                        ..ReputationSettings::default()
+                    ..ReputationSettings::default()
                 }
             }
             #[test]
@@ -791,8 +889,11 @@ mod tests {
                 let current_incidents = Vec::new();
                 let expected_decrease = Reputation::new(0);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -809,8 +910,11 @@ mod tests {
                 }];
                 let expected_decrease = settings.incident_penalty;
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -836,8 +940,11 @@ mod tests {
                 ];
                 let expected_decrease = settings.incident_penalty.multiply(2);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -862,8 +969,11 @@ mod tests {
                 ];
                 let expected_decrease = settings.incident_penalty.multiply(2);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -891,8 +1001,11 @@ mod tests {
                 ];
                 let expected_decrease = Reputation::new(100);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -918,8 +1031,11 @@ mod tests {
                 ];
                 let expected_decrease = settings.incident_penalty.multiply(2);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -927,19 +1043,20 @@ mod tests {
             #[test]
             fn no_new_incident_no_decrease() {
                 let settings = stacked_default_settings();
-                let previous_incidents = vec![
-                    Incident {
-                        attack_card_id: Uuid::new_v4(),
-                        attack_title: "Attack Title".to_string(),
-                        oopsie_card_id: Uuid::new_v4(),
-                        oopsie_title: "Oopsie Title".to_string(),
-                    },
-                ];
+                let previous_incidents = vec![Incident {
+                    attack_card_id: Uuid::new_v4(),
+                    attack_title: "Attack Title".to_string(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: "Oopsie Title".to_string(),
+                }];
                 let current_incidents = previous_incidents.clone();
                 let expected_decrease = Reputation::new(0);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -949,14 +1066,12 @@ mod tests {
                 let settings = stacked_default_settings();
                 let attack_card_id = Uuid::new_v4();
 
-                let previous_incidents = vec![
-                    Incident {
-                        attack_card_id,
-                        attack_title: "Attack Title".to_string(),
-                        oopsie_card_id: Uuid::new_v4(),
-                        oopsie_title: "Oopsie Title".to_string(),
-                    },
-                ];
+                let previous_incidents = vec![Incident {
+                    attack_card_id,
+                    attack_title: "Attack Title".to_string(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: "Oopsie Title".to_string(),
+                }];
                 let mut current_incidents = previous_incidents.clone();
                 current_incidents.append(&mut vec![
                     Incident {
@@ -970,12 +1085,15 @@ mod tests {
                         attack_title: "Attack Title".to_string(),
                         oopsie_card_id: Uuid::new_v4(),
                         oopsie_title: "Oopsie Title".to_string(),
-                    }]
-                );
+                    },
+                ]);
                 let expected_decrease = settings.incident_penalty.multiply(2);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
             }
@@ -985,14 +1103,12 @@ mod tests {
                 let settings = stacked_default_settings();
                 let attack_card_id = Uuid::new_v4();
                 let oopsie_card_id = Uuid::new_v4();
-                let previous_incidents = vec![
-                    Incident {
-                        attack_card_id,
-                        attack_title: "Attack Title".to_string(),
-                        oopsie_card_id: Uuid::new_v4(),
-                        oopsie_title: "Oopsie Title".to_string(),
-                    },
-                ];
+                let previous_incidents = vec![Incident {
+                    attack_card_id,
+                    attack_title: "Attack Title".to_string(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: "Oopsie Title".to_string(),
+                }];
                 let mut current_incidents = previous_incidents.clone();
                 current_incidents.append(&mut vec![
                     Incident {
@@ -1012,14 +1128,150 @@ mod tests {
                         attack_title: "New Attack Title".to_string(),
                         oopsie_card_id: oopsie_card_id.clone(),
                         oopsie_title: "Shared Oopsie Title".to_string(),
-                    }]
-                );
+                    },
+                ]);
                 let expected_decrease = settings.incident_penalty.multiply(3);
 
-                let reputation_decrease =
-                    calculate_reputation_decrease(&previous_incidents, &current_incidents, &settings);
+                let reputation_decrease = calculate_reputation_decrease(
+                    &previous_incidents,
+                    &current_incidents,
+                    &settings,
+                );
 
                 assert_eq!(reputation_decrease, expected_decrease);
+            }
+        }
+    }
+
+    mod incident_free_effects {
+        use super::*;
+        use crate::world::board::Board;
+        use uuid::Uuid;
+
+        fn create_incident_vec() -> Vec<Incident> {
+            vec![Incident {
+                attack_card_id: Uuid::new_v4(),
+                attack_title: "New Attack Title".to_string(),
+                oopsie_card_id: Uuid::new_v4(),
+                oopsie_title: "Shared Oopsie Title".to_string(),
+            }]
+        }
+
+        mod reputation_gain {
+            use super::*;
+
+            #[test]
+            fn no_resource_gain_when_gain_deactive() {
+                let board_for_bonus = Board {
+                    incident_free_turns: ReputationSettings::default().gain_incident_free_turns
+                        as usize,
+                    ..Board::empty()
+                };
+                let board_for_turn = Board {
+                    incident_free_turns: ReputationSettings::default().gain_incident_free_turns
+                        as usize
+                        + 1,
+                    ..Board::empty()
+                };
+                let settings = ReputationSettings {
+                    gain_active: false,
+                    ..ReputationSettings::default()
+                };
+
+                let incidents = Vec::new();
+
+                let reputation_gain_bonus =
+                    calculate_reputation_gain(&board_for_bonus, &incidents, &settings);
+                let reputation_gain_turn =
+                    calculate_reputation_gain(&board_for_turn, &incidents, &settings);
+
+                assert_eq!(
+                    reputation_gain_bonus,
+                    ReputationGain {
+                        turn_based: Reputation::new(0),
+                        bonus: Reputation::new(0)
+                    }
+                );
+
+                assert_eq!(
+                    reputation_gain_turn,
+                    ReputationGain {
+                        turn_based: Reputation::new(0),
+                        bonus: Reputation::new(0)
+                    }
+                );
+            }
+
+            #[test]
+            fn no_reputation_bonus_and_no_gain_below_threshold() {
+                let settings = ReputationSettings::default();
+                let board = Board {
+                    incident_free_turns: settings.gain_incident_free_turns as usize - 2,
+                    ..Board::empty()
+                };
+                let incidents = Vec::new();
+                let expected_result = ReputationGain {
+                    bonus: Reputation::new(0),
+                    turn_based: Reputation::new(0),
+                };
+
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
+
+                assert_eq!(result, expected_result);
+            }
+
+            #[test]
+            fn reputation_bonus_but_no_gain_at_threshold() {
+                let settings = ReputationSettings::default();
+                let board = Board {
+                    incident_free_turns: settings.gain_incident_free_turns as usize,
+                    ..Board::empty()
+                };
+                let incidents = Vec::new();
+                let expected_result = ReputationGain {
+                    bonus: settings.gain_bonus,
+                    turn_based: Reputation::new(0),
+                };
+
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
+
+                assert_eq!(result, expected_result);
+            }
+
+            #[test]
+            fn no_reputation_bonus_but_reputation_gain_above_threshold() {
+                let settings = ReputationSettings::default();
+                let board = Board {
+                    incident_free_turns: settings.gain_incident_free_turns as usize + 1,
+                    ..Board::empty()
+                };
+                let incidents = Vec::new();
+                let expected_result = ReputationGain {
+                    bonus: Reputation::new(0),
+                    turn_based: settings.gain_turn_based,
+                };
+
+                let result = calculate_reputation_gain(&board, &incidents,&settings);
+
+                assert_eq!(result, expected_result);
+            }
+
+            #[test]
+            fn no_reputation_bonus_and_gain_on_incident() {
+                let settings = ReputationSettings::default();
+                let board = Board {
+                    incident_free_turns: settings.gain_incident_free_turns as usize + 1,
+                    ..Board::empty()
+                };
+                let incidents = create_incident_vec();
+                let expected_result = ReputationGain {
+                    bonus: Reputation::new(0),
+                    turn_based: Reputation::new(0),
+                };
+
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
+
+                assert_eq!(result, expected_result);
             }
         }
     }

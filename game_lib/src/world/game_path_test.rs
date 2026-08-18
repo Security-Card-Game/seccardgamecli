@@ -144,7 +144,7 @@ mod path_tests {
         }
     }
 
-    mod reputation_handling_for_incident {
+    mod reputation {
         use crate::cards::properties::duration::Duration;
         use crate::cards::properties::effect::Effect;
         use crate::cards::properties::effect_description::EffectDescription;
@@ -163,6 +163,8 @@ mod path_tests {
         use crate::world::resources::Resources;
         use fake::Fake;
         use std::rc::Rc;
+        use crate::cards::types::event::EventCard;
+        use crate::cards::types::event::tests::FakeNoOpEventCard;
 
         const NETWORK_ATTACK_CARD_TITLE: &str = "Attack card";
         const NETWORK_OOPSIE_CARD_TITLE_1: &str = "Network Oopsie card 1";
@@ -174,6 +176,7 @@ mod path_tests {
             network_oopsie_2: Card,
             network_attack: Card,
             missing_attack: Card,
+            no_op_cards: Vec<Card>,
         }
 
         fn available_cards() -> AvailableCards {
@@ -217,11 +220,15 @@ mod path_tests {
                 ..FakeAttackCard.fake()
             };
 
+            let no_op_cards = (1..20).into_iter()
+                .map(|_| Card::from(FakeNoOpEventCard.fake::<EventCard>())).collect();
+
             AvailableCards {
                 network_oopsie_1: Card::from(network_oopsie_1),
                 network_oopsie_2: Card::from(network_oopsie_2),
                 network_attack: Card::from(network_attack),
                 missing_attack: Card::from(missing_attack),
+                no_op_cards
             }
         }
 
@@ -229,7 +236,7 @@ mod path_tests {
             Deck::new(cards.iter().map(|c| Rc::new(c.clone())).collect())
         }
 
-        mod non_stacked {
+        mod incident_non_stacked {
             use super::*;
             fn create_game(deck: Deck) -> Game {
                 let init_settings = GameInitSettings {
@@ -381,7 +388,7 @@ mod path_tests {
             }
         }
 
-        mod stacked {
+        mod incident_stacked {
             use super::*;
 
             fn create_game(deck: Deck) -> Game {
@@ -451,6 +458,158 @@ mod path_tests {
                 assert_eq!(incident_reputation, expected_reputation, "Expected penalty to be stacked twice")
             }
 
+        }
+
+        mod gain  {
+            use super::*;
+            use crate::world::deck::Deck;
+            use crate::world::game::{Game, GameInitSettings, ReputationSettings};
+            use crate::world::resources::Resources;
+
+            fn create_game(deck: Deck) -> Game {
+                let init_settings = GameInitSettings {
+                    resources: Resources::new(100),
+                    ..GameInitSettings::default()
+                };
+
+                Game::create(deck, init_settings)
+            }
+
+            fn create_game_with_gain_deactive(deck: Deck) -> Game {
+                let init_settings = GameInitSettings {
+                    resources: Resources::new(100),
+                    reputation: ReputationSettings {
+                        gain_active: false,
+                        ..ReputationSettings::default()
+                    },
+                    ..GameInitSettings::default()
+                };
+
+                Game::create(deck, init_settings)
+            }
+
+            fn default_reputation_bonus() -> Reputation {
+                ReputationSettings::default().gain_bonus
+            }
+
+            fn default_turn_based_reputation_gain() -> Reputation {
+                ReputationSettings::default().gain_turn_based
+            }
+
+            fn default_incident_free_turns() -> u8 {
+                ReputationSettings::default().gain_incident_free_turns
+            }
+
+            #[test]
+            fn no_incidents_give_bonus_and_round_based_gain() {
+                let available_cards = available_cards();
+                let mut cards = vec![available_cards.network_oopsie_1];
+                cards.append(&mut available_cards.no_op_cards.clone());
+                let deck = create_deck(cards);
+                let initial_game = create_game(deck);
+                let initial_board = get_board_from_game(&initial_game);
+                let initial_reputation = initial_board.current_reputation;
+
+                let mut game_before_bonus = initial_game.clone();
+                for _ in 1..=default_incident_free_turns() {
+                   game_before_bonus = game_before_bonus.next_round()
+                }
+
+                let game_before_bonus_reputation = get_board_from_game(&game_before_bonus).current_reputation;
+
+                assert_eq!(initial_reputation, game_before_bonus_reputation, "No Reputation change expected");
+
+                // activate bonus
+                let game_after_bonus = game_before_bonus.next_round();
+                let game_after_bonus_reputation = get_board_from_game(&game_after_bonus).current_reputation;
+                let expected_reputation_after_bonus = &initial_reputation + &default_reputation_bonus();
+
+                assert_eq!(game_after_bonus_reputation, expected_reputation_after_bonus, "Bonus expected");
+
+                // play n more rounds and check turn based reputation gain
+                let mut game_turn_based_gain = game_after_bonus.clone();
+                let rounds_to_play: u8 = 5;
+                let expected_reputation_after_turns =  &expected_reputation_after_bonus + &default_turn_based_reputation_gain().multiply(rounds_to_play);
+                for _ in 1..=rounds_to_play {
+                    game_turn_based_gain = game_turn_based_gain.next_round()
+                }
+                let game_after_turn_based_gain_reputation = get_board_from_game(&game_turn_based_gain).current_reputation;
+
+                assert_eq!(game_after_turn_based_gain_reputation, expected_reputation_after_turns, "Turn based gain expected")
+            }
+
+            fn get_attack_duration(card: &Card) -> u8 {
+                match card {
+                    Card::Attack(a) => a.duration.value().unwrap_or(&0).clone() as u8,
+                    _ => panic!("No attack!")
+                }
+            }
+
+            #[test]
+            fn incidents_gives_no_bonus_and_gain_continue_without_incident_till_bonus() {
+                let available_cards = available_cards();
+                let attack = available_cards.network_attack.clone();
+                let mut cards = vec![available_cards.network_oopsie_1];
+                cards.append(&mut (available_cards.no_op_cards.clone()[1..=3].to_vec()));
+                cards.append(&mut vec![attack.clone()]);
+                cards.append(&mut available_cards.no_op_cards.clone());
+                let deck = create_deck(cards);
+                let initial_game = create_game(deck);
+                let initial_board = get_board_from_game(&initial_game);
+                let initial_reputation = initial_board.current_reputation;
+
+                let mut game_before_bonus = initial_game.clone();
+                for _ in 1..default_incident_free_turns() {
+                    game_before_bonus = game_before_bonus.next_round();
+                }
+
+                let game_before_bonus_reputation = get_board_from_game(&game_before_bonus).current_reputation;
+
+                assert_eq!(initial_reputation, game_before_bonus_reputation, "No Reputation change expected");
+
+                // draw attack that results in incident
+                let game_after_incident = game_before_bonus.next_round();
+                let game_after_incident_reputation = get_board_from_game(&game_after_incident).current_reputation;
+                let expected_reputation_after_incident = initial_reputation - ReputationSettings::default().incident_penalty;
+
+                assert_eq!(game_after_incident_reputation, expected_reputation_after_incident, "Incident penalty expected");
+
+                // play n more rounds and check if bonus activates (detects off by one error)
+                let mut game_bonus_gain = game_after_incident.clone();
+                let rounds_to_play: u8 = get_attack_duration(&attack) + default_incident_free_turns();
+                let expected_reputation_after_bonus =  &expected_reputation_after_incident + &default_reputation_bonus();
+                // draw enough cards to activate bonus in next turn
+                for _ in 1..rounds_to_play {
+                    game_bonus_gain = game_bonus_gain.next_round();
+                    let current_reputation = get_board_from_game(&game_bonus_gain).current_reputation;
+                    assert_eq!(current_reputation, expected_reputation_after_incident);
+                }
+
+                game_bonus_gain = game_bonus_gain.next_round();
+                let game_after_bonus_activates_reputation = get_board_from_game(&game_bonus_gain).current_reputation;
+
+                assert_eq!(game_after_bonus_activates_reputation, expected_reputation_after_bonus, "Bonus expected")
+            }
+
+            #[test]
+            fn gain_deactive_no_incidents_no_reputation_change() {
+                let available_cards = available_cards();
+                let mut cards = vec![available_cards.network_oopsie_1];
+                cards.append(&mut available_cards.no_op_cards.clone());
+                let deck = create_deck(cards);
+                let initial_game = create_game_with_gain_deactive(deck);
+                let initial_board = get_board_from_game(&initial_game);
+                let initial_reputation = initial_board.current_reputation;
+
+                let mut game = initial_game.clone();
+                for _ in 1..(initial_board.incident_free_turns + 10) {
+                    game = game.next_round()
+                }
+
+                let game_reputation = get_board_from_game(&game).current_reputation;
+
+                assert_eq!(initial_reputation, game_reputation, "No Reputation change expected");
+            }
         }
     }
 

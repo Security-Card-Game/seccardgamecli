@@ -41,6 +41,14 @@ impl Add for &Reputation {
     }
 }
 
+impl Add for Reputation {
+    type Output = Reputation;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        &self + &rhs
+    }
+}
+
 impl Sub for &Reputation {
     type Output = Reputation;
 
@@ -50,6 +58,15 @@ impl Sub for &Reputation {
         Reputation::new(new_value)
     }
 }
+
+impl Sub for Reputation {
+    type Output = Reputation;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        &self - &rhs
+    }
+}
+
 
 impl Serialize for Reputation {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

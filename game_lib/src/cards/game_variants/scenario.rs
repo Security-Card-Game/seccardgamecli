@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::cards::properties::description::Description;
 use crate::cards::properties::title::Title;
-use crate::world::game::{GameInitSettings, ReputationSettings};
 use crate::world::reputation::Reputation;
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
@@ -28,19 +27,4 @@ pub struct Preset {
 pub struct Goal {
     pub minimum_resources: Resources,
     pub minimum_reputation: Reputation
-}
-
-impl Into<GameInitSettings> for Preset {
-    fn into(self) -> GameInitSettings {
-        GameInitSettings {
-            resources: self.resources,
-            reputation: ReputationSettings {
-                initial_reputation: self.reputation,
-                incident_penalty: Reputation::default_incident_penalty(),
-                incident_penalty_stacked: false
-            },
-            resource_gain: self.resource_gain,
-            fix_multiplier: self.multiplier,
-        }
-    }
 }
