@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::cards::properties::description::Description;
 use crate::cards::properties::title::Title;
-use crate::world::game::{GameInitSettings, ReputationSettings};
 use crate::world::reputation::Reputation;
 use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
 use crate::world::resources::Resources;
