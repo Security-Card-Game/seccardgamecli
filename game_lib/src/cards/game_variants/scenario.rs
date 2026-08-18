@@ -29,17 +29,3 @@ pub struct Goal {
     pub minimum_resources: Resources,
     pub minimum_reputation: Reputation
 }
-
-impl Into<GameInitSettings> for Preset {
-    fn into(self) -> GameInitSettings {
-        GameInitSettings {
-            resources: self.resources,
-            reputation: ReputationSettings {
-                initial_reputation: self.reputation,
-                ..ReputationSettings::default()
-            },
-            resource_gain: self.resource_gain,
-            fix_multiplier: self.multiplier,
-        }
-    }
-}
