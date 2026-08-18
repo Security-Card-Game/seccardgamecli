@@ -5,9 +5,9 @@ It has to be called when
 - Any card is closed
 - Any card is applied
  */
+use log::warn;
 use std::cmp::min;
 use std::collections::{HashMap, HashSet};
-use log::warn;
 use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
@@ -17,6 +17,7 @@ use crate::cards::types::card_model::Card;
 use crate::world::board::{Board, Incident, ResourceEffect};
 use crate::world::deck::{CardRc, Deck};
 use crate::world::game::ReputationSettings;
+use crate::world::part_of_hundred::PartOfHundred;
 use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
 
@@ -59,68 +60,9 @@ pub(crate) fn calculate_board(
     let active_incidents = determine_active_incidents(&board);
 
     let resource_gain = if let Some(manual_gain) = force_set_resource_gain {
-        (manual_gain, board.active_incident_resource_effects)
+        (manual_gain.clone(), board.active_incident_resource_effects)
     } else {
-        let previous_active_incidents = &board.active_incidents.iter().map(|i| i.attack_card_id).collect::<HashSet<_>>();
-        let current_active_incidents = &active_incidents.iter().map(|i| i.attack_card_id).collect::<HashSet<_>>();
-
-        let new_incidents = current_active_incidents.iter().filter(|i| !previous_active_incidents.contains(i)).collect::<Vec<_>>();
-        if new_incidents.len() > 1 {
-            warn!("More then one new incident?");
-        }
-
-        let finished_incidents = previous_active_incidents.iter().filter(|i| !current_active_incidents.contains(i)).collect::<Vec<_>>();
-
-        let open_cards = board.open_cards.clone();
-        let mut new_effects = board.active_incident_resource_effects.clone();
-        let mut amount_to_reduce = Resources::new(0);
-        for incident in new_incidents {
-            let effect = if let Some(card) = open_cards.get(incident) {
-                match &**card {
-                    Card::Attack(a) => {
-                        match &a.effect {
-                            Effect::Incident(_, _, e) => {
-                                match e {
-                                    IncidentImpact::PartOfRevenue(p) => {
-                                       let calculated = board.resource_gain.value().clone() as f32 * (p.value as f32) / 100f32;
-                                        let effect = min(board.resource_gain, Resources::new(calculated.round() as usize));
-                                        Some(ResourceEffect {
-                                            attack_card_id: incident.clone(),
-                                            effect,
-                                        })
-                                    }
-                                    IncidentImpact::Fixed(f) => {
-                                        Some(ResourceEffect {
-                                            attack_card_id: incident.clone(),
-                                            effect: min(board.resource_gain, f.clone())
-                                        })
-                                    }
-                                }
-                            },
-                            _ => {
-                                warn!("No incident effect!");
-                                None
-                            }
-                        }
-                    }
-                    _ => {
-                            warn!("No attack card!");
-                            None
-                        }
-                }
-            } else {
-                None
-            };
-            if let Some(e) = effect {
-                amount_to_reduce = amount_to_reduce + e.effect;
-                new_effects.push(e)
-
-            };
-        }
-
-        let amount_to_increase = reverse_resolved_incident_effects(finished_incidents, &mut new_effects);
-
-        (&(&board.resource_gain - &amount_to_reduce + amount_to_increase), new_effects)
+        calculate_incident_resource_effects(&board, &active_incidents)
     };
 
     Board {
@@ -133,15 +75,132 @@ pub(crate) fn calculate_board(
     }
 }
 
-fn reverse_resolved_incident_effects(finished_incidents: Vec<&Uuid>, new_effects: &mut Vec<ResourceEffect>) -> Resources {
+fn calculate_incident_resource_effects(
+    previous_board: &Board,
+    current_incidents: &Vec<Incident>,
+) -> (Resources, Vec<ResourceEffect>) {
+    let previous_active_incidents = &previous_board
+        .active_incidents
+        .iter()
+        .map(|i| i.attack_card_id)
+        .collect::<HashSet<_>>();
+    let current_active_incidents = &current_incidents
+        .iter()
+        .map(|i| i.attack_card_id)
+        .collect::<HashSet<_>>();
+
+    let new_incidents = current_active_incidents
+        .iter()
+        .filter(|i| !previous_active_incidents.contains(i))
+        .collect::<Vec<_>>();
+    if new_incidents.len() > 1 {
+        warn!("More then one new incident!");
+    }
+
+    let resolved_incidents = previous_active_incidents
+        .iter()
+        .filter(|i| !current_active_incidents.contains(i))
+        .collect::<Vec<_>>();
+
+    // this feels a bit strange, but open cards are set before calculation of effects
+    let open_cards = previous_board.open_cards.clone();
+    let mut new_effects = previous_board.active_incident_resource_effects.clone();
+
+    let amount_to_reduce =
+        add_new_incident_effects(&previous_board, new_incidents, open_cards, &mut new_effects);
+    let amount_to_increase =
+        reverse_resolved_incident_effects(resolved_incidents, &mut new_effects);
+
+    (
+        &previous_board.resource_gain - &amount_to_reduce + amount_to_increase,
+        new_effects,
+    )
+}
+
+fn add_new_incident_effects(
+    board: &Board,
+    new_incidents: Vec<&Uuid>,
+    open_cards: HashMap<Uuid, CardRc>,
+    new_effects: &mut Vec<ResourceEffect>,
+) -> Resources {
+    let mut amount_to_reduce = Resources::new(0);
+    for incident in new_incidents {
+        let effect = if let Some(card) = open_cards.get(incident) {
+            match &**card {
+                Card::Attack(a) => match &a.effect {
+                    Effect::Incident(_, _, e) => match e {
+                        IncidentImpact::PartOfRevenue(p) => {
+                            calculate_relative_resource_effect(board, incident, p)
+                        }
+                        IncidentImpact::Fixed(f) => {
+                            calculate_fixed_resource_effect(board, incident, f)
+                        }
+                    },
+                    _ => {
+                        warn!("No incident effect!");
+                        None
+                    }
+                },
+                _ => {
+                    warn!("No attack card!");
+                    None
+                }
+            }
+        } else {
+            None
+        };
+        if let Some(e) = effect {
+            amount_to_reduce = amount_to_reduce + e.effect;
+            new_effects.push(e)
+        };
+    }
+    amount_to_reduce
+}
+
+fn calculate_fixed_resource_effect(
+    board: &Board,
+    incident: &Uuid,
+    fixed_amount: &Resources,
+) -> Option<ResourceEffect> {
+    Some(ResourceEffect {
+        attack_card_id: incident.clone(),
+        effect: min(board.resource_gain, fixed_amount.clone()),
+    })
+}
+
+fn calculate_relative_resource_effect(
+    board: &Board,
+    incident: &Uuid,
+    p: &PartOfHundred,
+) -> Option<ResourceEffect> {
+    let calculated = board.resource_gain.value().clone() as f32 * (p.value as f32) / 100f32;
+    let effect = min(
+        board.resource_gain,
+        Resources::new(calculated.round() as usize),
+    );
+    Some(ResourceEffect {
+        attack_card_id: incident.clone(),
+        effect,
+    })
+}
+
+fn reverse_resolved_incident_effects(
+    finished_incidents: Vec<&Uuid>,
+    new_effects: &mut Vec<ResourceEffect>,
+) -> Resources {
     let mut amount_to_increase = Resources::new(0);
     for resolved_incident in finished_incidents {
-        let idx_resolved_effect = new_effects.iter().position(|x| &x.attack_card_id == resolved_incident);
+        let idx_resolved_effect = new_effects
+            .iter()
+            .position(|x| &x.attack_card_id == resolved_incident);
         if let Some(idx) = idx_resolved_effect {
             let effect = new_effects.remove(idx);
             amount_to_increase = amount_to_increase + effect.effect;
         } else {
-            warn!("No effect found for resolved incident {}", resolved_incident);
+            warn!(
+                "No effect found for resolved incident {}",
+                resolved_incident
+            );
         }
     }
     amount_to_increase
@@ -158,33 +217,31 @@ fn calculate_reputation_gain(
     current_incidents: &Vec<Incident>,
     reputation_settings: &ReputationSettings,
 ) -> ReputationGain {
-
     if !(current_incidents.is_empty()) {
         return ReputationGain {
             bonus: Reputation::new(0),
-            turn_based: Reputation::new(0)
+            turn_based: Reputation::new(0),
         };
     }
 
     if reputation_settings.gain_active {
-        let turn_based =
-            if previous_board.incident_free_turns > reputation_settings.gain_incident_free_turns as usize {
-                reputation_settings.gain_turn_based
-            } else {
-                Reputation::new(0)
-            };
+        let turn_based = if previous_board.incident_free_turns
+            > reputation_settings.gain_incident_free_turns as usize
+        {
+            reputation_settings.gain_turn_based
+        } else {
+            Reputation::new(0)
+        };
 
-        let bonus = if previous_board.incident_free_turns == reputation_settings.gain_incident_free_turns as usize
+        let bonus = if previous_board.incident_free_turns
+            == reputation_settings.gain_incident_free_turns as usize
         {
             reputation_settings.gain_bonus
         } else {
             Reputation::new(0)
         };
 
-        ReputationGain {
-            bonus,
-            turn_based,
-        }
+        ReputationGain { bonus, turn_based }
     } else {
         ReputationGain {
             bonus: Reputation::new(0),
@@ -193,10 +250,7 @@ fn calculate_reputation_gain(
     }
 }
 
-fn calculate_incident_free_turns(
-    board: &Board,
-    active_incidents: &Vec<Incident>,
-) -> usize {
+fn calculate_incident_free_turns(board: &Board, active_incidents: &Vec<Incident>) -> usize {
     if active_incidents.is_empty() {
         board.incident_free_turns + 1
     } else {
@@ -566,7 +620,8 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = progress_board_to_next_turn(board, &deck, &ReputationSettings::default(), &None);
+        let new_board =
+            progress_board_to_next_turn(board, &deck, &ReputationSettings::default(), &None);
 
         assert_eq!(new_board, expected_board)
     }
@@ -750,7 +805,8 @@ mod tests {
             ..board.clone()
         };
 
-        let new_board = progress_board_to_next_turn(board, &deck, &ReputationSettings::default(), &None);
+        let new_board =
+            progress_board_to_next_turn(board, &deck, &ReputationSettings::default(), &None);
 
         assert_eq!(new_board, expected_board)
     }
@@ -1350,7 +1406,7 @@ mod tests {
                     turn_based: settings.gain_turn_based,
                 };
 
-                let result = calculate_reputation_gain(&board, &incidents,&settings);
+                let result = calculate_reputation_gain(&board, &incidents, &settings);
 
                 assert_eq!(result, expected_result);
             }
@@ -1372,6 +1428,369 @@ mod tests {
 
                 assert_eq!(result, expected_result);
             }
+        }
+    }
+
+    mod resource_effects {
+        use super::*;
+        use crate::cards::properties::duration::Duration;
+        use crate::cards::properties::effect_description::EffectDescription;
+        use std::iter::zip;
+
+        fn create_attack_card(impact: IncidentImpact) -> Card {
+            let attack_card = AttackCard {
+                title: Title::new("Incident"),
+                effect: Effect::Incident(
+                    EffectDescription::new("Relative Incident"),
+                    vec![Target::new("network")],
+                    impact,
+                ),
+                duration: Duration::new(Some(5)),
+                ..FakeAttackCard.fake::<AttackCard>()
+            };
+            Card::from(attack_card)
+        }
+
+        #[test]
+        fn fixed_value_incident_returns_fixed_value_when_lower_then_resource_gain() {
+            let incident_id = Uuid::new_v4();
+            let board = Board {
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+            let expected_result = Some(ResourceEffect {
+                attack_card_id: incident_id,
+                effect: Resources::new(9),
+            });
+
+            let result = calculate_fixed_resource_effect(&board, &incident_id, &Resources::new(9));
+
+            assert_eq!(result, expected_result);
+        }
+
+        #[test]
+        fn fixed_value_incident_returns_resource_gain__when_fixed_effect_higher_then_resource_gain()
+        {
+            let incident_id = Uuid::new_v4();
+            let board = Board {
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+            let expected_result = Some(ResourceEffect {
+                attack_card_id: incident_id,
+                effect: Resources::new(10),
+            });
+
+            let result = calculate_fixed_resource_effect(&board, &incident_id, &Resources::new(11));
+
+            assert_eq!(result, expected_result);
+        }
+
+        #[test]
+        fn relative_value_incident_returns_rounded_results_when_lower_then_resource_gain() {
+            let incident_id = Uuid::new_v4();
+            let board = Board {
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+            let expected_result_rounded_up = Some(ResourceEffect {
+                attack_card_id: incident_id,
+                effect: Resources::new(4),
+            });
+
+            let expected_result = Some(ResourceEffect {
+                attack_card_id: incident_id,
+                effect: Resources::new(5),
+            });
+
+            let expected_result_rounded_down = Some(ResourceEffect {
+                attack_card_id: incident_id,
+                effect: Resources::new(6),
+            });
+
+            let result_rounded_up =
+                calculate_relative_resource_effect(&board, &incident_id, &PartOfHundred::new(44));
+            assert_eq!(result_rounded_up, expected_result_rounded_up);
+
+            let result =
+                calculate_relative_resource_effect(&board, &incident_id, &PartOfHundred::new(50));
+            assert_eq!(result, expected_result);
+
+            let result_rounded_down =
+                calculate_relative_resource_effect(&board, &incident_id, &PartOfHundred::new(55));
+            assert_eq!(result_rounded_down, expected_result_rounded_down);
+        }
+
+        #[test]
+        fn relative_value_incident_returns_max_resource_gain() {
+            let incident_id = Uuid::new_v4();
+            let board = Board {
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+            let expected_result = Some(ResourceEffect {
+                attack_card_id: incident_id,
+                effect: Resources::new(10),
+            });
+
+            let result =
+                calculate_relative_resource_effect(&board, &incident_id, &PartOfHundred::new(100));
+            assert_eq!(result, expected_result);
+        }
+
+        #[test]
+        fn resolved_incident_reverses_effect() {
+            let effects = vec![
+                ResourceEffect {
+                    attack_card_id: Uuid::new_v4(),
+                    effect: Resources::new(10),
+                },
+                ResourceEffect {
+                    attack_card_id: Uuid::new_v4(),
+                    effect: Resources::new(5),
+                },
+                ResourceEffect {
+                    attack_card_id: Uuid::new_v4(),
+                    effect: Resources::new(3),
+                },
+            ];
+            let mut new_effects = effects.clone();
+            let resolved_incident_id = effects[1..=2]
+                .iter()
+                .map(|effect| &effect.attack_card_id)
+                .collect::<Vec<&Uuid>>();
+            let resources_to_add_to_gain =
+                reverse_resolved_incident_effects(resolved_incident_id, &mut new_effects);
+            assert_eq!(resources_to_add_to_gain, Resources::new(8));
+            assert_eq!(new_effects.len(), 1);
+            assert_eq!(new_effects[0].effect, Resources::new(10));
+        }
+
+        #[test]
+        fn calculate_only_new_incident_resource_effects() {
+            let cards = vec![
+                Card::from(create_attack_card(IncidentImpact::Fixed(Resources::new(5)))),
+                Card::from(create_attack_card(IncidentImpact::PartOfRevenue(
+                    PartOfHundred::new(50),
+                ))),
+                Card::from(create_attack_card(IncidentImpact::Fixed(Resources::new(4)))),
+            ];
+            let incident_ids = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
+
+            let open_cards = zip(incident_ids.iter(), cards.iter())
+                .map(|(id, card)| (*id, CardRc::new(card.clone())))
+                .collect::<HashMap<Uuid, CardRc>>();
+
+            let active_incidents_before = incident_ids[0..2]
+                .iter()
+                .map(|i| Incident {
+                    attack_card_id: *i,
+                    attack_title: String::new(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: String::new(),
+                })
+                .collect::<Vec<Incident>>();
+
+            let active_effects_before = vec![
+                ResourceEffect {
+                    attack_card_id: incident_ids[0],
+                    effect: Resources::new(5),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[1],
+                    effect: Resources::new(3),
+                },
+            ];
+
+            let previous_board = Board {
+                open_cards,
+                active_incidents: active_incidents_before,
+                active_incident_resource_effects: active_effects_before,
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+
+            let active_incidents = incident_ids
+                .iter()
+                .map(|i| Incident {
+                    attack_card_id: *i,
+                    attack_title: String::new(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: String::new(),
+                })
+                .collect::<Vec<Incident>>();
+
+            let expected_new_gain = Resources::new(6);
+            let expected_effects = vec![
+                ResourceEffect {
+                    attack_card_id: incident_ids[0],
+                    effect: Resources::new(5),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[1],
+                    effect: Resources::new(3),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[2],
+                    effect: Resources::new(4),
+                },
+            ];
+
+            let result = calculate_incident_resource_effects(&previous_board, &active_incidents);
+            let new_gain = result.0;
+            let active_effects = result.1;
+
+            assert_eq!(new_gain, expected_new_gain);
+            assert_eq!(active_effects, expected_effects);
+        }
+
+        #[test]
+        fn calculate_only_resolved_incident_resource_effects() {
+            let cards = vec![
+                Card::from(create_attack_card(IncidentImpact::Fixed(Resources::new(5)))),
+                Card::from(create_attack_card(IncidentImpact::PartOfRevenue(
+                    PartOfHundred::new(50),
+                ))),
+                Card::from(create_attack_card(IncidentImpact::Fixed(Resources::new(4)))),
+            ];
+            let incident_ids = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
+
+            let open_cards = zip(incident_ids.iter(), cards.iter())
+                .map(|(id, card)| (*id, CardRc::new(card.clone())))
+                .collect::<HashMap<Uuid, CardRc>>();
+
+            let active_incidents_before = incident_ids
+                .iter()
+                .map(|i| Incident {
+                    attack_card_id: *i,
+                    attack_title: String::new(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: String::new(),
+                })
+                .collect::<Vec<Incident>>();
+
+            let active_effects_before = vec![
+                ResourceEffect {
+                    attack_card_id: incident_ids[0],
+                    effect: Resources::new(5),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[1],
+                    effect: Resources::new(3),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[2],
+                    effect: Resources::new(4),
+                },
+            ];
+
+            let previous_board = Board {
+                open_cards,
+                active_incidents: active_incidents_before,
+                active_incident_resource_effects: active_effects_before,
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+
+            let active_incidents = vec![Incident {
+                attack_card_id: incident_ids[2],
+                attack_title: String::new(),
+                oopsie_card_id: Uuid::new_v4(),
+                oopsie_title: String::new(),
+            }];
+            // two incidents are resolved 5 + 3 + 10 current gain
+            let expected_new_gain = Resources::new(18);
+            let expected_effects = vec![ResourceEffect {
+                attack_card_id: incident_ids[2],
+                effect: Resources::new(4),
+            }];
+
+            let result = calculate_incident_resource_effects(&previous_board, &active_incidents);
+            let new_gain = result.0;
+            let active_effects = result.1;
+
+            assert_eq!(new_gain, expected_new_gain);
+            assert_eq!(active_effects, expected_effects);
+        }
+
+        #[test]
+        fn calculate_mixture_incident_resource_effects() {
+            let cards = vec![
+                Card::from(create_attack_card(IncidentImpact::Fixed(Resources::new(5)))),
+                Card::from(create_attack_card(IncidentImpact::PartOfRevenue(
+                    PartOfHundred::new(50),
+                ))),
+                Card::from(create_attack_card(IncidentImpact::Fixed(Resources::new(4)))),
+            ];
+            let incident_ids = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
+
+            let open_cards = zip(incident_ids.iter(), cards.iter())
+                .map(|(id, card)| (*id, CardRc::new(card.clone())))
+                .collect::<HashMap<Uuid, CardRc>>();
+
+            let active_incidents_before = incident_ids[0..=1]
+                .iter()
+                .map(|i| Incident {
+                    attack_card_id: *i,
+                    attack_title: String::new(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: String::new(),
+                })
+                .collect::<Vec<Incident>>();
+
+            let active_effects_before = vec![
+                ResourceEffect {
+                    attack_card_id: incident_ids[0],
+                    effect: Resources::new(5),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[1],
+                    effect: Resources::new(3),
+                },
+            ];
+
+            let previous_board = Board {
+                open_cards,
+                active_incidents: active_incidents_before,
+                active_incident_resource_effects: active_effects_before,
+                resource_gain: Resources::new(10),
+                ..Board::empty()
+            };
+
+            let active_incidents = vec![
+                Incident {
+                    attack_card_id: incident_ids[1],
+                    attack_title: String::new(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: String::new(),
+                },
+                Incident {
+                    attack_card_id: incident_ids[2],
+                    attack_title: String::new(),
+                    oopsie_card_id: Uuid::new_v4(),
+                    oopsie_title: String::new(),
+                },
+            ];
+
+            // one incident is resolved +5, one is new -4: 10 + 5 -4
+            let expected_new_gain = Resources::new(11);
+            let expected_effects = vec![
+                ResourceEffect {
+                    attack_card_id: incident_ids[1],
+                    effect: Resources::new(3),
+                },
+                ResourceEffect {
+                    attack_card_id: incident_ids[2],
+                    effect: Resources::new(4),
+                },
+            ];
+
+            let result = calculate_incident_resource_effects(&previous_board, &active_incidents);
+            let new_gain = result.0;
+            let active_effects = result.1;
+
+            assert_eq!(new_gain, expected_new_gain);
+            assert_eq!(active_effects, expected_effects);
         }
     }
 }
