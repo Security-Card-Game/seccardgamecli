@@ -56,6 +56,24 @@ pub struct Game {
     pub action_status: GameActionResult,
     pub resource_gain: Resources,
     pub fix_multiplier: ResourceFixMultiplier,
+    reputation_settings: ReputationSettings
+}
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub struct ReputationSettings {
+    pub initial_reputation: Reputation,
+    pub incident_penalty: Reputation,
+    pub incident_penalty_stacked: bool
+}
+
+impl Default for ReputationSettings {
+    fn default() -> Self {
+        ReputationSettings {
+            initial_reputation: Reputation::start_value(),
+            incident_penalty: Reputation::default_incident_penalty(),
+            incident_penalty_stacked: false
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -63,7 +81,7 @@ pub struct GameInitSettings {
     pub resource_gain: Resources,
     pub resources: Resources,
     pub fix_multiplier: ResourceFixMultiplier,
-    pub reputation: Reputation,
+    pub reputation: ReputationSettings,
 }
 
 pub struct CardCount {
@@ -77,11 +95,14 @@ impl Default for GameInitSettings {
             resource_gain: Resources::new(5),
             resources: Resources::default(),
             fix_multiplier: ResourceFixMultiplier::default(),
-            reputation: Reputation::start_value(),
+            reputation: ReputationSettings {
+                initial_reputation: Reputation::start_value(),
+                incident_penalty: Reputation::default_incident_penalty(),
+                incident_penalty_stacked: false
+            },
         }
     }
 }
-
 
 /// This defines the API on how to interact with the Game. It will in turn use corresponding
 /// actions from the actions module, combines them when needed. Every interaction return a new Game
@@ -107,7 +128,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match activate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
+                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &self.reputation_settings)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -130,7 +151,7 @@ impl Game {
             GameStatus::Start(b) | GameStatus::InProgress(b) => {
                 match deactivate_lucky_card(b.clone(), card_id) {
                     Ok(new_board) => Game {
-                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
+                        status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &self.reputation_settings)),
                         action_status: GameActionResult::Success,
                         ..self.clone()
                     },
@@ -165,13 +186,9 @@ impl Game {
 
     /// Creates a new game with the given Deck, initial resource gain and fix multiplier.
     /// Use this to start.
-    pub fn create(
-        deck: Deck,
-        init_settings: GameInitSettings,
-    ) -> Self {
-        
+    pub fn create(deck: Deck, init_settings: GameInitSettings) -> Self {
         let board = Board::init(&deck, init_settings.resources, init_settings.reputation);
-        let status = GameStatus::Start(calculate_board(board, &deck));
+        let status = GameStatus::Start(calculate_board(board, &deck, &init_settings.reputation));
 
         Game {
             deck,
@@ -179,6 +196,7 @@ impl Game {
             action_status: GameActionResult::Success,
             resource_gain: init_settings.resource_gain,
             fix_multiplier: init_settings.fix_multiplier,
+            reputation_settings: init_settings.reputation.clone(),
         }
     }
 
@@ -190,7 +208,7 @@ impl Game {
         {
             let board_with_added_resources = add_resources(board, &self.resource_gain);
             let updated_attacks_board = update_attack_cards(board_with_added_resources);
-            let new_board = calculate_board(updated_attacks_board, &new_deck);
+            let new_board = calculate_board(updated_attacks_board, &new_deck, &self.reputation_settings);
 
             let status = if new_board.turns_remaining == 0 {
                 GameStatus::Finished(new_board)
@@ -230,10 +248,10 @@ impl Game {
 
                 let (b, res) = match new_board {
                     Ok(b) => (b, GameActionResult::Success),
-                    Err(e) => handle_action_error(board, &self.deck, e),
+                    Err(e) => handle_action_error(board, &self.deck, &self.reputation_settings, e),
                 };
                 Game {
-                    status: GameStatus::InProgress(calculate_board(b, &self.deck)),
+                    status: GameStatus::InProgress(calculate_board(b, &self.deck, &self.reputation_settings)),
                     action_status: res,
                     ..self.clone()
                 }
@@ -251,7 +269,7 @@ impl Game {
             GameStatus::InProgress(b) => {
                 let new_board = add_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
+                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &self.reputation_settings)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -259,7 +277,7 @@ impl Game {
             GameStatus::Start(b) => {
                 let new_board = add_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::Start(calculate_board(new_board, &self.deck)),
+                    status: GameStatus::Start(calculate_board(new_board, &self.deck, &self.reputation_settings)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -277,7 +295,7 @@ impl Game {
             GameStatus::InProgress(b) => {
                 let new_board = subtract_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck)),
+                    status: GameStatus::InProgress(calculate_board(new_board, &self.deck, &self.reputation_settings)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -285,7 +303,7 @@ impl Game {
             GameStatus::Start(b) => {
                 let new_board = subtract_reputation(b.clone(), value);
                 Game {
-                    status: GameStatus::Start(calculate_board(new_board, &self.deck)),
+                    status: GameStatus::Start(calculate_board(new_board, &self.deck, &self.reputation_settings)),
                     action_status: GameActionResult::Success,
                     ..self.clone()
                 }
@@ -297,19 +315,18 @@ impl Game {
         }
     }
 
-
     /// Try anc closes an Oopsie card. Will roll a dice to calculate the costs.
     fn handle_non_oopsie_close(&self, result: ActionResult<Board>) -> Self {
         match result {
             Ok(b) => Game {
-                status: GameStatus::InProgress(calculate_board(b, &self.deck)),
+                status: GameStatus::InProgress(calculate_board(b, &self.deck, &self.reputation_settings)),
                 action_status: GameActionResult::Success,
                 ..self.clone()
             },
             Err(err) => {
-                let (b, r) = handle_action_error(self.get_board(), &self.deck, err);
+                let (b, r) = handle_action_error(self.get_board(), &self.deck, &self.reputation_settings, err);
                 Game {
-                    status: GameStatus::InProgress(calculate_board(b, &self.deck)),
+                    status: GameStatus::InProgress(calculate_board(b, &self.deck, &self.reputation_settings)),
                     action_status: r,
                     ..self.clone()
                 }
@@ -342,7 +359,7 @@ impl Game {
                             );
                             match result {
                                 Ok((b, r)) => Game {
-                                    status: GameStatus::InProgress(calculate_board(b, &self.deck)),
+                                    status: GameStatus::InProgress(calculate_board(b, &self.deck, &self.reputation_settings)),
                                     action_status: OopsieFixed(r),
                                     ..self.clone()
                                 },
@@ -386,7 +403,11 @@ impl Game {
     pub fn is_card_affected_attack(&self, card_id: &Uuid) -> bool {
         match &self.status {
             GameStatus::Start(b) | GameStatus::InProgress(b) | GameStatus::Finished(b) => {
-                let affected_oopises = b.active_incidents.iter().map(|i| i.oopsie_card_id).collect::<Vec<Uuid>>();
+                let affected_oopises = b
+                    .active_incidents
+                    .iter()
+                    .map(|i| i.oopsie_card_id)
+                    .collect::<Vec<Uuid>>();
                 affected_oopises.contains(&card_id)
             }
         }
@@ -401,12 +422,12 @@ impl Game {
     }
 }
 
-fn handle_action_error(board: &Board, deck: &Deck, err: ActionError) -> (Board, GameActionResult) {
+fn handle_action_error(board: &Board, deck: &Deck, reputation_settings: &ReputationSettings, err: ActionError) -> (Board, GameActionResult) {
     match err {
         ActionError::AttackForceClosed(b) => (b.clone(), GameActionResult::AttackForceClosed),
         ActionError::NoCardsLeft => (board.clone(), InvalidAction),
         ActionError::WrongCardType(b) | ActionError::InvalidState(b) => {
-            (calculate_board(b, deck), InvalidAction)
+            (calculate_board(b, deck, reputation_settings), InvalidAction)
         }
         ActionError::NotEnoughResources(_, _) => {
             (board.clone(), GameActionResult::NotEnoughResources)
@@ -435,7 +456,9 @@ mod tests {
     use crate::cards::types::oopsie::OopsieCard;
     use crate::world::board::Board;
     use crate::world::deck::{CardRc, Deck};
-    use crate::world::game::{Game, GameActionResult, GameInitSettings, GameStatus};
+    use crate::world::game::{
+        Game, GameActionResult, GameInitSettings, GameStatus, ReputationSettings,
+    };
     use crate::world::reputation::Reputation;
     use crate::world::resource_fix_multiplier::ResourceFixMultiplier;
     use crate::world::resources::Resources;
@@ -490,10 +513,7 @@ mod tests {
                 played_cards: 0,
                 total: cards.len(),
             };
-            TestDeck {
-                cards,
-                start_deck,
-            }
+            TestDeck { cards, start_deck }
         }
     }
 
@@ -515,6 +535,7 @@ mod tests {
             action_status: GameActionResult::Success,
             resource_gain: Resources::new(10),
             fix_multiplier: ResourceFixMultiplier::new(2),
+            reputation_settings: ReputationSettings::default(),
         };
 
         let sut = Game::create(
@@ -523,8 +544,8 @@ mod tests {
                 resources: Resources::new(0),
                 resource_gain: Resources::new(10),
                 fix_multiplier: ResourceFixMultiplier::new(2),
-                reputation: Reputation::start_value(),
-            }
+                reputation: ReputationSettings::default(),
+            },
         );
 
         assert_eq!(sut, expectation);
@@ -540,7 +561,7 @@ mod tests {
                 resource_gain: resource_gain.clone(),
                 fix_multiplier: ResourceFixMultiplier::new(2),
                 ..GameInitSettings::default()
-            }
+            },
         );
 
         let game_after_round_1 = sut.next_round();
@@ -583,7 +604,7 @@ mod tests {
                 resource_gain: resource_gain.clone(),
                 fix_multiplier: ResourceFixMultiplier::new(2),
                 ..GameInitSettings::default()
-            }
+            },
         );
 
         let game_after_round_1 = sut.next_round();
@@ -639,7 +660,7 @@ mod tests {
                 resource_gain: resource_gain.clone(),
                 fix_multiplier: ResourceFixMultiplier::new(2),
                 ..GameInitSettings::default()
-            }
+            },
         );
 
         let game_after_round_1 = sut.next_round();

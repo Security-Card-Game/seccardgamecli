@@ -2,6 +2,8 @@
 
 ## upcoming
 
+* [FEATURE] on an incident reputation a configurable reputation penalty is applied
+
 ## 0.9.2
 
 * [DEPENDENCIES] Update dependencies, most notable to egui 0.36.0

@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use crate::cards::properties::cost_modifier::CostModifier;
 use crate::world::deck::{CardRc, Deck};
+use crate::world::game::ReputationSettings;
 use crate::world::reputation::Reputation;
 use crate::world::resources::Resources;
 /*
@@ -39,10 +40,10 @@ pub struct Incident {
 }
 
 impl Board {
-    pub fn init(deck: &Deck, start_resources: Resources, start_reputation: Reputation) -> Self {
+    pub fn init(deck: &Deck, start_resources: Resources, reputation_settings: ReputationSettings) -> Self {
         Board {
             current_resources: start_resources,
-            current_reputation: start_reputation,
+            current_reputation: reputation_settings.initial_reputation,
             drawn_card: None,
             open_cards: HashMap::new(),
             cards_to_use: HashSet::new(),
